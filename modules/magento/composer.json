@@ -1,0 +1,21 @@
+{
+    "name": "tudorsync/module-magento",
+    "description": "Magento 2 module that syncs store availability to TUDOR's e-commerce inventory API via tudorsync/core.",
+    "type": "magento2-module",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.1",
+        "tudorsync/core": "*"
+    },
+    "repositories": [
+        { "type": "path", "url": "../../core" }
+    ],
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "Tudorsync\\EcommerceSync\\": ""
+        }
+    }
+}

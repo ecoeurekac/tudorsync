@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="tudorsync" translate="label" type="text" sortOrder="500" showInDefault="1" showInWebsite="1" showInStore="1">
+            <label>TUDOR E-commerce Sync</label>
+            <tab>catalog</tab>
+            <resource>Tudorsync_EcommerceSync::config</resource>
+            <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>General</label>
+                <field id="country" translate="label comment" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Market / Country (ISO code)</label>
+                    <comment>ISO country code reported to TUDOR for every stock record from this store, e.g. ES, CH.</comment>
+                </field>
+                <field id="environment" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>TUDOR API Environment</label>
+                    <source_model>Tudorsync\EcommerceSync\Model\Config\Source\Environment</source_model>
+                </field>
+                <field id="api_key_staging" translate="label" type="obscure" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>TUDOR API Key (Staging)</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                </field>
+                <field id="api_key_production" translate="label" type="obscure" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>TUDOR API Key (Production)</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                </field>
+                <field id="click_and_collect_enabled" translate="label comment" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Offer Click &amp; Collect</label>
+                    <comment>Store-wide toggle only — per-point-of-sale click &amp; collect timing (storesAvailabilityDetails) is not wired up yet, see the connector's TODOs.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="cron_schedule" translate="label comment" type="text" sortOrder="60" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Sync Frequency (cron expression)</label>
+                    <comment>Standard cron expression, e.g. "0 * * * *" for hourly. Applies globally regardless of store/website scope.</comment>
+                </field>
+                <field id="status_and_actions" translate="label" type="text" sortOrder="70" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Connection &amp; Sync</label>
+                    <frontend_model>Tudorsync\EcommerceSync\Block\Adminhtml\System\Config\StatusAndActions</frontend_model>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

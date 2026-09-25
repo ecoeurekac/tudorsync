@@ -1,0 +1,18 @@
+{
+    "name": "tudorsync/plugin-woocommerce",
+    "description": "WordPress/WooCommerce plugin that syncs store availability to TUDOR's e-commerce inventory API via tudorsync/core.",
+    "type": "wordpress-plugin",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.1",
+        "tudorsync/core": "*"
+    },
+    "repositories": [
+        { "type": "path", "url": "../../core" }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Tudorsync\\Woocommerce\\": "includes/"
+        }
+    }
+}

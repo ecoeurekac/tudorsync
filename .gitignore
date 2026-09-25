@@ -1,0 +1,13 @@
+.DS_Store
+
+# Composer
+/vendor/
+core/vendor/
+modules/*/vendor/
+composer.lock
+core/composer.lock
+modules/*/composer.lock
+
+# Test artifacts
+.phpunit.result.cache
+core/.phpunit.result.cache

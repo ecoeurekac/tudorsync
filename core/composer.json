@@ -2,6 +2,7 @@
     "name": "tudorsync/core",
     "description": "Platform-agnostic sync logic for TUDOR's authorized-retailer e-commerce inventory API program.",
     "type": "library",
+    "version": "0.1.0",
     "license": "proprietary",
     "require": {
         "php": "^8.1",

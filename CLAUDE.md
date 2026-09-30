@@ -46,6 +46,13 @@ se identifica, pregunta. Ambos hablan español. Reparto según
   esté hecho y verificado, seguido de `git push` (el 30-09 se perdió el checkout entero con
   trabajo sin commit). En la sesión de Juanjo, commit + push siempre, sin preguntar; la sesión de
   Jorge sigue su propio criterio. El servidor empuja con una deploy key (ver `CLAUDE.local.md`).
+- **Commit solo de lo ya probado:** un push sube también los commits locales del otro, así que no
+  se hace commit de nada que aún se esté depurando. Y como el checkout es el mismo, `git add` solo
+  de las rutas propias (nunca `git add -A` / `git commit -a` en la raíz): así no entra el trabajo
+  sin terminar del otro.
+- **Prefijo de los mensajes de commit:** `Nombre - [Parte V1] - descripción`, p. ej.
+  `Jorge - [Core V1] - …` o `Juanjo - [Magento V1] - …` (`[Docs]` para docs e `intercambio/`).
+  Sirve para localizar en GitHub lo que ha tocado cada uno.
 - ⚠️ `vendor/tudorsync/{core,module-magento}` son **symlinks** a este checkout: no borrar nada
   dentro de ellos por SFTP (borra el original).
 

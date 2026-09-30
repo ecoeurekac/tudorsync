@@ -12,21 +12,20 @@ use Tudorsync\Core\Domain\StockAvailability;
  * public-rest-api-1.7.0-*.zip, version 1.7.0). Endpoint paths, request/response payload
  * shapes and the batch NDJSON contract below come directly from that spec.
  *
- * STILL UNCONFIRMED — neither the OAS nor the RAML file specifies these, they're not part
- * of the API contract itself and must come from TUDOR's own onboarding/credential delivery:
- *   - the base URL for staging vs. production (the spec has no `servers:` block — these
- *     Anypoint-published assets typically get their URL from the API portal per subscribed
- *     application, not from the spec file);
- *   - the authentication scheme (no `securitySchemes`/`securedBy` in either spec file) —
- *     this class assumes a bearer token in the API key for now, which is a guess, not a
- *     confirmed fact. Update self::BASE_URLS and the auth header in pushStockBatch()/etc.
- *     once TUDOR hands over real staging/production credentials and connection details.
+ * Base URLs come from TUDOR's "API Spotlight" page (doc/Community Asset_ stock-retail-publish-
+ * public-rest-api.zip) and the technical presentation; PREPROD was verified on 2026-09-30 (see
+ * intercambio/2026-09-30-juanjo-peticion-auth-y-url-tudor.md). Environment::Staging maps to
+ * TUDOR's PREPROD.
+ *
+ * STILL PENDING — authentication: TUDOR uses OAuth2 client credentials via Okta (see the
+ * intercambio note above), but this class still sends the API key as a bearer token. Replace
+ * the auth header in headers() once ClientConfig carries a client ID/secret.
  */
 final class TudorApiClient
 {
     private const BASE_URLS = [
-        'staging' => 'https://api-staging.tudorwatch.com',    // placeholder — unconfirmed, see class docblock
-        'production' => 'https://api.tudorwatch.com',          // placeholder — unconfirmed, see class docblock
+        'staging' => 'https://pp-api.services.mytudorwatch.com/estock-retail/retailer',
+        'production' => 'https://api.services.mytudorwatch.com/estock-retail/retailer',
     ];
 
     public function __construct(

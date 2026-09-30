@@ -9,7 +9,8 @@
                 <label>General</label>
                 <field id="country" translate="label comment" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Market / Country (ISO code)</label>
-                    <comment>ISO country code reported to TUDOR for every stock record from this store, e.g. ES, CH.</comment>
+                    <comment>ISO country code reported to TUDOR for every stock record from this store, e.g. ES, CH. Nothing is synced while it is empty.</comment>
+                    <validate>validate-alpha validate-length minimum-length-2 maximum-length-2</validate>
                 </field>
                 <field id="environment" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>TUDOR API Environment</label>
@@ -23,10 +24,20 @@
                     <label>TUDOR API Key (Production)</label>
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
                 </field>
+                <field id="value_mode" translate="label comment" type="select" sortOrder="45" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Value Sent to TUDOR</label>
+                    <comment>What goes in the API's "value" field. Pending TUDOR's confirmation of what it means; shoppers never see it either way.</comment>
+                    <source_model>Tudorsync\EcommerceSync\Model\Config\Source\ValueMode</source_model>
+                </field>
                 <field id="click_and_collect_enabled" translate="label comment" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Offer Click &amp; Collect</label>
-                    <comment>Store-wide toggle only — per-point-of-sale click &amp; collect timing (storesAvailabilityDetails) is not wired up yet, see the connector's TODOs.</comment>
+                    <comment>Store-wide toggle only — per-point-of-sale click &amp; collect timing (storesAvailabilityDetails) is not wired up yet.</comment>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="home_delivery_timing" translate="label comment" type="text" sortOrder="55" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Home Delivery Timing (hours)</label>
+                    <comment>Optional. Estimated delivery time sent to TUDOR (homeDeliveryTiming). Leave empty to omit it.</comment>
+                    <validate>validate-digits</validate>
                 </field>
                 <field id="cron_schedule" translate="label comment" type="text" sortOrder="60" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Sync Frequency (cron expression)</label>
@@ -35,6 +46,30 @@
                 <field id="status_and_actions" translate="label" type="text" sortOrder="70" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Connection &amp; Sync</label>
                     <frontend_model>Tudorsync\EcommerceSync\Block\Adminhtml\System\Config\StatusAndActions</frontend_model>
+                </field>
+            </group>
+            <group id="model_code" translate="label comment" type="text" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>TUDOR Model Code</label>
+                <comment><![CDATA[A product takes part when its "TUDOR Model Code" attribute is filled in. Optionally, when the attribute is empty, the code can be derived from the SKU with the rule below. Check the result with <code>bin/magento tudorsync:catalog:preview</code> before syncing.]]></comment>
+                <field id="sku_prefix" translate="label comment" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>SKU Prefix</label>
+                    <comment>Only SKUs starting with this are checked against the pattern, e.g. 1001TU. Required for the SKU rule to apply.</comment>
+                </field>
+                <field id="sku_pattern" translate="label comment" type="text" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>SKU Pattern (PHP regular expression)</label>
+                    <comment>With delimiters, e.g. /^1001TU(\w+)-(\d{4})$/</comment>
+                </field>
+                <field id="sku_replacement" translate="label comment" type="text" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Model Code Built From the SKU</label>
+                    <comment>Replacement using the pattern's groups, e.g. M$1-$2</comment>
+                </field>
+            </group>
+            <group id="urls" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Product URLs</label>
+                <field id="locale_format" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Locale Key Format</label>
+                    <comment>How each store view's locale is sent as a key of localizedUrls. One URL per active store view, taken from its General > Locale Options.</comment>
+                    <source_model>Tudorsync\EcommerceSync\Model\Config\Source\LocaleFormat</source_model>
                 </field>
             </group>
         </section>

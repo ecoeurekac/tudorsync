@@ -8,10 +8,12 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Model\ScopeInterface;
 use Tudorsync\Core\Domain\ClientConfig;
 use Tudorsync\Core\Domain\Environment;
+use Tudorsync\EcommerceSync\Model\Config\Source\LocaleFormat;
+use Tudorsync\EcommerceSync\Model\Config\Source\ValueMode;
 
 /**
  * Reads this store's TUDOR sync settings from Magento's own system configuration
- * (Stores > Configuration > TUDOR E-commerce Sync — see etc/adminhtml/system.xml),
+ * (Stores > Configuration > Catalog > TUDOR E-commerce Sync — see etc/adminhtml/system.xml),
  * store-view scoped so a multi-store-view install could sync different markets per view.
  */
 class Config
@@ -21,6 +23,12 @@ class Config
     private const XML_PATH_API_KEY_STAGING = 'tudorsync/general/api_key_staging';
     private const XML_PATH_API_KEY_PRODUCTION = 'tudorsync/general/api_key_production';
     private const XML_PATH_CLICK_AND_COLLECT_ENABLED = 'tudorsync/general/click_and_collect_enabled';
+    private const XML_PATH_HOME_DELIVERY_TIMING = 'tudorsync/general/home_delivery_timing';
+    private const XML_PATH_VALUE_MODE = 'tudorsync/general/value_mode';
+    private const XML_PATH_LOCALE_FORMAT = 'tudorsync/urls/locale_format';
+    private const XML_PATH_SKU_PREFIX = 'tudorsync/model_code/sku_prefix';
+    private const XML_PATH_SKU_PATTERN = 'tudorsync/model_code/sku_pattern';
+    private const XML_PATH_SKU_REPLACEMENT = 'tudorsync/model_code/sku_replacement';
     private const XML_PATH_STORE_NAME = 'general/store_information/name';
     private const XML_PATH_LOCALE_CODE = 'general/locale/code';
 
@@ -31,28 +39,86 @@ class Config
 
     public function getClientConfig(?int $storeId = null): ClientConfig
     {
-        $environment = Environment::from(
-            (string) $this->scopeConfig->getValue(self::XML_PATH_ENVIRONMENT, ScopeInterface::SCOPE_STORE, $storeId),
-        );
+        $environment = Environment::tryFrom($this->getString(self::XML_PATH_ENVIRONMENT, $storeId))
+            ?? Environment::Staging;
 
         $apiKeyPath = $environment === Environment::Production
             ? self::XML_PATH_API_KEY_PRODUCTION
             : self::XML_PATH_API_KEY_STAGING;
 
         return new ClientConfig(
-            clientName: (string) $this->scopeConfig->getValue(self::XML_PATH_STORE_NAME, ScopeInterface::SCOPE_STORE, $storeId),
-            market: (string) $this->scopeConfig->getValue(self::XML_PATH_COUNTRY, ScopeInterface::SCOPE_STORE, $storeId),
-            languages: [], // TODO: derive from the store's configured store views once confirmed with the client
+            clientName: $this->getString(self::XML_PATH_STORE_NAME, $storeId),
+            market: $this->getCountry($storeId),
+            languages: [], // not used by the Magento connector: locales come from the store views
             environment: $environment,
-            tudorApiKey: (string) $this->scopeConfig->getValue($apiKeyPath, ScopeInterface::SCOPE_STORE, $storeId),
-            offersClickAndCollect: (bool) $this->scopeConfig->getValue(self::XML_PATH_CLICK_AND_COLLECT_ENABLED, ScopeInterface::SCOPE_STORE, $storeId),
+            tudorApiKey: $this->getString($apiKeyPath, $storeId),
+            offersClickAndCollect: $this->scopeConfig->isSetFlag(self::XML_PATH_CLICK_AND_COLLECT_ENABLED, ScopeInterface::SCOPE_STORE, $storeId),
         );
     }
 
+    /**
+     * ISO 3166-1 alpha-2 market code, upper-cased; empty string when not configured.
+     */
+    public function getCountry(?int $storeId = null): string
+    {
+        return strtoupper($this->getString(self::XML_PATH_COUNTRY, $storeId));
+    }
+
+    public function getHomeDeliveryTimingHours(?int $storeId = null): ?int
+    {
+        $value = $this->getString(self::XML_PATH_HOME_DELIVERY_TIMING, $storeId);
+
+        return ctype_digit($value) ? (int) $value : null;
+    }
+
+    public function getValueMode(?int $storeId = null): string
+    {
+        return $this->getString(self::XML_PATH_VALUE_MODE, $storeId) ?: ValueMode::QUANTITY;
+    }
+
+    /**
+     * The store view's Magento locale (e.g. "en_GB") in the form TUDOR's localizedUrls keys
+     * use: BCP 47 with a hyphen ("en-GB") or the bare language ("en"), per admin config.
+     */
     public function getLocaleCode(int $storeId): ?string
     {
-        $locale = $this->scopeConfig->getValue(self::XML_PATH_LOCALE_CODE, ScopeInterface::SCOPE_STORE, $storeId);
+        $locale = $this->getString(self::XML_PATH_LOCALE_CODE, $storeId);
 
-        return $locale !== null ? (string) $locale : null;
+        if ($locale === '') {
+            return null;
+        }
+
+        [$language, $region] = array_pad(explode('_', $locale, 2), 2, '');
+        $language = strtolower($language);
+
+        if ($region === '' || $this->getString(self::XML_PATH_LOCALE_FORMAT) === LocaleFormat::LANGUAGE) {
+            return $language;
+        }
+
+        return $language . '-' . strtoupper($region);
+    }
+
+    /**
+     * Optional SQL pre-filter: products whose SKU starts with this prefix are candidates even
+     * when `tudor_model_code` is empty (their code is then derived with getSkuPattern()).
+     */
+    public function getSkuPrefix(): string
+    {
+        return $this->getString(self::XML_PATH_SKU_PREFIX);
+    }
+
+    public function getSkuPattern(): string
+    {
+        return $this->getString(self::XML_PATH_SKU_PATTERN);
+    }
+
+    public function getSkuReplacement(): string
+    {
+        return $this->getString(self::XML_PATH_SKU_REPLACEMENT);
+    }
+
+    private function getString(string $path, ?int $storeId = null): string
+    {
+        return trim((string) $this->scopeConfig->getValue($path, ScopeInterface::SCOPE_STORE, $storeId));
     }
 }

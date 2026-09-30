@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Magento\Framework\Console\CommandListInterface">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="tudorsync_catalog_preview" xsi:type="object">Tudorsync\EcommerceSync\Console\Command\CatalogPreviewCommand</item>
+                <item name="tudorsync_sync_run" xsi:type="object">Tudorsync\EcommerceSync\Console\Command\SyncRunCommand</item>
+                <item name="tudorsync_connection_test" xsi:type="object">Tudorsync\EcommerceSync\Console\Command\TestConnectionCommand</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Proxies: every bin/magento call builds the command list; don't load the catalog stack for it. -->
+    <type name="Tudorsync\EcommerceSync\Console\Command\CatalogPreviewCommand">
+        <arguments>
+            <argument name="catalogConnector" xsi:type="object">Tudorsync\EcommerceSync\Model\CatalogConnector\Proxy</argument>
+        </arguments>
+    </type>
+    <type name="Tudorsync\EcommerceSync\Console\Command\SyncRunCommand">
+        <arguments>
+            <argument name="syncRunner" xsi:type="object">Tudorsync\EcommerceSync\Model\SyncRunner\Proxy</argument>
+        </arguments>
+    </type>
+    <type name="Tudorsync\EcommerceSync\Console\Command\TestConnectionCommand">
+        <arguments>
+            <argument name="syncRunner" xsi:type="object">Tudorsync\EcommerceSync\Model\SyncRunner\Proxy</argument>
+        </arguments>
+    </type>
+
+    <!-- Own log file: var/log/tudorsync.log -->
+    <virtualType name="Tudorsync\EcommerceSync\Logger\Handler" type="Magento\Framework\Logger\Handler\Base">
+        <arguments>
+            <argument name="fileName" xsi:type="string">/var/log/tudorsync.log</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Tudorsync\EcommerceSync\Logger" type="Magento\Framework\Logger\Monolog">
+        <arguments>
+            <argument name="name" xsi:type="string">tudorsync</argument>
+            <argument name="handlers" xsi:type="array">
+                <item name="file" xsi:type="object">Tudorsync\EcommerceSync\Logger\Handler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <type name="Tudorsync\EcommerceSync\Model\SyncRunner">
+        <arguments>
+            <argument name="logger" xsi:type="object">Tudorsync\EcommerceSync\Logger</argument>
+        </arguments>
+    </type>
+</config>

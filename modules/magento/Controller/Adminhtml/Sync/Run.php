@@ -6,72 +6,35 @@ namespace Tudorsync\EcommerceSync\Controller\Adminhtml\Sync;
 
 use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
+use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
-use Throwable;
-use Tudorsync\Core\Api\TudorApiClient;
-use Tudorsync\Core\Rules\AvailabilityFilter;
-use Tudorsync\Core\Sync\SyncEngine;
-use Tudorsync\EcommerceSync\Model\Api\CurlHttpClient;
-use Tudorsync\EcommerceSync\Model\CatalogConnector;
-use Tudorsync\EcommerceSync\Model\Config;
-use Tudorsync\EcommerceSync\Model\Status;
+use Tudorsync\EcommerceSync\Model\SyncRunner;
 
 /**
  * AJAX endpoint behind the "Run Sync Now" button (StatusAndActions block) — runs exactly
- * the same SyncEngine as the scheduled cron job (Cron\RunSync), so a manual run and a
+ * the same code as the scheduled cron job (Model\SyncRunner), so a manual run and a
  * scheduled run behave identically.
  */
-class Run extends Action
+class Run extends Action implements HttpPostActionInterface
 {
     public const ADMIN_RESOURCE = 'Tudorsync_EcommerceSync::config';
 
     public function __construct(
         Context $context,
         private readonly JsonFactory $resultJsonFactory,
-        private readonly Config $config,
-        private readonly CatalogConnector $catalogConnector,
-        private readonly CurlHttpClient $httpClient,
-        private readonly Status $status,
+        private readonly SyncRunner $syncRunner,
     ) {
         parent::__construct($context);
     }
 
     public function execute(): Json
     {
-        $result = $this->resultJsonFactory->create();
-        $clientConfig = $this->config->getClientConfig();
+        $outcome = $this->syncRunner->runSync('admin');
 
-        if ($clientConfig->tudorApiKey === '') {
-            $message = (string) __('No TUDOR API key configured for this environment.');
-            $this->status->recordSyncResult(false, $message);
-
-            return $result->setData(['success' => false, 'message' => $message]);
-        }
-
-        try {
-            $engine = new SyncEngine(
-                $this->catalogConnector,
-                new AvailabilityFilter(),
-                new TudorApiClient($clientConfig, $this->httpClient),
-            );
-
-            $syncResult = $engine->run();
-            $failures = $syncResult->failures();
-            $message = (string) __(
-                'Sync completed: %1 result(s), %2 failure(s).',
-                count($syncResult->results),
-                count($failures),
-            );
-
-            $this->status->recordSyncResult($failures === [], $message);
-
-            return $result->setData(['success' => $failures === [], 'message' => $message]);
-        } catch (Throwable $e) {
-            $message = (string) __('Sync failed: %1', $e->getMessage());
-            $this->status->recordSyncResult(false, $message);
-
-            return $result->setData(['success' => false, 'message' => $message]);
-        }
+        return $this->resultJsonFactory->create()->setData([
+            'success' => $outcome->success,
+            'message' => $outcome->message,
+        ]);
     }
 }

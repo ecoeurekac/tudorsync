@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tudorsync\EcommerceSync\Model\Config\Source;
 
-use Magento\Framework\Option\ArrayInterface;
+use Magento\Framework\Data\OptionSourceInterface;
 use Tudorsync\Core\Domain\Environment as TudorEnvironment;
 
 /**
@@ -12,7 +12,7 @@ use Tudorsync\Core\Domain\Environment as TudorEnvironment;
  * TUDOR E-commerce Sync). Values match Tudorsync\Core\Domain\Environment exactly so the
  * saved config value can be passed straight to Environment::from().
  */
-class Environment implements ArrayInterface
+class Environment implements OptionSourceInterface
 {
     public function toOptionArray(): array
     {

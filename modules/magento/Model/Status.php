@@ -4,50 +4,48 @@ declare(strict_types=1);
 
 namespace Tudorsync\EcommerceSync\Model;
 
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\App\Config\Storage\WriterInterface;
-use Magento\Store\Model\ScopeInterface;
+use Magento\Framework\FlagManager;
 
 /**
- * Persists a one-line summary of the last "Test Connection" / "Run Sync Now" admin action
- * (see Block\Adminhtml\System\Config\StatusAndActions), shown back as read-only text on
- * Stores > Configuration > TUDOR E-commerce Sync. Stored at default scope only — a
- * per-store-view status isn't tracked separately.
+ * Persists a one-line summary of the last connection test and the last sync (manual, cron or
+ * CLI), shown back as read-only text on Stores > Configuration > TUDOR E-commerce Sync.
+ *
+ * Kept in the `flag` table rather than core_config_data: config values are served from the
+ * config cache, so a status written there would stay invisible until the next cache clean.
  */
 class Status
 {
-    private const XML_PATH_LAST_SYNC = 'tudorsync/status/last_sync';
-    private const XML_PATH_LAST_TEST = 'tudorsync/status/last_test';
+    private const FLAG_LAST_SYNC = 'tudorsync_last_sync';
+    private const FLAG_LAST_TEST = 'tudorsync_last_test';
 
     public function __construct(
-        private readonly WriterInterface $configWriter,
-        private readonly ScopeConfigInterface $scopeConfig,
+        private readonly FlagManager $flagManager,
     ) {
     }
 
-    public function recordSyncResult(bool $success, string $summary): void
+    public function recordSyncResult(bool $success, string $summary, string $trigger = 'admin'): void
     {
-        $this->write(self::XML_PATH_LAST_SYNC, $success, $summary);
+        $this->write(self::FLAG_LAST_SYNC, $success, $summary, $trigger);
     }
 
     public function recordTestResult(bool $success, string $summary): void
     {
-        $this->write(self::XML_PATH_LAST_TEST, $success, $summary);
+        $this->write(self::FLAG_LAST_TEST, $success, $summary, 'admin');
     }
 
     public function getLastSyncSummary(): string
     {
-        return (string) $this->scopeConfig->getValue(self::XML_PATH_LAST_SYNC, ScopeInterface::SCOPE_STORE);
+        return (string) $this->flagManager->getFlagData(self::FLAG_LAST_SYNC);
     }
 
     public function getLastTestSummary(): string
     {
-        return (string) $this->scopeConfig->getValue(self::XML_PATH_LAST_TEST, ScopeInterface::SCOPE_STORE);
+        return (string) $this->flagManager->getFlagData(self::FLAG_LAST_TEST);
     }
 
-    private function write(string $path, bool $success, string $summary): void
+    private function write(string $flagCode, bool $success, string $summary, string $trigger): void
     {
-        $line = sprintf('[%s] %s: %s', date('Y-m-d H:i:s'), $success ? 'OK' : 'FAILED', $summary);
-        $this->configWriter->save($path, $line);
+        $line = sprintf('[%s, %s] %s: %s', date('Y-m-d H:i:s'), $trigger, $success ? 'OK' : 'FAILED', $summary);
+        $this->flagManager->saveFlag($flagCode, $line);
     }
 }

@@ -7,43 +7,47 @@ namespace Tudorsync\EcommerceSync\Model;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product\Attribute\Source\Status;
+use Magento\Catalog\Model\Product\Visibility;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
-use Magento\CatalogInventory\Api\StockRegistryInterface;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Tudorsync\Core\Contract\CatalogConnectorInterface;
 use Tudorsync\Core\Domain\StockAvailability;
 use Tudorsync\Core\Url\UtmUrlBuilder;
+use Tudorsync\EcommerceSync\Model\Config\Source\ValueMode;
+use Tudorsync\EcommerceSync\Model\Stock\SalableQtyProvider;
 
 /**
  * Reads Magento's own catalog/stock data and maps it into tudorsync/core's
  * Tudorsync\Core\Domain\StockAvailability shape.
  *
- * A product is considered enrolled in the TUDOR program simply by having the
- * `tudor_model_code` attribute (added by Setup\Patch\Data\AddTudorModelCodeAttribute)
- * filled in — there's no separate "enable for TUDOR" toggle. It's excluded from the batch
- * entirely (never returned) when:
- *   - it isn't enabled in the given store, or
- *   - it's out of stock, or its stock item allows backorders (Magento's closest equivalent
- *     to TUDOR's "bajo demanda" / on-demand items, which must never be published).
+ * Enrollment: a product takes part in the TUDOR program when it has a model code — the
+ * `tudor_model_code` attribute or, failing that, one derived from its SKU (ModelCodeResolver).
  *
- * Multi-language: iterates every configured store view and reloads the product per view via
- * ProductRepositoryInterface, so a Magento site using one store view per language gets one
- * localized URL per view (see Tudorsync\Core\Domain\StockAvailability::$localizedUrls).
+ * Exclusion ("bajo demanda" must never be published): the product is left out when it's
+ * disabled in the default store view, not visible, not stock-managed, out of stock, allows
+ * backorders, or has no salable quantity left (MSI reservations already discounted).
  *
- * TODO not yet wired up here: MSI multi-source stock (this uses the legacy single-source
- * StockRegistryInterface, which covers the common single-warehouse retailer case but not a
- * multi-source MSI setup) and per-source click & collect / storesAvailabilityDetails —
- * storePickupAvailable below is a flat store-wide toggle from admin config only.
+ * One record per model code: TUDOR's batch is keyed by model/country, but a store can have
+ * several products for the same model (Quera does). Those are merged — quantities summed, URLs
+ * taken from the product with the most salable stock — instead of sending duplicate records.
+ *
+ * Multi-language: one localized URL per active store view where the product is enabled and
+ * visible, keyed by the store view's locale (see Config::getLocaleCode()). The default URL is
+ * the default store view's.
+ *
+ * Not wired up yet: per-point-of-sale click & collect (storesAvailabilityDetails / RSWI) —
+ * storePickupAvailable is a flat store-wide toggle from admin config.
  */
 class CatalogConnector implements CatalogConnectorInterface
 {
-    private const ATTRIBUTE_MODEL_CODE = 'tudor_model_code';
-
     public function __construct(
         private readonly ProductCollectionFactory $productCollectionFactory,
         private readonly ProductRepositoryInterface $productRepository,
-        private readonly StockRegistryInterface $stockRegistry,
         private readonly StoreManagerInterface $storeManager,
+        private readonly SalableQtyProvider $salableQtyProvider,
+        private readonly ModelCodeResolver $modelCodeResolver,
         private readonly Config $config,
         private readonly UtmUrlBuilder $utmUrlBuilder = new UtmUrlBuilder(),
     ) {
@@ -51,47 +55,160 @@ class CatalogConnector implements CatalogConnectorInterface
 
     public function getAvailableCatalog(): array
     {
-        $clientConfig = $this->config->getClientConfig();
-        $defaultStoreId = (int) $this->storeManager->getStore()->getId();
+        return $this->collect()->items;
+    }
 
-        $collection = $this->productCollectionFactory->create();
-        $collection->addAttributeToSelect([self::ATTRIBUTE_MODEL_CODE, 'name'])
-            ->addAttributeToFilter(self::ATTRIBUTE_MODEL_CODE, ['notnull' => true])
-            ->addAttributeToFilter(self::ATTRIBUTE_MODEL_CODE, ['neq' => ''])
-            ->addAttributeToFilter('status', Status::STATUS_ENABLED)
-            ->setStore($defaultStoreId);
+    public function collect(): CatalogSnapshot
+    {
+        $defaultStore = $this->storeManager->getDefaultStoreView();
+        $defaultStoreId = (int) $defaultStore->getId();
+        $websiteCode = (string) $this->storeManager->getWebsite($defaultStore->getWebsiteId())->getCode();
+        $country = $this->config->getCountry($defaultStoreId);
+        $warnings = $this->getWarnings($country);
 
-        $items = [];
+        /** @var array<int, array<string, mixed>> $products */
+        $products = [];
+        /** @var array<string, int[]> $productIdsByModelCode */
+        $productIdsByModelCode = [];
 
         /** @var Product $product */
-        foreach ($collection as $product) {
-            $modelCode = (string) $product->getData(self::ATTRIBUTE_MODEL_CODE);
+        foreach ($this->getCandidateCollection($defaultStoreId) as $product) {
+            $productId = (int) $product->getId();
+            $sku = (string) $product->getSku();
+            $modelCode = $this->modelCodeResolver->resolve(
+                (string) $product->getData(ModelCodeResolver::ATTRIBUTE_CODE),
+                $sku,
+            );
 
-            if ($modelCode === '') {
+            $row = [
+                'product_id' => $productId,
+                'sku' => $sku,
+                'name' => (string) $product->getName(),
+                'model_code' => $modelCode,
+                'model_code_source' => trim((string) $product->getData(ModelCodeResolver::ATTRIBUTE_CODE)) !== ''
+                    ? 'attribute'
+                    : 'sku',
+                'qty' => null,
+                'salable_qty' => null,
+                'status' => CatalogSnapshot::STATUS_EXCLUDED,
+                'reason' => null,
+            ];
+
+            if ($modelCode === null) {
+                $row['reason'] = 'no model code (attribute empty and SKU rule did not match)';
+                $products[$productId] = $row;
                 continue;
             }
 
-            $stockItem = $this->stockRegistry->getStockItem($product->getId());
-            $qty = (int) $stockItem->getQty();
-            $allowsBackorders = (bool) $stockItem->getBackorders();
-            $inStock = (bool) $stockItem->getIsInStock();
+            $reason = $this->getProductExclusionReason($product);
 
-            if (!$inStock || $allowsBackorders || $qty <= 0) {
-                continue; // never publish backorder-only or genuinely out-of-stock items
+            if ($reason === null) {
+                $stock = $this->salableQtyProvider->getStockData($productId, $sku, $websiteCode);
+                $row['qty'] = $stock['qty'];
+                $row['salable_qty'] = $stock['salable_qty'];
+                $reason = $this->getStockExclusionReason($stock);
+            }
+
+            if ($reason !== null) {
+                $row['reason'] = $reason;
+                $products[$productId] = $row;
+                continue;
+            }
+
+            $row['status'] = CatalogSnapshot::STATUS_SENT;
+            $products[$productId] = $row;
+            $productIdsByModelCode[$modelCode][] = $productId;
+        }
+
+        $items = [];
+
+        foreach ($productIdsByModelCode as $modelCode => $productIds) {
+            usort(
+                $productIds,
+                static fn (int $a, int $b): int => [$products[$b]['salable_qty'], $a] <=> [$products[$a]['salable_qty'], $b],
+            );
+            $mainProductId = $productIds[0];
+            $totalQty = 0;
+
+            foreach ($productIds as $productId) {
+                $totalQty += (int) $products[$productId]['salable_qty'];
+
+                if ($productId !== $mainProductId) {
+                    $products[$productId]['status'] = CatalogSnapshot::STATUS_MERGED;
+                    $products[$productId]['reason'] = sprintf('same model code as product %d', $mainProductId);
+                }
+            }
+
+            $defaultUrl = $this->getTrackedUrl($mainProductId, $defaultStore);
+
+            if ($defaultUrl === null) {
+                $products[$mainProductId]['status'] = CatalogSnapshot::STATUS_EXCLUDED;
+                $products[$mainProductId]['reason'] = 'no URL in the default store view';
+                continue;
             }
 
             $items[] = new StockAvailability(
-                modelCode: $modelCode,
-                country: $clientConfig->market,
-                value: $qty,
-                defaultUrl: $this->buildTrackedUrl((int) $product->getId(), $defaultStoreId),
-                localizedUrls: $this->getLocalizedUrls((int) $product->getId()),
+                modelCode: (string) $modelCode,
+                country: $country,
+                value: $this->config->getValueMode($defaultStoreId) === ValueMode::SIGNAL ? 1 : $totalQty,
+                defaultUrl: $defaultUrl,
+                localizedUrls: $this->getLocalizedUrls($mainProductId),
                 onlinePurchaseEnabled: true,
-                storePickupAvailable: $clientConfig->offersClickAndCollect,
+                storePickupAvailable: $this->config->getClientConfig($defaultStoreId)->offersClickAndCollect,
+                homeDeliveryTimingHours: $this->config->getHomeDeliveryTimingHours($defaultStoreId),
             );
+            $products[$mainProductId]['merged_count'] = count($productIds);
         }
 
-        return $items;
+        return new CatalogSnapshot($items, $products, $warnings);
+    }
+
+    private function getCandidateCollection(int $storeId): \Magento\Catalog\Model\ResourceModel\Product\Collection
+    {
+        $collection = $this->productCollectionFactory->create();
+        // Stock is judged per product below (salable qty); keep Magento's "hide out of stock"
+        // filter from silently dropping candidates, so the preview can say why each is excluded.
+        $collection->setFlag('has_stock_status_filter', true);
+        $collection->setStoreId($storeId)
+            ->addAttributeToSelect([ModelCodeResolver::ATTRIBUTE_CODE, 'name', 'status', 'visibility']);
+
+        $conditions = [['attribute' => ModelCodeResolver::ATTRIBUTE_CODE, 'neq' => '']];
+        $skuPrefix = $this->config->getSkuPrefix();
+
+        if ($skuPrefix !== '' && $this->modelCodeResolver->isSkuRuleConfigured()) {
+            $conditions[] = ['attribute' => 'sku', 'like' => addcslashes($skuPrefix, '%_') . '%'];
+        }
+
+        $collection->addAttributeToFilter($conditions, null, 'left');
+
+        return $collection;
+    }
+
+    private function getProductExclusionReason(Product $product): ?string
+    {
+        if ((int) $product->getStatus() !== Status::STATUS_ENABLED) {
+            return 'disabled';
+        }
+
+        if ((int) $product->getVisibility() === Visibility::VISIBILITY_NOT_VISIBLE) {
+            return 'not visible individually';
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array{in_stock: bool, backorders: bool, manage_stock: bool, qty: int, salable_qty: int} $stock
+     */
+    private function getStockExclusionReason(array $stock): ?string
+    {
+        return match (true) {
+            !$stock['manage_stock'] => 'stock not managed (cannot tell if it is immediately available)',
+            $stock['backorders'] => 'backorders allowed (on demand)',
+            !$stock['in_stock'] => 'out of stock',
+            $stock['salable_qty'] <= 0 => 'no salable quantity left (reserved by pending orders)',
+            default => null,
+        };
     }
 
     /**
@@ -102,23 +219,77 @@ class CatalogConnector implements CatalogConnectorInterface
         $urls = [];
 
         foreach ($this->storeManager->getStores() as $store) {
-            $storeId = (int) $store->getId();
-            $locale = $this->config->getLocaleCode($storeId);
-
-            if ($locale === null) {
+            if (!$store->getIsActive()) {
                 continue;
             }
 
-            $urls[$locale] = $this->buildTrackedUrl($productId, $storeId);
+            $locale = $this->config->getLocaleCode((int) $store->getId());
+
+            if ($locale === null || isset($urls[$locale])) {
+                continue; // first store view wins when two share a locale
+            }
+
+            $url = $this->getTrackedUrl($productId, $store);
+
+            if ($url !== null) {
+                $urls[$locale] = $url;
+            }
         }
 
         return $urls;
     }
 
-    private function buildTrackedUrl(int $productId, int $storeId): string
+    /**
+     * Product URL in that store view with UTM tracking, or null when the product isn't sold
+     * there (not assigned to its website, disabled or not visible in that view).
+     */
+    private function getTrackedUrl(int $productId, StoreInterface $store): ?string
     {
-        $storeScopedProduct = $this->productRepository->getById($productId, false, $storeId);
+        try {
+            /** @var Product $storeScopedProduct */
+            $storeScopedProduct = $this->productRepository->getById($productId, false, (int) $store->getId());
+        } catch (NoSuchEntityException) {
+            return null;
+        }
 
-        return $this->utmUrlBuilder->withTracking($storeScopedProduct->getProductUrl());
+        if (!in_array((int) $store->getWebsiteId(), array_map('intval', $storeScopedProduct->getWebsiteIds()), true)
+            || (int) $storeScopedProduct->getStatus() !== Status::STATUS_ENABLED
+            || (int) $storeScopedProduct->getVisibility() === Visibility::VISIBILITY_NOT_VISIBLE
+        ) {
+            return null;
+        }
+
+        $url = (string) $storeScopedProduct->setStoreId((int) $store->getId())->getUrlModel()->getUrl(
+            $storeScopedProduct,
+            ['_scope' => (int) $store->getId(), '_nosid' => true],
+        );
+
+        return $url !== '' ? $this->utmUrlBuilder->withTracking($url) : null;
+    }
+
+    /**
+     * @return string[]
+     */
+    private function getWarnings(string $country): array
+    {
+        $warnings = [];
+
+        if (preg_match('/^[A-Z]{2}$/', $country) !== 1) {
+            $warnings[] = 'Market / Country is not a 2-letter ISO code — nothing will be synced until it is set.';
+        }
+
+        if ($this->config->getSkuPattern() !== '' && !$this->modelCodeResolver->isSkuRuleConfigured()) {
+            $warnings[] = 'The SKU pattern in config is not a valid regular expression — SKU rule ignored.';
+        }
+
+        if ($this->config->getSkuPattern() !== '' && $this->config->getSkuPrefix() === '') {
+            $warnings[] = 'SKU pattern set without a SKU prefix — only products with tudor_model_code filled are read.';
+        }
+
+        if (!$this->salableQtyProvider->isMsiEnabled()) {
+            $warnings[] = 'MSI disabled: using physical stock qty, pending-order reservations are not discounted.';
+        }
+
+        return $warnings;
     }
 }

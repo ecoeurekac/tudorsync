@@ -6,13 +6,10 @@ namespace Tudorsync\EcommerceSync\Controller\Adminhtml\Sync;
 
 use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
+use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
-use Throwable;
-use Tudorsync\Core\Api\TudorApiClient;
-use Tudorsync\EcommerceSync\Model\Api\CurlHttpClient;
-use Tudorsync\EcommerceSync\Model\Config;
-use Tudorsync\EcommerceSync\Model\Status;
+use Tudorsync\EcommerceSync\Model\SyncRunner;
 
 /**
  * AJAX endpoint behind the "Test Connection" button (StatusAndActions block). Calls
@@ -20,43 +17,25 @@ use Tudorsync\EcommerceSync\Model\Status;
  * TUDOR endpoint that requires valid credentials and returns retailer-specific data, so a
  * successful call is a genuine end-to-end confirmation, not just a reachability ping.
  */
-class Test extends Action
+class Test extends Action implements HttpPostActionInterface
 {
     public const ADMIN_RESOURCE = 'Tudorsync_EcommerceSync::config';
 
     public function __construct(
         Context $context,
         private readonly JsonFactory $resultJsonFactory,
-        private readonly Config $config,
-        private readonly CurlHttpClient $httpClient,
-        private readonly Status $status,
+        private readonly SyncRunner $syncRunner,
     ) {
         parent::__construct($context);
     }
 
     public function execute(): Json
     {
-        $result = $this->resultJsonFactory->create();
-        $clientConfig = $this->config->getClientConfig();
+        $outcome = $this->syncRunner->testConnection();
 
-        if ($clientConfig->tudorApiKey === '') {
-            $message = (string) __('No TUDOR API key configured for this environment.');
-            $this->status->recordTestResult(false, $message);
-
-            return $result->setData(['success' => false, 'message' => $message]);
-        }
-
-        try {
-            $pointOfSales = (new TudorApiClient($clientConfig, $this->httpClient))->getPointOfSales();
-            $message = (string) __('Connected successfully. %1 point(s) of sale found.', count($pointOfSales));
-            $this->status->recordTestResult(true, $message);
-
-            return $result->setData(['success' => true, 'message' => $message]);
-        } catch (Throwable $e) {
-            $message = (string) __('Connection failed: %1', $e->getMessage());
-            $this->status->recordTestResult(false, $message);
-
-            return $result->setData(['success' => false, 'message' => $message]);
-        }
+        return $this->resultJsonFactory->create()->setData([
+            'success' => $outcome->success,
+            'message' => $outcome->message,
+        ]);
     }
 }

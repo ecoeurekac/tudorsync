@@ -32,7 +32,7 @@ Ver `modules/magento/README.md`. Además de los puntos de abajo: la clave de API
 limpiar la caché (ahora va en la tabla `flag`); el cron no guardaba estado; Curl sin timeout;
 script inline sin nonce CSP. Nuevos: `tudorsync:catalog:preview` (en seco), `tudorsync:sync:run`,
 `tudorsync:connection:test`, log `var/log/tudorsync.log`, regla opcional SKU → mc, campos
-«value» y plazo de entrega. Prueba en seco real: `intercambio/2026-09-30-juanjo-muestra-catalogo-quera.json`.
+«value» y plazo de entrega. Prueba en seco real: `intercambio/20260930_quera.json`.
 Nota para Jorge: con 0 modelos disponibles el batch sale vacío y TUDOR pone todo a 0 (es lo
 correcto según la spec, pero una regla de SKU mal puesta tendría el mismo efecto: revisar siempre con preview).
 
@@ -73,7 +73,7 @@ correcto según la spec, pero una regla de SKU mal puesta tendría el mismo efec
 2. Los botones Test Connection / Run Sync Now: rutas, ACL, `FORM_KEY` y la respuesta JSON cuando no
    hay clave (tiene que dar un error controlado, no un 500).
 3. **Prueba en seco del conector** por CLI (sin llamar a TUDOR): guardar la salida real de
-   `getAvailableCatalog()` en `intercambio/AAAA-MM-DD-juanjo-muestra-catalogo-quera.json`. Sirve
+   `getAvailableCatalog()` en `intercambio/AAAAMMDD_quera.json`. Sirve
    para comprobar las URLs por idioma (`/es/`, `/en/`…), los UTM y los duplicados, y **le sirve a Jorge**.
 4. Cron `tudorsync_run_sync` (cada hora por defecto): comprobar que está registrado. Sin clave
    se salta la ejecución (visto en el código); comprobar que el aviso del log no llena `system.log`.

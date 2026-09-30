@@ -39,7 +39,8 @@ se identifica, pregunta. Ambos hablan español. Reparto según
 - **`intercambio/`** es la carpeta neutral: datos de prueba (p. ej. salidas reales de un
   `CatalogConnector`, respuestas de la API de TUDOR), peticiones de cambio y notas entre los
   dos. Ambos pueden escribir ahí; nombra los archivos con fecha y autor
-  (`2026-09-29-juanjo-muestra-catalogo-quera.json`).
+  (`2026-09-30-juanjo-plan-conectores.md`). **Los JSON van como `AAAAMMDD_retailer.json`**
+  (`20260930_quera.json`).
 - `CLAUDE.md`, `CONTEXT.md`, `README.md` y `doc/` son comunes.
 - Ambos trabajan en **este mismo checkout** del servidor. **Todo cambio va en un commit** en cuanto
   esté hecho y verificado, seguido de `git push` (el 30-09 se perdió el checkout entero con

@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <!--
+        One row per order placed by a customer who landed from tudorwatch.com (UTM cookie set by
+        view/frontend/templates/utm-capture.phtml). Data source for the "sold online through this
+        programme" figures of TUDOR's monthly report. Kept out of sales_order on purpose: the
+        go-live data reload replaces the sales tables, and a separate table survives it.
+    -->
+    <table name="tudorsync_order_attribution" resource="sales" engine="innodb"
+           comment="TUDOR e-Stock programme: orders from customers referred by tudorwatch.com">
+        <column xsi:type="int" name="order_id" unsigned="true" nullable="false" comment="sales_order.entity_id"/>
+        <column xsi:type="varchar" name="increment_id" length="50" nullable="true" comment="Order number"/>
+        <column xsi:type="smallint" name="store_id" unsigned="true" nullable="true" comment="Store"/>
+        <column xsi:type="varchar" name="utm_source" length="100" nullable="false" comment="utm_source"/>
+        <column xsi:type="varchar" name="utm_medium" length="100" nullable="true" comment="utm_medium"/>
+        <column xsi:type="varchar" name="utm_campaign" length="100" nullable="true" comment="utm_campaign"/>
+        <column xsi:type="datetime" name="landed_at" nullable="true" comment="Last landing from TUDOR (UTC)"/>
+        <column xsi:type="timestamp" name="created_at" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Order placed at"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="order_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="TUDORSYNC_ORDER_ATTRIBUTION_ORDER_ID_SALES_ORDER_ENTITY_ID"
+                    table="tudorsync_order_attribution" column="order_id"
+                    referenceTable="sales_order" referenceColumn="entity_id" onDelete="CASCADE"/>
+        <index referenceId="TUDORSYNC_ORDER_ATTRIBUTION_CREATED_AT" indexType="btree">
+            <column name="created_at"/>
+        </index>
+    </table>
+</schema>

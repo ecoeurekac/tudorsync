@@ -1,0 +1,21 @@
+{
+    "tudorsync_order_attribution": {
+        "column": {
+            "order_id": true,
+            "increment_id": true,
+            "store_id": true,
+            "utm_source": true,
+            "utm_medium": true,
+            "utm_campaign": true,
+            "landed_at": true,
+            "created_at": true
+        },
+        "index": {
+            "TUDORSYNC_ORDER_ATTRIBUTION_CREATED_AT": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "TUDORSYNC_ORDER_ATTRIBUTION_ORDER_ID_SALES_ORDER_ENTITY_ID": true
+        }
+    }
+}

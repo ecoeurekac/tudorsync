@@ -46,4 +46,9 @@
             <argument name="logger" xsi:type="object">Tudorsync\EcommerceSync\Logger</argument>
         </arguments>
     </type>
+    <type name="Tudorsync\EcommerceSync\Observer\SaveOrderAttribution">
+        <arguments>
+            <argument name="logger" xsi:type="object">Tudorsync\EcommerceSync\Logger</argument>
+        </arguments>
+    </type>
 </config>

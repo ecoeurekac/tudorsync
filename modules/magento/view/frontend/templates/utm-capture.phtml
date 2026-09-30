@@ -1,0 +1,39 @@
+<?php
+/**
+ * Marks visitors referred by tudorwatch.com with a first-party cookie, read back when the order
+ * is placed (Observer\SaveOrderAttribution). Done in the browser because the page itself comes
+ * from the full page cache. Last-click: landing with any other utm_source removes the mark.
+ *
+ * @var \Magento\Framework\View\Element\Template $block
+ * @var \Magento\Framework\View\Helper\SecureHtmlRenderer $secureRenderer
+ */
+use Tudorsync\EcommerceSync\Model\Attribution\UtmCookie;
+
+$config = json_encode([
+    'name' => UtmCookie::NAME,
+    'source' => UtmCookie::TUDOR_SOURCE,
+    'maxAge' => UtmCookie::LIFETIME_DAYS * 86400,
+]);
+$script = <<<JS
+(function (c) {
+    try {
+        var params = new URLSearchParams(window.location.search),
+            source = params.get('utm_source'),
+            clean = function (v) { return (v || '').replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 100); },
+            secure = window.location.protocol === 'https:' ? '; Secure' : '';
+        if (!source) {
+            return;
+        }
+        if (source.toLowerCase() === c.source) {
+            document.cookie = c.name + '=' + [
+                c.source, clean(params.get('utm_medium')), clean(params.get('utm_campaign')),
+                Math.floor(Date.now() / 1000)
+            ].join('|') + '; max-age=' + c.maxAge + '; path=/; SameSite=Lax' + secure;
+        } else {
+            document.cookie = c.name + '=; max-age=0; path=/; SameSite=Lax' + secure;
+        }
+    } catch (e) {}
+})({$config});
+JS;
+?>
+<?= /* @noEscape */ $secureRenderer->renderTag('script', [], $script, false) ?>

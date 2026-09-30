@@ -41,8 +41,12 @@ se identifica, pregunta. Ambos hablan español. Reparto según
   dos. Ambos pueden escribir ahí; nombra los archivos con fecha y autor
   (`2026-09-29-juanjo-muestra-catalogo-quera.json`).
 - `CLAUDE.md`, `CONTEXT.md`, `README.md` y `doc/` son comunes.
-- Ambos trabajan en **este mismo checkout** del servidor. No hacer commit ni push salvo que lo
-  pidan explícitamente; el push a GitHub se hará más adelante.
+- Ambos trabajan en **este mismo checkout** del servidor. **Todo cambio va en un commit** en cuanto
+  esté hecho y verificado, seguido de `git push` (el 30-09 se perdió el checkout entero con
+  trabajo sin commit). En la sesión de Juanjo, commit + push siempre, sin preguntar; la sesión de
+  Jorge sigue su propio criterio. El servidor empuja con una deploy key (ver `CLAUDE.local.md`).
+- ⚠️ `vendor/tudorsync/{core,module-magento}` son **symlinks** a este checkout: no borrar nada
+  dentro de ellos por SFTP (borra el original).
 
 **Contrato compartido:** `CatalogConnectorInterface` (devuelve `StockAvailability`) y
 `TudorApiClient`. Cualquier cambio en esas piezas o en la forma de `StockAvailability` requiere

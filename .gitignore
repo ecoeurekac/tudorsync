@@ -11,3 +11,6 @@ modules/*/composer.lock
 # Test artifacts
 .phpunit.result.cache
 core/.phpunit.result.cache
+
+# Registro local de sesiones (no versionado)
+CLAUDE.local.md

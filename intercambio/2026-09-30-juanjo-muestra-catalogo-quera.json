@@ -1,0 +1,1132 @@
+{
+ "_nota": "2026-09-30 Juanjo. Salida REAL del conector Magento de Quera (sin llamar a TUDOR). El mc es PROVISIONAL: regla de prueba prefijo 1001TU, patron /^1001TU(.+)-\\d{4}$/ -> $1, a falta de que TUDOR diga el formato de mc. country=ES forzado para la prueba.",
+ "counts": {
+  "sent": 63,
+  "merged": 14,
+  "excluded": 175
+ },
+ "warnings": [],
+ "records": [
+  {
+   "mc": "79363NCUERO",
+   "country": "ES",
+   "value": 2,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-chrono-s-g-79363ncuero-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-chrono-s-g-79363ncuero-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-black-bay-chrono-s-g-79363ncuero-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-black-bay-chrono-s-g-79363ncuero-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-black-bay-chrono-s-g-79363ncuero-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "79018VCROCO",
+   "country": "ES",
+   "value": 1,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-fifty-eight-18k-79018vcroco-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-fifty-eight-18k-79018vcroco-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-black-bay-fifty-eight-18k-79018vcroco-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-black-bay-fifty-eight-18k-79018vcroco-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-black-bay-fifty-eight-18k-79018vcroco-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "79010SGCUERO",
+   "country": "ES",
+   "value": 1,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-fifty-eight-925-79010sgcuero-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-fifty-eight-925-79010sgcuero-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-black-bay-fifty-eight-925-79010sgcuero-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-black-bay-fifty-eight-925-79010sgcuero-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-black-bay-fifty-eight-925-79010sgcuero-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "79250BACUERO",
+   "country": "ES",
+   "value": 3,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-bronce-79250bacuero-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-bronce-79250bacuero-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-black-bay-bronce-79250bacuero-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-black-bay-bronce-79250bacuero-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-black-bay-bronce-79250bacuero-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "25600TB95820T",
+   "country": "ES",
+   "value": 3,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-pelagos-25600tb95820t-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-pelagos-25600tb95820t-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-pelagos-25600tb95820t-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-pelagos-25600tb95820t-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-pelagos-25600tb95820t-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "25600TN95820T",
+   "country": "ES",
+   "value": 4,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-pelagos-25600tn95820t-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-pelagos-25600tn95820t-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-pelagos-25600tn95820t-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-pelagos-25600tn95820t-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-pelagos-25600tn95820t-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "25610TNL95820",
+   "country": "ES",
+   "value": 3,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-pelagos-lhd-25610tnl95820-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-pelagos-lhd-25610tnl95820-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-pelagos-lhd-25610tnl95820-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-pelagos-lhd-25610tnl95820-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-pelagos-lhd-25610tnl95820-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "79363N72063",
+   "country": "ES",
+   "value": 4,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-chrono-s-g-79363n72063-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-chrono-s-g-79363n72063-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-black-bay-chrono-s-g-79363n72063-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-black-bay-chrono-s-g-79363n72063-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-black-bay-chrono-s-g-79363n72063-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "79830RB72060",
+   "country": "ES",
+   "value": 8,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-gmt-79830rb72060-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-gmt-79830rb72060-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-black-bay-gmt-79830rb72060-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-black-bay-gmt-79830rb72060-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-black-bay-gmt-79830rb72060-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "79030NCUERO",
+   "country": "ES",
+   "value": 1,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-fifty-eight-39-mm-79030ncuero-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-fifty-eight-39-mm-79030ncuero-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-black-bay-fifty-eight-39-mm-79030ncuero-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-black-bay-fifty-eight-39-mm-79030ncuero-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-black-bay-fifty-eight-39-mm-79030ncuero-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "79210CNUCUERO",
+   "country": "ES",
+   "value": 6,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-ceramic-41-mm-79210cnucuero-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-ceramic-41-mm-79210cnucuero-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-black-bay-ceramic-41-mm-79210cnucuero-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-black-bay-ceramic-41-mm-79210cnucuero-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-black-bay-ceramic-41-mm-79210cnucuero-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "79833MN72063",
+   "country": "ES",
+   "value": 4,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-gmt-s-g-41-mm-79833mn72063-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-gmt-s-g-41-mm-79833mn72063-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-black-bay-gmt-s-g-41-mm-79833mn72063-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-black-bay-gmt-s-g-41-mm-79833mn72063-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-black-bay-gmt-s-g-41-mm-79833mn72063-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7947072540",
+   "country": "ES",
+   "value": 9,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-pro-39-mm-7947072540-0004?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-pro-39-mm-7947072540-0004?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-black-bay-pro-39-mm-7947072540-0004?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-black-bay-pro-39-mm-7947072540-0004?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-black-bay-pro-39-mm-7947072540-0004?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "79470CUERO",
+   "country": "ES",
+   "value": 1,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-pro-39-mm-79470cuero-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-pro-39-mm-79470cuero-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-black-bay-pro-39-mm-79470cuero-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-black-bay-pro-39-mm-79470cuero-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-black-bay-pro-39-mm-79470cuero-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7966365573",
+   "country": "ES",
+   "value": 4,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-s-g-39-mm-7966365573-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-s-g-39-mm-7966365573-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-black-bay-s-g-39-mm-7966365573-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-black-bay-s-g-39-mm-7966365573-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-black-bay-s-g-39-mm-7966365573-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7964365553",
+   "country": "ES",
+   "value": 4,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-s-g-36-mm-7964365553-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-s-g-36-mm-7964365553-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-black-bay-s-g-36-mm-7964365553-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-black-bay-s-g-36-mm-7964365553-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-black-bay-s-g-36-mm-7964365553-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7968365583",
+   "country": "ES",
+   "value": 3,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-s-g-41-mm-7968365583-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-s-g-41-mm-7968365583-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-black-bay-s-g-41-mm-7968365583-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-black-bay-s-g-41-mm-7968365583-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-black-bay-s-g-41-mm-7968365583-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "25407N95817",
+   "country": "ES",
+   "value": 4,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-pelagos?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-pelagos?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-pelagos-39-mm-25407n95817-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-pelagos-39-mm-25407n95817-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-pelagos-39-mm-25407n95817-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7995095510",
+   "country": "ES",
+   "value": 3,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-ranger?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-ranger?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-ranger-39-mm-7995095510-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-ranger-39-mm-7995095510-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-ranger-39-mm-7995095510-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "79000N73560",
+   "country": "ES",
+   "value": 4,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-54?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-54?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-black-bay-54-37-mm-79000n73560-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-black-bay-54-37-mm-79000n73560-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-black-bay-54-37-mm-79000n73560-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7941A1A0RU61570",
+   "country": "ES",
+   "value": 2,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-7941a1a0ru61570-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-7941a1a0ru61570-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-black-bay-41-mm-7941a1a0ru61570-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-black-bay-41-mm-7941a1a0ru61570-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-black-bay-41-mm-7941a1a0ru61570-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7941A1A0RU73570",
+   "country": "ES",
+   "value": 4,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-7941a1a0ru73570-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-7941a1a0ru73570-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-black-bay-41-mm-7941a1a0ru73570-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-black-bay-41-mm-7941a1a0ru73570-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-black-bay-41-mm-7941a1a0ru73570-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7968065580",
+   "country": "ES",
+   "value": 3,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-41-mm-7968065580-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-41-mm-7968065580-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-black-bay-41-mm-7968065580-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-black-bay-41-mm-7968065580-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-black-bay-41-mm-7968065580-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "3580065770",
+   "country": "ES",
+   "value": 4,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-clair-de-rose-3580065770-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-clair-de-rose-3580065770-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-clair-de-rose-3580065770-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-clair-de-rose-34-mm-3580065770-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-clair-de-rose-3580065770-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7964065550",
+   "country": "ES",
+   "value": 3,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-36-mm-7964065550-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-36-mm-7964065550-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-black-bay-36-mm-7964065550-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-black-bay-36-mm-7964065550-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-black-bay-36-mm-7964065550-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7941A1A0RUCAUCHO",
+   "country": "ES",
+   "value": 3,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-41-mm-7941a1a0rucaucho-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-41-mm-7941a1a0rucaucho-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-black-bay-41-mm-7941a1a0rucaucho-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-black-bay-41-mm-7941a1a0rucaucho-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-black-bay-41-mm-7941a1a0rucaucho-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7966065570",
+   "country": "ES",
+   "value": 3,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-39-mm-7966065570-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-39-mm-7966065570-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-black-bay-39-mm-7966065570-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-black-bay-39-mm-7966065570-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-black-bay-39-mm-7966065570-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "25807KNTEJIDO",
+   "country": "ES",
+   "value": 3,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-pelagos-fxd-chrono-43-mm-25807kntejido-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-pelagos-fxd-chrono-43-mm-25807kntejido-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-pelagos-fxd-chrono-43-mm-25807kntejido-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-pelagos-fxd-chrono-43-mm-25807kntejido-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-pelagos-fxd-chrono-43-mm-25807kntejido-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "79950TEJIDO",
+   "country": "ES",
+   "value": 4,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-ranger-39-mm-79950tejido-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-ranger-39-mm-79950tejido-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-ranger-39-mm-79950tejido-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-ranger-39-mm-79950tejido-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-ranger-39-mm-79950tejido-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "25717NTEJIDO",
+   "country": "ES",
+   "value": 3,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-pelagos-fxd-42-mm-25717ntejido-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-pelagos-fxd-42-mm-25717ntejido-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-pelagos-fxd-42-mm-25717ntejido-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-pelagos-fxd-42-mm-25717ntejido-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-pelagos-fxd-42-mm-25717ntejido-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7941A1A0NU73570",
+   "country": "ES",
+   "value": 3,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-41-mm-7941a1a0nu73570-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-41-mm-7941a1a0nu73570-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-black-bay-41-mm-7941a1a0nu73570-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-black-bay-41-mm-7941a1a0nu73570-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-black-bay-41-mm-7941a1a0nu73570-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7941A1A0NU61570",
+   "country": "ES",
+   "value": 4,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-41-mm-7941a1a0nu61570-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-41-mm-7941a1a0nu61570-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-black-bay-41-mm-7941a1a0nu61570-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-black-bay-41-mm-7941a1a0nu61570-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-black-bay-41-mm-7941a1a0nu61570-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "25827KNTEJIDO",
+   "country": "ES",
+   "value": 4,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-pelagos-fxd-chrono-43-mm-25827kntejido-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-pelagos-fxd-chrono-43-mm-25827kntejido-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-pelagos-fxd-chrono-43-mm-25827kntejido-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-pelagos-fxd-chrono-43-mm-25827kntejido-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-pelagos-fxd-chrono-43-mm-25827kntejido-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7939G1A0NRU73560",
+   "country": "ES",
+   "value": 2,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-58-gmt-39-mm-7939g1a0nru73560-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-58-gmt-39-mm-7939g1a0nru73560-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-black-bay-58-gmt-39-mm-7939g1a0nru73560-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-black-bay-58-gmt-39-mm-7939g1a0nru73560-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-black-bay-58-gmt-39-mm-7939g1a0nru73560-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7939A1A0RU73560",
+   "country": "ES",
+   "value": 3,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-58-39-mm-7939a1a0ru73560-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-58-39-mm-7939a1a0ru73560-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-black-bay-58-39-mm-7939a1a0ru73560-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-black-bay-58-39-mm-7939a1a0ru73560-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-black-bay-58-39-mm-7939a1a0ru73560-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "79360N61580",
+   "country": "ES",
+   "value": 7,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-chrono-41-mm-79360n61580-0014?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-chrono-41-mm-79360n61580-0014?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-black-bay-chrono-41-mm-79360n61580-0014?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-black-bay-chrono-41-mm-79360n61580-0014?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-black-bay-chrono-41-mm-79360n61580-0014?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7943A1A0NU75580",
+   "country": "ES",
+   "value": 8,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-68-43-mm-7943a1a0nu75580-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-68-43-mm-7943a1a0nu75580-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-black-bay-68-43-mm-7943a1a0nu75580-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-black-bay-68-43-mm-7943a1a0nu75580-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-black-bay-68-43-mm-7943a1a0nu75580-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7939A1A0RU61560",
+   "country": "ES",
+   "value": 1,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-58-39-mm-7939a1a0ru61560-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-58-39-mm-7939a1a0ru61560-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-black-bay-58-39-mm-7939a1a0ru61560-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-black-bay-58-39-mm-7939a1a0ru61560-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-black-bay-58-39-mm-7939a1a0ru61560-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "2543C1A7NU95873",
+   "country": "ES",
+   "value": 4,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-pelagos-ultra-43-mm-2543c1a7nu95873-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-pelagos-ultra-43-mm-2543c1a7nu95873-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-pelagos-ultra-43-mm-2543c1a7nu95873-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-pelagos-ultra-43-mm-2543c1a7nu95873-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-pelagos-ultra-43-mm-2543c1a7nu95873-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "9156067050",
+   "country": "ES",
+   "value": 4,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-1926-luna-39-mm-9156067050-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-1926-luna-39-mm-9156067050-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-1926-luna-39-mm-9156067050-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-1926-luna-39-mm-9156067050-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-1926-luna-39-mm-9156067050-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7993095530",
+   "country": "ES",
+   "value": 3,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-ranger-36-7993095530-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-ranger-36-7993095530-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-ranger-36-watch-7993095530-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/montre-tudor-ranger-36-7993095530-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/rellotge-tudor-ranger-36-7993095530-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "25707B/25TEJIDO",
+   "country": "ES",
+   "value": 1,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-pelagos-fxd-25707b-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-pelagos-fxd-25707b-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-pelagos-fxd-watch-25707b-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/montre-tudor-pelagos-fxd-25707b-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/rellotge-tudor-pelagos-fxd-25707b-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7960065530",
+   "country": "ES",
+   "value": 1,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-one-31-mm-7960065530-0004?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-one-31-mm-7960065530-0004?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-black-bay-one-31-mm-watch-7960065530-0004?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/montre-tudor-black-bay-one-31-mm-7960065530-0004?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/rellotge-tudor-black-bay-one-31-mm-7960065530-0004?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7941A1A0NUCAUCHO",
+   "country": "ES",
+   "value": 1,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-7941a1a0nucaucho-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-7941a1a0nucaucho-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-black-bay-watch-7941a1a0nucaucho-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/montre-tudor-black-bay-7941a1a0nucaucho-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/rellotge-tudor-black-bay-7941a1a0nucaucho-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "2542G267NUTEJIDO",
+   "country": "ES",
+   "value": 2,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-pelagos-fxd-gmt-2542g267nutejido-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-pelagos-fxd-gmt-2542g267nutejido-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-pelagos-fxd-gmt-watch-2542g267nutejido-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/montre-tudor-pelagos-fxd-gmt-2542g267nutejido-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/rellotge-tudor-pelagos-fxd-gmt-2542g267nutejido-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "9165067070",
+   "country": "ES",
+   "value": 3,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-1926-9165067070-0005?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-1926-9165067070-0005?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-1926-watch-9165067070-0005?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/montre-tudor-1926-9165067070-0005?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/rellotge-tudor-1926-9165067070-0005?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7939A1A0NU73560",
+   "country": "ES",
+   "value": 2,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-58-7939a1a0nu73560-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-black-bay-58-7939a1a0nu73560-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-black-bay-58-7939a1a0nu73560-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-black-bay-58-7939a1a0nu73560-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-black-bay-58-39-mm-7939a1a0nu73560-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7939A1A0NUCAUCHO",
+   "country": "ES",
+   "value": 3,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-58-7939a1a0nucaucho-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-58-7939a1a0nucaucho-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-black-bay-58-39-mm-7939a1a0nucaucho-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-black-bay-58-7939a1a0nucaucho-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-black-bay-58-7939a1a0nucaucho-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7939G1A0NRU61560",
+   "country": "ES",
+   "value": 3,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-58-gmt-39-mm-7939g1a0nru61560-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-58-gmt-39-mm-7939g1a0nru61560-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-black-bay-58-gmt-7939g1a0nru61560-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-black-bay-58-gmt-7939g1a0nru61560-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-black-bay-58-gmt-7939g1a0nru61560-0003?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7939A1A0NU61560",
+   "country": "ES",
+   "value": 3,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-58-7939a1a0nu61560-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-58-7939a1a0nu61560-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-black-bay-58-7939a1a0nu61560-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-black-bay-58-7939a1a0nu61560-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-black-bay-58-7939a1a0nu61560-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "79000BCAUCHO",
+   "country": "ES",
+   "value": 2,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-54-79000bcaucho-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-54-79000bcaucho-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-black-bay-54-79000bcaucho-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-black-bay-54-79000bcaucho-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-black-bay-54-79000bcaucho-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "2836C1A398553",
+   "country": "ES",
+   "value": 2,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-royal-2836c1a398553-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-royal-2836c1a398553-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-royal-2836c1a398553-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-royal-2836c1a398553-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-royal-2836c1a398553-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "3550065740",
+   "country": "ES",
+   "value": 5,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-clair-de-rose-3550065740-0010?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-clair-de-rose-3550065740-0010?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-clair-de-rose-3550065740-0010?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-clair-de-rose-3550065740-0010?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-clair-de-rose-3550065740-0010?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "79000B73560",
+   "country": "ES",
+   "value": 5,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-54-79000b73560-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-54-79000b73560-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-black-bay-54-79000b73560-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-black-bay-54-79000b73560-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-black-bay-54-79000b73560-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7967365573",
+   "country": "ES",
+   "value": 1,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-one-7967365573-0006?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-one-7967365573-0006?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-black-bay-one-7967365573-0006?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-black-bay-one-7967365573-0006?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-black-bay-one-7967365573-0006?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "7900060560",
+   "country": "ES",
+   "value": 1,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-54-m79000-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-54-m79000-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-black-bay-54-m79000-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-black-bay-54-m79000-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-black-bay-54-m79000-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "2836C1A098550",
+   "country": "ES",
+   "value": 3,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-royal-m2836c1a0-0102?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-royal-m2836c1a0-0102?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-royal-m2836c1a0-0102?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-royal-m2836c1a0-0102?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-royal-m2836c1a0-0102?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "9145067030",
+   "country": "ES",
+   "value": 4,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-1926-m91450-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-1926-m91450-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-1926-m91450-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-1926-m91450-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-1926-m91450-0001?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "91550CUERO",
+   "country": "ES",
+   "value": 2,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-1926-m91550-0010?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-1926-m91550-0010?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-1926-m91550-0010?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-1926-m91550-0010?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-1926-m91550-0010?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "79360N73580",
+   "country": "ES",
+   "value": 3,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-chrono-m79360n-0011?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-black-bay-chrono-m79360n-0011?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-black-bay-chrono-m79360n-0011?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-black-bay-chrono-m79360n-0011?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-black-bay-chrono-m79360n-0011?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "2840D1A098580",
+   "country": "ES",
+   "value": 4,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-royal-m2840d1a0-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-royal-m2840d1a0-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-royal-m2840d1a0-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-royal-m2840d1a0-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-royal-m2840d1a0-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "91650G67070",
+   "country": "ES",
+   "value": 1,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-1926-m91650-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/tudor-1926-m91650-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/tudor-1926-m91650-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/tudor-1926-m91650-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/tudor-1926-m91650-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  },
+  {
+   "mc": "9135167011",
+   "country": "ES",
+   "value": 1,
+   "defaultUrl": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-1926-28-mm-9135167011-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+   "localizedUrls": {
+    "es-ES": "https://magento-1638574-6499149.cloudwaysapps.com/es/reloj-tudor-1926-28-mm-9135167011-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "en-GB": "https://magento-1638574-6499149.cloudwaysapps.com/en/reloj-tudor-1926-28-mm-9135167011-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "fr-FR": "https://magento-1638574-6499149.cloudwaysapps.com/fr/reloj-tudor-1926-28-mm-9135167011-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program",
+    "ca-ES": "https://magento-1638574-6499149.cloudwaysapps.com/ca/reloj-tudor-1926-28-mm-9135167011-0002?utm_source=tudorwatch.com&utm_medium=website&utm_campaign=tudor_e-stock_program"
+   },
+   "onlinePurchaseEnabled": true,
+   "storePickupAvailable": false
+  }
+ ],
+ "products": [
+  {
+   "product_id": 1294,
+   "sku": "1001TU79363NCUERO-0002",
+   "name": "RELOJ TUDOR BLACK BAY CHRONO S&G",
+   "model_code": "79363NCUERO",
+   "model_code_source": "sku",
+   "qty": 2,
+   "salable_qty": 2,
+   "status": "sent",
+   "reason": null,
+   "merged_count": 1
+  },
+  {
+   "product_id": 2523,
+   "sku": "1001TU79018VCROCO-0001",
+   "name": "RELOJ TUDOR BLACK BAY FIFTY-EIGHT 18K",
+   "model_code": "79018VCROCO",
+   "model_code_source": "sku",
+   "qty": 1,
+   "salable_qty": 1,
+   "status": "sent",
+   "reason": null,
+   "merged_count": 1
+  },
+  {
+   "product_id": 2983,
+   "sku": "1001TU79010SGCUERO-0001",
+   "name": "RELOJ TUDOR BLACK BAY FIFTY-EIGHT 925",
+   "model_code": "79010SGCUERO",
+   "model_code_source": "sku",
+   "qty": 1,
+   "salable_qty": 1,
+   "status": "sent",
+   "reason": null,
+   "merged_count": 1
+  },
+  {
+   "product_id": 3095,
+   "sku": "1001TU79250BACUERO-0001",
+   "name": "RELOJ TUDOR BLACK BAY BRONCE",
+   "model_code": "79250BACUERO",
+   "model_code_source": "sku",
+   "qty": 3,
+   "salable_qty": 3,
+   "status": "sent",
+   "reason": null,
+   "merged_count": 1
+  },
+  {
+   "product_id": 6736,
+   "sku": "1001TU25600TB95820T-0001",
+   "name": "RELOJ TUDOR PELAGOS",
+   "model_code": "25600TB95820T",
+   "model_code_source": "sku",
+   "qty": 3,
+   "salable_qty": 3,
+   "status": "sent",
+   "reason": null,
+   "merged_count": 1
+  },
+  {
+   "product_id": 6737,
+   "sku": "1001TU25600TN95820T-0001",
+   "name": "RELOJ TUDOR PELAGOS",
+   "model_code": "25600TN95820T",
+   "model_code_source": "sku",
+   "qty": 4,
+   "salable_qty": 4,
+   "status": "sent",
+   "reason": null,
+   "merged_count": 1
+  },
+  {
+   "product_id": 6738,
+   "sku": "1001TU25610TNL95820-0001",
+   "name": "RELOJ TUDOR PELAGOS LHD",
+   "model_code": "25610TNL95820",
+   "model_code_source": "sku",
+   "qty": 3,
+   "salable_qty": 3,
+   "status": "sent",
+   "reason": null,
+   "merged_count": 1
+  },
+  {
+   "product_id": 6746,
+   "sku": "1001TU79363N72063-0001",
+   "name": "RELOJ TUDOR BLACK BAY CHRONO S&G",
+   "model_code": "79363N72063",
+   "model_code_source": "sku",
+   "qty": 4,
+   "salable_qty": 4,
+   "status": "sent",
+   "reason": null,
+   "merged_count": 1
+  },
+  {
+   "product_id": 6754,
+   "sku": "1001TU79830RB72060-0001",
+   "name": "RELOJ TUDOR BLACK BAY GMT",
+   "model_code": "79830RB72060",
+   "model_code_source": "sku",
+   "qty": 5,
+   "salable_qty": 5,
+   "status": "sent",
+   "reason": null,
+   "merged_count": 2
+  },
+  {
+   "product_id": 7208,
+   "sku": "1001TU79030NCUERO-0002",
+   "name": "RELOJ TUDOR BLACK BAY FIFTY-EIGHT",
+   "model_code": "79030NCUERO",
+   "model_code_source": "sku",
+   "qty": 1,
+   "salable_qty": 1,
+   "status": "sent",
+   "reason": null,
+   "merged_count": 1
+  },
+  {
+   "product_id": 7213,
+   "sku": "1001TU79210CNUCUERO-0001",
+   "name": "RELOJ TUDOR BLACK BAY CERAMIC",
+   "model_code": "79210CNUCUERO",
+   "model_code_source": "sku",
+   "qty": 6,
+   "salable_qty": 6,
+   "status": "sent",
+   "reason": null,
+   "merged_count": 1
+  },
+  {
+   "product_id": 7711,
+   "sku": "1001TU79833MN72063-0001",
+   "name": "RELOJ TUDOR BLACK BAY GMT S&G 41",
+   "model_code": "79833MN72063",
+   "model_code_source": "sku",
+   "qty": 4,
+   "salable_qty": 4,
+   "status": "sent",
+   "reason": null,
+   "merged_count": 1
+  },
+  {
+   "product_id": 7717,
+   "sku": "1001TU7947072540-0001",
+   "name": "RELOJ TUDOR BLACK BAY PRO",
+   "model_code": "7947072540",
+   "model_code_source": "sku",
+   "qty": 4,
+   "salable_qty": 4,
+   "status": "merged",
+   "reason": "same model code as product 15049"
+  },
+  {
+   "product_id": 7718,
+   "sku": "1001TU79470CUERO-0003",
+   "name": "RELOJ TUDOR BLACK BAY PRO 39 MM.",
+   "model_code": "79470CUERO",
+   "model_code_source": "sku",
+   "qty": 1,
+   "salable_qty": 1,
+   "status": "sent",
+   "reason": null,
+   "merged_count": 1
+  },
+  {
+   "product_id": 7742,
+   "sku": "1001TU7966365573-0002",
+   "name": "RELOJ TUDOR BLACK BAY S&G 39",
+   "model_code": "7966365573",
+   "model_code_source": "sku",
+   "qty": 3,
+   "salable_qty": 3,
+   "status": "sent",
+   "reason": null,
+   "merged_count": 2
+  },
+  {
+   "product_id": 7745,
+   "sku": "1001TU7964365553-0001",
+   "name": "RELOJ TUDOR BLACK BAY S&G 36",
+   "model_code": "7964365553",
+   "model_code_source": "sku",
+   "qty": 2,
+   "salable_qty": 2,
+   "status": "sent",
+   "reason": null,
+   "merged_count": 3
+  },
+  {
+   "product_id": 7749,
+   "sku": "1001TU7966365573-0001",
+   "name": "RELOJ TUDOR BLACK BAY S&G 39",
+   "model_code": "7966365573",
+   "model_code_source": "sku",
+   "qty": 1,
+   "salable_qty": 1,
+   "status": "merged",
+   "reason": "same model code as product 7742"
+  },
+  {
+   "product_id": 8198,
+   "sku": "1001TU7968365583-0001",
+   "name": "RELOJ TUDOR BLACK BAY S&G 41",
+   "model_code": "7968365583",
+   "model_code_source": "sku",
+   "qty": 1,
+   "salable_qty": 1,
+   "status": "merged",
+   "reason": "same model code as product 8199"
+  },
+  {
+   "product_id": 8199,
+   "sku": "1001TU7968365583-0002",
+   "name": "RELOJ TUDOR BLACK BAY S&G 41",
+   "model_code": "7968365583",
+   "model_code_source": "sku",
+   "qty": 2,
+   "salable_qty": 2,
+   "status": "sent",
+   "reason": null,
+   "merged_count": 2
+  },
+  {
+   "product_id": 8368,
+   "sku": "1001TU25407N95817-0001",
+   "name": "RELOJ TUDOR PELAGOS",
+   "model_code": "25407N95817",
+   "model_code_source": "sku",
+   "qty": 4,
+   "salable_qty": 4,
+   "status": "sent",
+   "reason": null,
+   "merged_count": 1
+  }
+ ]
+}

@@ -90,8 +90,8 @@ class SyncRunner
     {
         $clientConfig = $this->config->getClientConfig();
 
-        if ($clientConfig->tudorApiKey === '') {
-            $message = (string) __('No TUDOR API key configured for this environment.');
+        $message = $this->getCredentialsProblem($clientConfig);
+        if ($message !== null) {
             $this->status->recordTestResult(false, $message);
 
             return new SyncOutcome(false, $message, skipped: true);
@@ -116,10 +116,25 @@ class SyncRunner
         }
     }
 
+    private function getCredentialsProblem(ClientConfig $clientConfig): ?string
+    {
+        if (!$this->config->hasCredentials()) {
+            return (string) __('No TUDOR Client ID / Client Secret configured for the %1 environment.', $clientConfig->environment->value);
+        }
+
+        if ($clientConfig->tudorApiKey === '') {
+            // Temporary: remove once core requests the OAuth token itself.
+            return (string) __('TUDOR credentials saved, but tudorsync/core cannot authenticate with them yet (OAuth pending in core).');
+        }
+
+        return null;
+    }
+
     private function getConfigProblem(ClientConfig $clientConfig): ?string
     {
-        if ($clientConfig->tudorApiKey === '') {
-            return (string) __('No TUDOR API key configured for the %1 environment.', $clientConfig->environment->value);
+        $problem = $this->getCredentialsProblem($clientConfig);
+        if ($problem !== null) {
+            return $problem;
         }
 
         if (preg_match('/^[A-Z]{2}$/', $clientConfig->market) !== 1) {

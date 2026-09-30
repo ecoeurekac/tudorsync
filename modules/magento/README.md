@@ -21,8 +21,8 @@ Lee el catálogo, decide qué relojes TUDOR se pueden comprar **ya** y entrega a
 
 *Stores > Configuration > Catalog > TUDOR E-commerce Sync*
 
-- **General**: país (ISO de 2 letras; sin él no se sincroniza), entorno, claves de staging y
-  producción (se guardan cifradas), «value», click & collect (todo o nada), plazo de entrega
+- **General**: país (ISO de 2 letras; sin él no se sincroniza), entorno, **Client ID y Client
+  Secret** de staging y producción (OAuth2 de TUDOR; el secret se guarda cifrado), «value», click & collect (todo o nada), plazo de entrega
   a domicilio (opcional), frecuencia del cron y los botones Test Connection / Run Sync Now.
 - **TUDOR Model Code**: regla opcional para sacar el código del SKU: prefijo (filtro SQL) +
   expresión regular + sustitución. Ejemplo: prefijo `1001TU`, patrón `/^1001TU(.+)-\d{4}$/`,
@@ -93,4 +93,8 @@ un error fatal.
 - Click & collect por punto de venta (`storesAvailabilityDetails`, RSWI): depende de TUDOR.
 - MSI con **varias** fuentes o stocks por website: hoy se usa el stock del website de la
   tienda por defecto (en Quera solo hay uno).
+- **Autenticación OAuth en core:** las credenciales ya se guardan en el admin, pero hasta que
+  `ClientConfig`/`TudorApiClient` pidan el token a Okta, test y sync se saltan con el aviso
+  «OAuth pending in core». Al llegar, pasarlas en `Model\Config::getClientConfig()` y quitar el
+  aviso temporal de `SyncRunner::getCredentialsProblem()`.
 - Una tienda con varios mercados (un país por website) necesitaría un batch por país.

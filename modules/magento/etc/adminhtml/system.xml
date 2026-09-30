@@ -16,12 +16,20 @@
                     <label>TUDOR API Environment</label>
                     <source_model>Tudorsync\EcommerceSync\Model\Config\Source\Environment</source_model>
                 </field>
-                <field id="api_key_staging" translate="label" type="obscure" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>TUDOR API Key (Staging)</label>
+                <field id="client_id_staging" translate="label comment" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Client ID (Staging)</label>
+                    <comment>Okta application of this retailer in TUDOR's API Spotlight portal (PREPROD).</comment>
+                </field>
+                <field id="client_secret_staging" translate="label" type="obscure" sortOrder="31" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Client Secret (Staging)</label>
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
                 </field>
-                <field id="api_key_production" translate="label" type="obscure" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>TUDOR API Key (Production)</label>
+                <field id="client_id_production" translate="label comment" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Client ID (Production)</label>
+                    <comment>Okta application of this retailer in TUDOR's API Spotlight portal (PROD).</comment>
+                </field>
+                <field id="client_secret_production" translate="label" type="obscure" sortOrder="41" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Client Secret (Production)</label>
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
                 </field>
                 <field id="value_mode" translate="label comment" type="select" sortOrder="45" showInDefault="1" showInWebsite="1" showInStore="1">

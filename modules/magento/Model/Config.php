@@ -20,8 +20,8 @@ class Config
 {
     private const XML_PATH_COUNTRY = 'tudorsync/general/country';
     private const XML_PATH_ENVIRONMENT = 'tudorsync/general/environment';
-    private const XML_PATH_API_KEY_STAGING = 'tudorsync/general/api_key_staging';
-    private const XML_PATH_API_KEY_PRODUCTION = 'tudorsync/general/api_key_production';
+    private const XML_PATH_CLIENT_ID = 'tudorsync/general/client_id_%s';
+    private const XML_PATH_CLIENT_SECRET = 'tudorsync/general/client_secret_%s';
     private const XML_PATH_CLICK_AND_COLLECT_ENABLED = 'tudorsync/general/click_and_collect_enabled';
     private const XML_PATH_HOME_DELIVERY_TIMING = 'tudorsync/general/home_delivery_timing';
     private const XML_PATH_VALUE_MODE = 'tudorsync/general/value_mode';
@@ -39,21 +39,48 @@ class Config
 
     public function getClientConfig(?int $storeId = null): ClientConfig
     {
-        $environment = Environment::tryFrom($this->getString(self::XML_PATH_ENVIRONMENT, $storeId))
-            ?? Environment::Staging;
-
-        $apiKeyPath = $environment === Environment::Production
-            ? self::XML_PATH_API_KEY_PRODUCTION
-            : self::XML_PATH_API_KEY_STAGING;
+        $environment = $this->getEnvironment($storeId);
 
         return new ClientConfig(
             clientName: $this->getString(self::XML_PATH_STORE_NAME, $storeId),
             market: $this->getCountry($storeId),
             languages: [], // not used by the Magento connector: locales come from the store views
             environment: $environment,
-            tudorApiKey: $this->getString($apiKeyPath, $storeId),
+            // TUDOR authenticates with OAuth2 client credentials (getClientId()/getClientSecret()),
+            // which core's ClientConfig doesn't take yet — pending in core, coordinate with Jorge.
+            tudorApiKey: '',
             offersClickAndCollect: $this->scopeConfig->isSetFlag(self::XML_PATH_CLICK_AND_COLLECT_ENABLED, ScopeInterface::SCOPE_STORE, $storeId),
         );
+    }
+
+    public function getEnvironment(?int $storeId = null): Environment
+    {
+        return Environment::tryFrom($this->getString(self::XML_PATH_ENVIRONMENT, $storeId)) ?? Environment::Staging;
+    }
+
+    /**
+     * Client ID of the retailer's Okta application for the given environment (not a secret).
+     */
+    public function getClientId(Environment $environment, ?int $storeId = null): string
+    {
+        return $this->getString(sprintf(self::XML_PATH_CLIENT_ID, $environment->value), $storeId);
+    }
+
+    /**
+     * Client secret for the given environment, already decrypted: etc/config.xml declares the
+     * field as Encrypted, so ScopeConfig hands back the plain value.
+     */
+    public function getClientSecret(Environment $environment, ?int $storeId = null): string
+    {
+        return $this->getString(sprintf(self::XML_PATH_CLIENT_SECRET, $environment->value), $storeId);
+    }
+
+    public function hasCredentials(?int $storeId = null): bool
+    {
+        $environment = $this->getEnvironment($storeId);
+
+        return $this->getClientId($environment, $storeId) !== ''
+            && $this->getClientSecret($environment, $storeId) !== '';
     }
 
     /**

@@ -37,7 +37,18 @@ Los botones usan los valores **guardados**: primero hay que guardar y después p
 bin/magento tudorsync:catalog:preview [--all] [--json=fichero.json]  # en seco: no llama a TUDOR
 bin/magento tudorsync:connection:test                                # GET /v1/point-of-sales
 bin/magento tudorsync:sync:run                                       # sync real, igual que el cron
+bin/magento tudorsync:model-code:fill [--apply] [--overwrite] [--all]  # rellena tudor_model_code (en seco sin --apply)
 ```
+
+`model-code:fill` rellena el atributo (tienda 0) de las fichas con el prefijo de SKU configurado:
+primero con el código que traen las **etiquetas de imagen** de TUDOR (`M79363N-0002`), y si no hay,
+con la regla de SKU. Los nombres de fichero de las fotos no se usan (algunos son genéricos,
+`M2542GXX7NU-0002`). No toca los valores ya puestos salvo con `--overwrite`. Se puede repetir
+(p. ej. tras una re-migración de datos).
+
+Regla de Quera (30-09): prefijo `1001TU`, patrón
+`/^1001TU(.+?)(?:\d{5}[A-Z]?|CUERO|TEJIDO|CROCO|CAUCHO)-(\d{4})$/`, sustitución `M$1-$2`
+(`1001TU79363NCUERO-0002` → `M79363N-0002`). Coincide con la etiqueta en 86 de 87 fichas.
 
 `preview` muestra lo que se enviaría y, para cada producto candidato, si se envía, se agrupa
 con otro o se excluye, y por qué.

@@ -1,0 +1,251 @@
+{
+  "info": {
+    "_postman_id": "78d93ad6-3e20-47ea-882c-8be364e1b3c1",
+    "name": "eStock API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "49299925",
+    "_collection_link": "https://go.postman.co/collection/49299925-78d93ad6-3e20-47ea-882c-8be364e1b3c1?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Get Token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const response = pm.response.json();\r",
+              "pm.environment.set(\"auth_token\", response.access_token);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "grant_type",
+              "value": "{{grant_type}}",
+              "type": "text",
+              "uuid": "9ea5a84b-f94f-4fea-8bfc-2fe666cb4d88"
+            },
+            {
+              "key": "client_id",
+              "value": "{{client_id}}",
+              "type": "text",
+              "uuid": "e0f1dc7e-72cf-494e-b1d7-6bb751d8108f"
+            },
+            {
+              "key": "client_secret",
+              "value": "{{client_secret}}",
+              "type": "text",
+              "uuid": "24108a6e-a931-446c-81bb-e6600a1267a6"
+            },
+            {
+              "key": "scope",
+              "value": "{{scope}}",
+              "type": "text",
+              "uuid": "47b322b0-e933-407f-9525-e0a8dd44ea16"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{auth_url}}",
+          "host": [
+            "{{auth_url}}"
+          ]
+        },
+        "description": "Retrieve a token from Okta, and store it in a variable for every requests."
+      },
+      "response": []
+    },
+    {
+      "name": "API Health",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{auth_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{stock_api_base_url}}/health",
+          "host": [
+            "{{stock_api_base_url}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get all stocks",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{auth_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{stock_api_base_url}}/v1/stocks",
+          "host": [
+            "{{stock_api_base_url}}"
+          ],
+          "path": [
+            "v1",
+            "stocks"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get all PoS",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{auth_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{stock_api_base_url}}/v1/point-of-sales",
+          "host": [
+            "{{stock_api_base_url}}"
+          ],
+          "path": [
+            "v1",
+            "point-of-sales"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Stock",
+      "protocolProfileBehavior": {
+        "disabledSystemHeaders": {},
+        "strictSSL": false
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{auth_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"country\": \"CH\",\r\n  \"value\": 42,\r\n  \"defaultUrl\": \"https://www.retailer.com/Demo-001\",\r\n  \"localizedUrls\": {\r\n    \"en\": \"https://www.retailer.com/en/Demo-001\",\r\n    \"fr\": \"https://www.retailer.com/fr/Demo-001\",\r\n    \"de\": \"https://www.retailer.com/de/Demo-001\"\r\n  },\r\n  \"mc\": \"Demo-Retailers\",\r\n  \"onlinePurchaseEnabled\": true,\r\n  \"storePickupAvailable\": true,\r\n  \"homeDeliveryTiming\": 24,\r\n  \"storesAvailabilityDetails\": {\r\n    \"RSWI_001\": {\"storePickupAvailable\" : true, \"storePickupTiming\" : 24},\r\n    \"RSWI_002\": {\"storePickupAvailable\" : true},\r\n    \"RSWI_004\": {\"storePickupAvailable\" : false}\r\n  }\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{stock_api_base_url}}/v1/stocks",
+          "host": [
+            "{{stock_api_base_url}}"
+          ],
+          "path": [
+            "v1",
+            "stocks"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Stock Batch",
+      "protocolProfileBehavior": {
+        "disabledSystemHeaders": {
+          "content-type": true
+        }
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{auth_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-ndjson",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"mc\":\"Demo-Retailers-001\",\"country\":\"CH\",\"value\":3,\"defaultUrl\":\"https://www.retailer.com/Demo-001\",\"localizedUrls\":{\"en\":\"https://www.retailer.com/en/Demo-001\",\"fr\":\"https://www.retailer.com/fr/Demo-001\"},\"onlinePurchaseEnabled\":true,\"storePickupAvailable\":false}\r\n{\"mc\":\"Demo-Retailers-002\",\"country\":\"CH\",\"value\":11,\"defaultUrl\":\"https://www.retailer.com/Demo-002\",\"localizedUrls\":{\"en\":\"https://www.retailer.com/en/Demo-002\",\"fr\":\"https://www.retailer.com/fr/Demo-002\"},\"onlinePurchaseEnabled\":false,\"storePickupAvailable\":true}\r\n{\"mc\":\"Demo-Retailers-004\",\"country\":\"CH\",\"value\":17,\"defaultUrl\":\"https://www.retailer.com/Demo-003\",\"localizedUrls\":{\"en\":\"https://www.retailer.com/en/Demo-003\",\"fr\":\"https://www.retailer.com/fr/Demo-003\"},\"onlinePurchaseEnabled\":true,\"storePickupAvailable\":true,\"homeDeliveryTiming\": 12}\r\n{\"mc\":\"Demo-Retailers-004\",\"country\":\"CH\",\"value\":21,\"defaultUrl\":\"https://www.retailer.com/Demo-004\",\"localizedUrls\":{\"en\":\"https://www.retailer.com/en/Demo-004\",\"fr\":\"https://www.retailer.com/fr/Demo-004\"},\"onlinePurchaseEnabled\":true,\"storePickupAvailable\":false,\"homeDeliveryTiming\": 24, \"storesAvailabilityDetails\": {\"RSWI_001\":{\"storePickupAvailable\":true,\"storePickupTiming\":72}}}\r\n{\"mc\":\"Demo-Retailers-005\",\"country\":\"CH\",\"value\":32,\"defaultUrl\":\"https://www.retailer.com/Demo-005\",\"localizedUrls\": {\"en\":\"https://www.retailer.com/en/Demo-005\",\"fr\":\"https://www.retailer.com/fr/Demo-005\"},\"onlinePurchaseEnabled\":true,\"storePickupAvailable\":false,\"homeDeliveryTiming\": 12, \"storesAvailabilityDetails\": {\"RSWI_0001\":{\"storePickupAvailable\":true,\"storePickupTiming\":12},\"RSWI_0002\":{\"storePickupAvailable\":true},\"RSWI_0003\":{\"storePickupAvailable\":false},\"RSWI_0004\":{\"storePickupAvailable\":true,\"storePickupTiming\":0}}}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{stock_api_base_url}}/v1/stocks/batch",
+          "host": [
+            "{{stock_api_base_url}}"
+          ],
+          "path": [
+            "v1",
+            "stocks",
+            "batch"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

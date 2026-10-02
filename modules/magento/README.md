@@ -87,7 +87,11 @@ el minuto siguiente. Interruptor: *Publish Changes Within a Minute* (`tudorsync/
      completo, cantidad sumada de todas sus fichas, igual que en el batch);
    - alguno ya no está disponible (agotado, desactivado, borrado), o hay más de 20 → **un batch
      completo**: TUDOR pone a 0 lo que falta, que es la forma documentada de retirar un modelo;
-   - un modelo que falla sigue en la cola y se reintenta al minuto siguiente.
+   - un modelo que falla sigue en la cola y se reintenta al minuto siguiente;
+   - **429 (demasiadas peticiones)**: se para en ese mismo modelo (el resto sigue en la cola) y la
+     publicación en el minuto se pausa 5 min (flag `tudorsync_realtime_paused_until`); el sync de
+     cada hora no se pausa. Un fallo de credenciales o del servicio de token también corta la
+     ejecución, porque daría lo mismo con todos los modelos.
 4. **Red de seguridad:** el sync completo sigue cada hora y vacía la cola de todo lo anterior a él.
 5. Mientras no se pueda hablar con TUDOR (credenciales, OAuth en core, país) la cola se conserva.
 

@@ -4,8 +4,13 @@ declare(strict_types=1);
 
 namespace Tudorsync\EcommerceSync\Model;
 
+use Magento\Framework\FlagManager;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use Tudorsync\Core\Api\Exception\ApiResponseException;
+use Tudorsync\Core\Api\Exception\CredentialsRejectedException;
+use Tudorsync\Core\Api\Exception\MissingCredentialsException;
+use Tudorsync\Core\Api\Exception\TokenRequestException;
 use Tudorsync\Core\Api\TudorApiClient;
 use Tudorsync\Core\Domain\ClientConfig;
 use Tudorsync\Core\Rules\AvailabilityFilter;
@@ -28,6 +33,10 @@ class SyncRunner
     /** Above this many queued models, one full batch is cheaper than one call per model. */
     private const MAX_SINGLE_CALLS = 20;
 
+    /** After a 429 from TUDOR, the per-minute publisher waits this long (the hourly sync doesn't). */
+    private const RATE_LIMIT_PAUSE_SECONDS = 300;
+    private const FLAG_PAUSED_UNTIL = 'tudorsync_realtime_paused_until';
+
     public function __construct(
         private readonly Config $config,
         private readonly CatalogConnector $catalogConnector,
@@ -35,6 +44,7 @@ class SyncRunner
         private readonly Status $status,
         private readonly LoggerInterface $logger,
         private readonly PendingQueue $pendingQueue,
+        private readonly FlagManager $flagManager,
     ) {
     }
 
@@ -145,6 +155,15 @@ class SyncRunner
             return new SyncOutcome(false, $problem, skipped: true);
         }
 
+        $pausedUntil = (int) $this->flagManager->getFlagData(self::FLAG_PAUSED_UNTIL);
+
+        if ($pausedUntil > time()) {
+            return new SyncOutcome(false, (string) __(
+                'Paused until %1 UTC: TUDOR asked to slow down (HTTP 429). The queue is kept.',
+                gmdate('H:i:s', $pausedUntil),
+            ), skipped: true);
+        }
+
         try {
             $plan = $this->planPending();
 
@@ -167,6 +186,7 @@ class SyncRunner
                 $client = new TudorApiClient($clientConfig, $this->httpClient);
                 $sent = [];
                 $failed = [];
+                $stoppedBy = null;
 
                 foreach ($plan->items as $item) {
                     try {
@@ -175,19 +195,33 @@ class SyncRunner
                     } catch (Throwable $e) {
                         $failed[] = $item->modelCode;
                         $this->logger->error(sprintf('Tudorsync: failed to publish %s: %s', $item->modelCode, $e->getMessage()));
+                        $stoppedBy = $this->getStopReason($e);
+
+                        if ($stoppedBy !== null) {
+                            // Same answer for every remaining model: don't hammer TUDOR, they stay queued.
+                            break;
+                        }
                     }
                 }
 
                 $this->pendingQueue->remove($sent, $plan->queuedBefore);
                 $message = (string) __(
-                    'Real-time: %1 model(s) published (%2), %3 failed and kept queued.',
+                    'Real-time: %1 model(s) published (%2), %3 failed, %4 kept queued.',
                     count($sent),
                     implode(', ', $sent),
                     count($failed),
+                    count($plan->items) - count($sent),
                 );
+
+                if ($stoppedBy !== null) {
+                    $message .= ' ' . __('Stopped: %1.', $stoppedBy);
+                }
+
                 $success = $failed === [];
             }
         } catch (Throwable $e) {
+            // Full batch failed as a whole: nothing removed from the queue, retried next run.
+            $this->getStopReason($e);
             $message = (string) __('Real-time publish failed: %1', $e->getMessage());
             $this->logger->error('Tudorsync: ' . $message, ['exception' => $e]);
 
@@ -227,6 +261,29 @@ class SyncRunner
 
             return new SyncOutcome(false, $message);
         }
+    }
+
+    /**
+     * Errors that will be the same for every other model in this run, so the run stops there.
+     * A 429 also pauses the per-minute publisher for RATE_LIMIT_PAUSE_SECONDS.
+     */
+    private function getStopReason(Throwable $e): ?string
+    {
+        if ($e instanceof ApiResponseException && $e->statusCode === 429) {
+            $this->flagManager->saveFlag(self::FLAG_PAUSED_UNTIL, time() + self::RATE_LIMIT_PAUSE_SECONDS);
+            $this->logger->warning(sprintf(
+                'Tudorsync: TUDOR answered 429 (too many requests), real-time publishing paused for %d s.',
+                self::RATE_LIMIT_PAUSE_SECONDS,
+            ));
+
+            return 'TUDOR asked to slow down (HTTP 429), paused 5 min';
+        }
+
+        return match (true) {
+            $e instanceof CredentialsRejectedException, $e instanceof MissingCredentialsException => 'credentials problem',
+            $e instanceof TokenRequestException => 'TUDOR token service unavailable',
+            default => null,
+        };
     }
 
     private function sendBatch(CatalogSnapshot $snapshot, ClientConfig $clientConfig): \Tudorsync\Core\Api\BatchSyncResult

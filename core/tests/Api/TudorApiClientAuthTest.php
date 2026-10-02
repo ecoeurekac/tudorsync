@@ -221,6 +221,29 @@ final class TudorApiClientAuthTest extends TestCase
         }
     }
 
+    public function testCreateStockReportsCreatedOn201(): void
+    {
+        $this->http->queue($this->tokenResponse('token-1'), new HttpResponse(201, '{"mc":"M79360B-0002","country":"ES","value":1}'));
+
+        $result = $this->client()->createStock($this->stock());
+
+        self::assertSame('CREATED', $result->status);
+        self::assertSame('M79360B-0002', $result->modelCode);
+        self::assertSame('ES', $result->country);
+        self::assertFalse($result->failed());
+    }
+
+    public function testCreateStockReportsUpdatedOn200(): void
+    {
+        $this->http->queue($this->tokenResponse('token-1'), new HttpResponse(200, '{"mc":"M79360B-0002","country":"ES","value":1,"version":1}'));
+
+        $result = $this->client()->createStock($this->stock());
+
+        self::assertSame('UPDATED', $result->status);
+        self::assertSame('M79360B-0002', $result->modelCode);
+        self::assertFalse($result->failed());
+    }
+
     public function testA207BatchResponseIsAPartialSuccessNotAnError(): void
     {
         $this->http->queue($this->tokenResponse('token-1'), $this->batchResponse(207, failed: true));

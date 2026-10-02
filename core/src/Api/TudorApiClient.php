@@ -88,9 +88,14 @@ final class TudorApiClient
     }
 
     /**
-     * POST /v1/stocks — create a single stock record. Prefer batchUpsertStocks() for regular
-     * syncs; this is here for one-off corrections or an initial single-item connectivity test
-     * during staging onboarding.
+     * POST /v1/stocks — create or update the stock record of one model/country: if it already
+     * exists, TUDOR updates it (and bumps its `version`). Meant for regular use, e.g. near
+     * real-time publishing of a single model whose stock just changed. Unlike the batch, it
+     * leaves every other published record untouched; the hourly batchUpsertStocks() is still
+     * what removes models that are no longer sent.
+     *
+     * TUDOR answers 201 when it created the record and 200 when it updated an existing one;
+     * the result's status is CREATED or UPDATED accordingly.
      *
      * @throws TudorApiException
      */
@@ -108,7 +113,7 @@ final class TudorApiClient
         return new StockImportResult(
             modelCode: $data['mc'],
             country: $data['country'],
-            status: 'CREATED',
+            status: $response->statusCode === 200 ? 'UPDATED' : 'CREATED',
             message: null,
         );
     }

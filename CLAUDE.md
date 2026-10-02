@@ -67,6 +67,28 @@ Documentos de trabajo en `doc/`: `Tudorsync Estado y Pendientes(1).pdf` (estado 
 pendientes) y `Tudorsync Arquitectura y Reparto de Trabajo.docx` (reparto). El resto de `doc/`
 es documentación oficial de TUDOR (PDF de onboarding, spec OAS/RAML, plantillas Excel).
 
+## ⚠️ Desde el go-live del lunes 05-10-2026: esta instalación es PRODUCCIÓN
+
+Acordado con Bea el 02-10. La instalación de Magento donde vive este checkout pasa a ser la tienda
+**real** de Quera. Cloudways creará después una aplicación **staging** en este mismo servidor.
+
+- **Todo el desarrollo y las pruebas de Tudorsync, incluidos sus crons, se hacen en el staging.** En
+  producción no se edita nada de `packages/tudorsync` (es código en vivo de la tienda real): solo
+  `git pull` de lo ya probado en staging.
+- **Credenciales de TUDOR:** el staging, solo PREPROD; producción, solo PROD y únicamente cuando esté
+  todo validado (España se activa el 19-10). **Nunca las mismas en las dos**: cada batch pone a 0 lo
+  que no lleva, y las dos instalaciones se pisarían el catálogo cada hora.
+- **Producción hasta entonces:** credenciales sin conectar y `realtime_enabled = 0` (lo de cada hora y
+  lo de cada minuto se saltan sin hacer nada). La captura de la UTM de tudorwatch.com en los pedidos sí
+  funciona, y es lo que se quiere desde el primer día.
+- **Al crear el staging:** la copia lleva el checkout, pero comprobar la deploy key
+  (`private_html/.ssh-tudorsync` y `core.sshCommand`) para poder hacer push. Apagar ahí PQnetStock y los
+  crons del ERP si Bea no dice lo contrario: con las dos instalaciones activas, los pedidos de prueba
+  descontarían stock real.
+- **En el go-live:** si se recargan pedidos desde la instalación vieja, vaciar `tudorsync_order_attribution`
+  y `tudorsync_pending_stock`. Comprobar que la config `tudorsync/*` (regla de SKU, país ES) sigue en la
+  BD y, si se han perdido los códigos, relanzar `bin/magento tudorsync:model-code:fill --apply`.
+
 ## Entorno: este checkout vive dentro de la tienda Magento de Quera
 
 - Ruta: `public_html/packages/tudorsync` (antes `var/tudorsync-src`, trasladado el 2026-09-29) de la instalación Magento 2.4.8 de Quera (Cloudways,

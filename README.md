@@ -79,8 +79,8 @@ document's promise that shoppers never see a quantity), `defaultUrl` + `localize
 (locale keys can carry a region, e.g. `fr-CH` vs `fr-FR`, not just a bare language code),
 `onlinePurchaseEnabled` (the real gate for "Comprar ahora"), `storePickupAvailable`,
 optional `homeDeliveryTiming`, and optional `storesAvailabilityDetails` (per-point-of-sale
-click & collect detail keyed by a TUDOR "RSWI" id — **not confirmed to be the same as the
-`stoId` returned by `/v1/point-of-sales`**).
+click & collect detail keyed by the point of sale's TUDOR "RSWI" id, which is the `stoId`
+returned by `/v1/point-of-sales`, e.g. `RSWI_185580`).
 
 Neither OAS nor RAML declares base URLs or an auth scheme; both come from TUDOR's "API
 Spotlight" page (`doc/Community Asset_ stock-retail-publish-public-rest-api*.zip`) and the
@@ -203,9 +203,6 @@ installation — see "What's still open" below for what each still needs before 
   connectors, unverified against a real installation — in particular Magento's AJAX
   controllers (ACL, routing, `FORM_KEY` handling) are the most likely to need adjustment
   once actually loaded in a Magento admin.
-- **RSWI vs `stoId`**: whether a point of sale's `storesAvailabilityDetails` key is the same
-  identifier as `PointOfSale::$stoId` from `GET /v1/point-of-sales`, or a separate code TUDOR
-  assigns — needs confirming with TUDOR.
 - **Monthly report data sourcing**: nothing yet pulls sessions/visitors from analytics or
   sales counts from each platform's orders into `MonthlySalesReportRow` — only the Excel
   writer exists so far.

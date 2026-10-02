@@ -42,6 +42,13 @@ use Tudorsync\EcommerceSync\Model\Stock\SalableQtyProvider;
  */
 class CatalogConnector implements CatalogConnectorInterface
 {
+    private readonly UtmUrlBuilder $utmUrlBuilder;
+
+    /**
+     * $utmUrlBuilder is nullable instead of `= new UtmUrlBuilder()`: setup:di:compile writes an object
+     * default into generated/metadata as UtmUrlBuilder::__set_state(), which does not exist, and every
+     * request in production mode then fails ("There is an error in generated/metadata/global.php").
+     */
     public function __construct(
         private readonly ProductCollectionFactory $productCollectionFactory,
         private readonly ProductRepositoryInterface $productRepository,
@@ -49,8 +56,9 @@ class CatalogConnector implements CatalogConnectorInterface
         private readonly SalableQtyProvider $salableQtyProvider,
         private readonly ModelCodeResolver $modelCodeResolver,
         private readonly Config $config,
-        private readonly UtmUrlBuilder $utmUrlBuilder = new UtmUrlBuilder(),
+        ?UtmUrlBuilder $utmUrlBuilder = null,
     ) {
+        $this->utmUrlBuilder = $utmUrlBuilder ?? new UtmUrlBuilder();
     }
 
     public function getAvailableCatalog(): array

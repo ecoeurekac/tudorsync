@@ -7,6 +7,7 @@
                 <item name="tudorsync_sync_run" xsi:type="object">Tudorsync\EcommerceSync\Console\Command\SyncRunCommand</item>
                 <item name="tudorsync_connection_test" xsi:type="object">Tudorsync\EcommerceSync\Console\Command\TestConnectionCommand</item>
                 <item name="tudorsync_model_code_fill" xsi:type="object">Tudorsync\EcommerceSync\Console\Command\ModelCodeFillCommand</item>
+                <item name="tudorsync_report_programme_sales" xsi:type="object">Tudorsync\EcommerceSync\Console\Command\ProgrammeSalesCommand</item>
             </argument>
         </arguments>
     </type>
@@ -31,6 +32,23 @@
     <type name="Tudorsync\EcommerceSync\Console\Command\ModelCodeFillCommand">
         <arguments>
             <argument name="productAction" xsi:type="object">Magento\Catalog\Model\Product\Action\Proxy</argument>
+        </arguments>
+    </type>
+
+    <type name="Tudorsync\EcommerceSync\Console\Command\ProgrammeSalesCommand">
+        <arguments>
+            <argument name="programmeSalesSource" xsi:type="object">Tudorsync\EcommerceSync\Model\Report\ProgrammeSalesSource\Proxy</argument>
+        </arguments>
+    </type>
+
+    <!-- Click & collect in the monthly report: shipping methods that mean "picked up in store".
+         Quera uses Amasty Store Pickup (amstorepick_amstorepick1, _2, ...). Empty list = the
+         store can't tell, and the report leaves the field blank. -->
+    <type name="Tudorsync\EcommerceSync\Model\Report\ProgrammeSalesSource">
+        <arguments>
+            <argument name="pickupShippingMethodPrefixes" xsi:type="array">
+                <item name="amasty_store_pickup" xsi:type="string">amstorepick_</item>
+            </argument>
         </arguments>
     </type>
 

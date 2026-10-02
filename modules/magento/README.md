@@ -38,6 +38,7 @@ bin/magento tudorsync:catalog:preview [--all] [--json=fichero.json]  # en seco: 
 bin/magento tudorsync:connection:test                                # GET /v1/point-of-sales
 bin/magento tudorsync:sync:run                                       # sync real, igual que el cron
 bin/magento tudorsync:model-code:fill [--apply] [--overwrite] [--all]  # rellena tudor_model_code (en seco sin --apply)
+bin/magento tudorsync:report:programme-sales [--month=AAAA-MM] [--store=N] [--all-orders]  # cifras de ventas del informe mensual
 ```
 
 `model-code:fill` rellena el atributo (tienda 0) de las fichas con el prefijo de SKU configurado:
@@ -81,8 +82,26 @@ de TUDOR (plantilla en `core/resources/report-templates/`).
   instalación hay que vaciarla** (`TRUNCATE tudorsync_order_attribution`), o se atribuirían a
   pedidos que no son.
 
-Qué es un «reloj TUDOR vendido» (líneas con código de modelo, pedidos cancelados o devueltos,
-click & collect) lo decide el informe al leer la tabla, no la captura.
+Qué es un «reloj TUDOR vendido» lo decide el informe al leer la tabla, no la captura:
+**`Model\Report\ProgrammeSalesSource`** (y el comando `tudorsync:report:programme-sales`, que
+enseña además las líneas de pedido contadas). Criterio propuesto a core el 30-09, **pendiente de
+que Jorge lo confirme** para que los 3 conectores cuenten igual:
+
+- **Unidades**, no pedidos: cantidad pedida menos cancelada de cada línea de primer nivel cuyo
+  producto da un código de modelo TUDOR (el mismo `ModelCodeResolver` del sync; si la ficha ya
+  no existe, vale la regla de SKU sobre el SKU guardado en el pedido).
+- **Se excluyen los pedidos cancelados; las devoluciones no se restan** (pueden llegar después de
+  enviado el informe del mes).
+- **Click & collect** = método de envío que empieza por uno de los prefijos del argumento DI
+  `pickupShippingMethodPrefixes` (Quera: `amstorepick_`, Amasty Store Pickup). Lista vacía = la
+  tienda no lo distingue y el campo queda en blanco (`null`).
+- **Mes** en la zona horaria de la tienda (`general/locale/timezone`); las fechas de Magento
+  están en UTC y se convierten.
+- `--all-orders` ignora la atribución y cuenta todos los pedidos: solo para comprobar el conteo
+  mientras la tabla está vacía. Esas cifras **no** son las del informe.
+
+Cuando core publique la interfaz de la fuente de ventas, esta clase la implementa (la forma de
+`ProgrammeSales` es la de la propuesta).
 
 ## Instalación en otra tienda (PLO)
 

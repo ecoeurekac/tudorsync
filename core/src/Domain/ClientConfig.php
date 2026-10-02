@@ -10,6 +10,9 @@ namespace Tudorsync\Core\Domain;
  * system config, PrestaShop module config, WordPress Settings API) — core never assumes a
  * shared config store across clients, since the hybrid deployment model keeps every store
  * self-contained.
+ *
+ * Credentials are the OAuth2 client ID / client secret of the store's TUDOR (Okta)
+ * application, one pair per Environment. TudorApiClient exchanges them for an access token.
  */
 final class ClientConfig
 {
@@ -22,8 +25,16 @@ final class ClientConfig
         public readonly string $market,
         public readonly array $languages,
         public readonly Environment $environment,
-        public readonly string $tudorApiKey,
+        /**
+         * @deprecated No longer used to authenticate: TUDOR uses OAuth2 client credentials
+         *             ($clientId / $clientSecret). Kept so the platform modules keep working
+         *             unchanged; to be removed once all three have migrated.
+         */
+        public readonly string $tudorApiKey = '',
         public readonly bool $offersClickAndCollect = false,
+        public readonly string $clientId = '',
+        #[\SensitiveParameter]
+        public readonly string $clientSecret = '',
     ) {
     }
 }

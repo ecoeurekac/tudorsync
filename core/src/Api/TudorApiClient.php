@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tudorsync\Core\Api;
 
+use Tudorsync\Core\Api\Auth\AccessTokenProvider;
+use Tudorsync\Core\Api\Exception\ApiResponseException;
+use Tudorsync\Core\Api\Exception\TudorApiException;
 use Tudorsync\Core\Domain\ClientConfig;
 use Tudorsync\Core\Domain\StockAvailability;
 
@@ -17,9 +20,16 @@ use Tudorsync\Core\Domain\StockAvailability;
  * intercambio/2026-09-30-juanjo-peticion-auth-y-url-tudor.md). Environment::Staging maps to
  * TUDOR's PREPROD.
  *
- * STILL PENDING — authentication: TUDOR uses OAuth2 client credentials via Okta (see the
- * intercambio note above), but this class still sends the API key as a bearer token. Replace
- * the auth header in headers() once ClientConfig carries a client ID/secret.
+ * Authentication: every call carries `Authorization: Bearer <access token>`, obtained by
+ * AccessTokenProvider from ClientConfig's client ID / secret (OAuth2 client credentials) and
+ * cached in memory. If the API answers 401, the token is dropped, a new one is requested and
+ * the call is retried once.
+ *
+ * Every public method throws a TudorApiException subclass when TUDOR can't be reached
+ * properly: credentials missing or rejected, token endpoint failure, or a non-2xx API
+ * response (ApiResponseException, with the HTTP code). 207 on the batch endpoint is a partial
+ * success, not an error: the per-line detail is in BatchSyncResult. Transport errors thrown by
+ * the platform's HttpClientInterface pass through untouched.
  */
 final class TudorApiClient
 {
@@ -28,11 +38,25 @@ final class TudorApiClient
         'production' => 'https://api.services.mytudorwatch.com/estock-retail/retailer',
     ];
 
+    /** Longest piece of an API error body quoted in ApiResponseException. */
+    private const ERROR_EXCERPT_LENGTH = 300;
+
+    private readonly AccessTokenProvider $tokenProvider;
+
+    /** Token sent on the last call, only so it can be scrubbed from error messages. */
+    private ?string $lastAccessToken = null;
+
+    /**
+     * @param AccessTokenProvider|null $tokenProvider Optional so existing callers keep working;
+     *                                                tests pass one with a fake clock.
+     */
     public function __construct(
         private readonly ClientConfig $config,
         private readonly HttpClientInterface $httpClient,
         private readonly NdjsonCodec $ndjsonCodec = new NdjsonCodec(),
+        ?AccessTokenProvider $tokenProvider = null,
     ) {
+        $this->tokenProvider = $tokenProvider ?? new AccessTokenProvider($config, $httpClient);
     }
 
     /**
@@ -43,6 +67,8 @@ final class TudorApiClient
      * catalog, not a delta.
      *
      * @param StockAvailability[] $items
+     *
+     * @throws TudorApiException
      */
     public function batchUpsertStocks(array $items): BatchSyncResult
     {
@@ -51,11 +77,7 @@ final class TudorApiClient
             $items,
         ));
 
-        $response = $this->httpClient->post(
-            $this->endpoint('/v1/stocks/batch'),
-            $body,
-            $this->headers('application/x-ndjson'),
-        );
+        $response = $this->send('POST', '/v1/stocks/batch', $body, 'application/x-ndjson');
 
         $results = array_map(
             StockImportResult::fromArray(...),
@@ -69,13 +91,16 @@ final class TudorApiClient
      * POST /v1/stocks — create a single stock record. Prefer batchUpsertStocks() for regular
      * syncs; this is here for one-off corrections or an initial single-item connectivity test
      * during staging onboarding.
+     *
+     * @throws TudorApiException
      */
     public function createStock(StockAvailability $item): StockImportResult
     {
-        $response = $this->httpClient->post(
-            $this->endpoint('/v1/stocks'),
+        $response = $this->send(
+            'POST',
+            '/v1/stocks',
             json_encode($this->toStockCreatePayload($item), JSON_THROW_ON_ERROR),
-            $this->headers('application/json'),
+            'application/json',
         );
 
         $data = json_decode($response->body, true, flags: JSON_THROW_ON_ERROR);
@@ -91,14 +116,16 @@ final class TudorApiClient
     /**
      * GET /v1/point-of-sales — this retailer's own active, non-virtual TUDOR points of sale.
      * Useful to confirm which locations exist before wiring up per-store click & collect
-     * detail in StockAvailability::$storesAvailabilityDetails (see PointOfSale's docblock for
-     * the open question on RSWI id mapping).
+     * detail in StockAvailability::$storesAvailabilityDetails, keyed by these stoId values
+     * (TUDOR's docs: "stoId represents the identifier, often named RSWI").
      *
      * @return PointOfSale[]
+     *
+     * @throws TudorApiException
      */
     public function getPointOfSales(): array
     {
-        $response = $this->httpClient->get($this->endpoint('/v1/point-of-sales'), $this->headers());
+        $response = $this->send('GET', '/v1/point-of-sales');
 
         $data = json_decode($response->body, true, flags: JSON_THROW_ON_ERROR);
 
@@ -108,12 +135,68 @@ final class TudorApiClient
     /**
      * GET /v1/stocks — paginated list of this retailer's currently published stock records,
      * useful for reconciliation (confirming what TUDOR thinks is live after a sync).
+     *
+     * @throws TudorApiException
      */
     public function getStocks(int $page = 0, int $size = 100): HttpResponse
     {
         $query = http_build_query(['page' => $page, 'size' => $size]);
 
-        return $this->httpClient->get($this->endpoint('/v1/stocks') . '?' . $query, $this->headers());
+        return $this->send('GET', '/v1/stocks?' . $query);
+    }
+
+    /**
+     * One API call with the cached token; on 401, a fresh token and a single retry.
+     *
+     * @throws TudorApiException
+     */
+    private function send(string $method, string $path, ?string $body = null, ?string $contentType = null): HttpResponse
+    {
+        $response = $this->dispatch($method, $path, $body, $contentType);
+
+        if ($response->statusCode === 401) {
+            $this->tokenProvider->invalidate();
+            $response = $this->dispatch($method, $path, $body, $contentType);
+        }
+
+        if ($response->statusCode < 200 || $response->statusCode >= 300) {
+            throw new ApiResponseException(
+                $method,
+                strtok($path, '?'),
+                $response->statusCode,
+                $this->errorExcerpt($response->body),
+            );
+        }
+
+        return $response;
+    }
+
+    private function dispatch(string $method, string $path, ?string $body, ?string $contentType): HttpResponse
+    {
+        $headers = $this->headers($contentType);
+
+        return $method === 'GET'
+            ? $this->httpClient->get($this->endpoint($path), $headers)
+            : $this->httpClient->post($this->endpoint($path), (string) $body, $headers);
+    }
+
+    /**
+     * Start of an error body, on one line, with the credentials scrubbed out in case the API
+     * ever echoes them back.
+     */
+    private function errorExcerpt(string $body): string
+    {
+        $secrets = array_filter(
+            [$this->config->clientSecret, $this->config->tudorApiKey, (string) $this->lastAccessToken],
+            static fn (string $value): bool => $value !== '',
+        );
+        $excerpt = str_replace($secrets, '***', $body);
+        $excerpt = preg_replace('/Bearer\s+\S+/i', 'Bearer ***', $excerpt) ?? '';
+        $excerpt = trim(preg_replace('/\s+/', ' ', $excerpt) ?? '');
+
+        return mb_strlen($excerpt) > self::ERROR_EXCERPT_LENGTH
+            ? mb_substr($excerpt, 0, self::ERROR_EXCERPT_LENGTH) . '…'
+            : $excerpt;
     }
 
     /**
@@ -160,10 +243,10 @@ final class TudorApiClient
      */
     private function headers(?string $contentType = null): array
     {
+        $this->lastAccessToken = $this->tokenProvider->getAccessToken();
+
         $headers = [
-            // Unconfirmed scheme — see class docblock. Swap for whatever TUDOR's real
-            // credentials require (a plain API-key header is just as likely as bearer auth).
-            'Authorization' => 'Bearer ' . $this->config->tudorApiKey,
+            'Authorization' => 'Bearer ' . $this->lastAccessToken,
         ];
 
         if ($contentType !== null) {

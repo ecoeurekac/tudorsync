@@ -54,7 +54,8 @@ tudorsync/
 
 Each platform module implements `Tudorsync\Core\Contract\CatalogConnectorInterface`
 (one `CatalogConnector` class) to translate that platform's own catalog/stock data into
-`Tudorsync\Core\Domain\AvailabilityItem` — that's the only thing that differs per platform.
+`Tudorsync\Core\Domain\StockAvailability` — that's the only thing that differs per platform.
+(Earlier versions of this README called it `AvailabilityItem`; that class never existed.)
 Everything else (visibility rules, UTM injection, locale URL resolution, talking to
 TUDOR's API, per-client reporting) lives once in `core/` and is shared by all five clients.
 
@@ -81,9 +82,45 @@ optional `homeDeliveryTiming`, and optional `storesAvailabilityDetails` (per-poi
 click & collect detail keyed by a TUDOR "RSWI" id — **not confirmed to be the same as the
 `stoId` returned by `/v1/point-of-sales`**).
 
-**Not in the spec files, still needed from TUDOR directly:** the staging/production base
-URLs and the authentication scheme — neither OAS nor RAML declares a `servers:`/
-`securitySchemes` block. `TudorApiClient` has clearly-flagged placeholders for both.
+Neither OAS nor RAML declares base URLs or an auth scheme; both come from TUDOR's "API
+Spotlight" page (`doc/Community Asset_ stock-retail-publish-public-rest-api*.zip`) and the
+official Postman collection (`doc/eStock collections/`), and were verified against PREPROD on
+2026-09-30:
+
+| | PREPROD (`Environment::Staging`) | PROD (`Environment::Production`) |
+|---|---|---|
+| API base URL | `https://pp-api.services.mytudorwatch.com/estock-retail/retailer` | `https://api.services.mytudorwatch.com/estock-retail/retailer` |
+| Token URL | `https://login.rolex.com/oauth2/aus3qkuvb8CliPktG417/v1/token` | `https://login.rolex.com/oauth2/aus3rz4418Eok4GHr417/v1/token` |
+
+### Authentication (OAuth2 client credentials)
+
+Each store gets an Okta application per environment (client ID + client secret), passed in
+`ClientConfig::$clientId` / `$clientSecret`. `Api\Auth\AccessTokenProvider` exchanges them
+for an access token:
+
+- `POST` to the token URL with `Content-Type: application/x-www-form-urlencoded` (**not**
+  JSON, although TUDOR's HTML docs show a JSON body) and the fields `grant_type=client_credentials`,
+  `client_id`, `client_secret`, `scope=com.myrolex.api.estock.publish app_owner`.
+- The response carries `access_token`, `token_type: Bearer` and `expires_in` (300 s today).
+- The token is kept in memory and reused until 30 s before it expires
+  (`AccessTokenProvider::EXPIRY_MARGIN_SECONDS`); a new `TudorApiClient` starts with no token,
+  so in practice a sync run requests one. The clock is behind `Api\Auth\ClockInterface`
+  (PSR-20 shape, no dependency) so tests can expire it.
+- Every API call sends `Authorization: Bearer <access_token>`. On a 401 the token is dropped,
+  a new one is requested and the call is retried **once**; a second 401 is an error.
+
+Errors are `Api\Exception\TudorApiException` subclasses, whose messages never contain the
+client secret or the token:
+
+| Exception | When |
+|---|---|
+| `MissingCredentialsException` | Client ID or secret empty — raised before any request. |
+| `CredentialsRejectedException` | Token endpoint answered 400/401/403 ("TUDOR rejected the client credentials"; `$oauthError` holds Okta's code, e.g. `invalid_client`). |
+| `TokenRequestException` | Token endpoint failed otherwise (5xx, no `access_token`...). |
+| `ApiResponseException` | An API call returned a non-2xx status (`$statusCode`, `$method`, `$path`). 207 on `/v1/stocks/batch` is a partial success, not an error: see `BatchSyncResult`. |
+
+`ClientConfig::$tudorApiKey` is deprecated and ignored; it stays (default `''`) only so the
+platform modules keep working unchanged until they pass the client ID/secret.
 
 ## TUDOR's monthly sales report
 
@@ -142,13 +179,14 @@ installation — see "What's still open" below for what each still needs before 
   utm_campaign=tudor_e-stock_program`).
 - Multi-language stores provide one product URL per language/region plus a default/fallback
   URL (`LocaleUrlResolver`).
-- Two environments, staging and production, each with their own TUDOR-issued API key
-  (`Environment`, `ClientConfig`).
+- Two environments, staging and production, each with their own TUDOR-issued OAuth client
+  ID/secret (`Environment`, `ClientConfig`).
 
 ## What's still open
 
-- **Base URL and auth scheme** for TUDOR's API — not in the spec files (see above); needs
-  to come from TUDOR directly with the real credentials.
+- **Modules still on `tudorApiKey`**: core authenticates with OAuth2 since 2026-10-02, but
+  the three modules don't pass `clientId`/`clientSecret` to `ClientConfig` yet (see
+  `intercambio/2026-10-02-jorge-oauth-listo.md`). Remove `tudorApiKey` once all three have.
 - **Per-platform `CatalogConnector` implementations exist but are unverified against a real
   store.** Each uses a *new* field (attribute/Feature/meta) for the TUDOR model code rather
   than an existing SKU or attribute — confirm with each client whether they already have a

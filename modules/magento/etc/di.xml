@@ -7,6 +7,7 @@
                 <item name="tudorsync_sync_run" xsi:type="object">Tudorsync\EcommerceSync\Console\Command\SyncRunCommand</item>
                 <item name="tudorsync_connection_test" xsi:type="object">Tudorsync\EcommerceSync\Console\Command\TestConnectionCommand</item>
                 <item name="tudorsync_model_code_fill" xsi:type="object">Tudorsync\EcommerceSync\Console\Command\ModelCodeFillCommand</item>
+                <item name="tudorsync_realtime_publish" xsi:type="object">Tudorsync\EcommerceSync\Console\Command\RealtimePublishCommand</item>
                 <item name="tudorsync_report_programme_sales" xsi:type="object">Tudorsync\EcommerceSync\Console\Command\ProgrammeSalesCommand</item>
             </argument>
         </arguments>
@@ -33,6 +34,21 @@
         <arguments>
             <argument name="productAction" xsi:type="object">Magento\Catalog\Model\Product\Action\Proxy</argument>
         </arguments>
+    </type>
+
+    <type name="Tudorsync\EcommerceSync\Console\Command\RealtimePublishCommand">
+        <arguments>
+            <argument name="syncRunner" xsi:type="object">Tudorsync\EcommerceSync\Model\SyncRunner\Proxy</argument>
+        </arguments>
+    </type>
+
+    <!-- Real-time publishing: queue the TUDOR model code of whatever moved (Model\Realtime).
+         MSI only; stores without MSI are covered by the stock item observer in etc/events.xml. -->
+    <type name="Magento\InventoryReservationsApi\Model\AppendReservationsInterface">
+        <plugin name="tudorsync_queue_on_reservations" type="Tudorsync\EcommerceSync\Plugin\QueueOnReservations"/>
+    </type>
+    <type name="Magento\InventoryApi\Api\SourceItemsSaveInterface">
+        <plugin name="tudorsync_queue_on_source_items_save" type="Tudorsync\EcommerceSync\Plugin\QueueOnSourceItemsSave"/>
     </type>
 
     <type name="Tudorsync\EcommerceSync\Console\Command\ProgrammeSalesCommand">
@@ -67,6 +83,11 @@
         </arguments>
     </virtualType>
     <type name="Tudorsync\EcommerceSync\Model\SyncRunner">
+        <arguments>
+            <argument name="logger" xsi:type="object">Tudorsync\EcommerceSync\Logger</argument>
+        </arguments>
+    </type>
+    <type name="Tudorsync\EcommerceSync\Model\Realtime\ChangeRecorder">
         <arguments>
             <argument name="logger" xsi:type="object">Tudorsync\EcommerceSync\Logger</argument>
         </arguments>

@@ -29,6 +29,7 @@ class Config
     private const XML_PATH_SKU_PREFIX = 'tudorsync/model_code/sku_prefix';
     private const XML_PATH_SKU_PATTERN = 'tudorsync/model_code/sku_pattern';
     private const XML_PATH_SKU_REPLACEMENT = 'tudorsync/model_code/sku_replacement';
+    private const XML_PATH_REALTIME_ENABLED = 'tudorsync/general/realtime_enabled';
     private const XML_PATH_STORE_NAME = 'general/store_information/name';
     private const XML_PATH_LOCALE_CODE = 'general/locale/code';
 
@@ -73,6 +74,15 @@ class Config
     public function getClientSecret(Environment $environment, ?int $storeId = null): string
     {
         return $this->getString(sprintf(self::XML_PATH_CLIENT_SECRET, $environment->value), $storeId);
+    }
+
+    /**
+     * Republish a TUDOR model code within a minute of a sale or stock change (Model\Realtime),
+     * on top of the scheduled full sync.
+     */
+    public function isRealtimeEnabled(): bool
+    {
+        return $this->scopeConfig->isSetFlag(self::XML_PATH_REALTIME_ENABLED);
     }
 
     public function hasCredentials(?int $storeId = null): bool

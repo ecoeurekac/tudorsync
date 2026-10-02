@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <!-- Real-time publishing: queue the TUDOR model code of what changed (Model\Realtime). -->
+    <event name="catalog_product_save_after">
+        <observer name="tudorsync_queue_on_product_change" instance="Tudorsync\EcommerceSync\Observer\QueueOnProductChange"/>
+    </event>
+    <event name="catalog_product_delete_after">
+        <observer name="tudorsync_queue_on_product_change" instance="Tudorsync\EcommerceSync\Observer\QueueOnProductChange"/>
+    </event>
+    <event name="cataloginventory_stock_item_save_after">
+        <observer name="tudorsync_queue_on_product_change" instance="Tudorsync\EcommerceSync\Observer\QueueOnProductChange"/>
+    </event>
+</config>

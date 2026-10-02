@@ -38,6 +38,7 @@ bin/magento tudorsync:catalog:preview [--all] [--json=fichero.json]  # en seco: 
 bin/magento tudorsync:connection:test                                # GET /v1/point-of-sales
 bin/magento tudorsync:sync:run                                       # sync real, igual que el cron
 bin/magento tudorsync:model-code:fill [--apply] [--overwrite] [--all]  # rellena tudor_model_code (en seco sin --apply)
+bin/magento tudorsync:realtime:publish [--send]                      # cola de cambios TUDOR y qué se enviaría (en seco sin --send)
 bin/magento tudorsync:report:programme-sales [--month=AAAA-MM] [--store=N] [--all-orders]  # cifras de ventas del informe mensual
 ```
 
@@ -58,8 +59,40 @@ con otro o se excluye, y por qué.
 
 - Tarea `tudorsync_run_sync` (grupo `default`), frecuencia configurable (por defecto cada hora).
   Sin clave o sin país, se salta la ejecución sin marcar error.
+- Tarea `tudorsync_publish_pending`, **cada minuto**: publica solo los modelos TUDOR que han
+  cambiado (ver «Publicación en el minuto»). Con la cola vacía no hace nada.
 - Log propio: `var/log/tudorsync.log`. El último test y el último sync (cron, admin o CLI) se
   guardan en la tabla `flag` y se ven en la pantalla de configuración.
+
+## Publicación en el minuto (solo TUDOR)
+
+TUDOR pide disponibilidad «en tiempo real»: con piezas únicas, un sync cada hora deja un reloj
+vendido anunciado hasta 59 min. Además del sync completo, el módulo vigila los cambios **solo de
+productos TUDOR** (los que dan código de modelo con la misma regla que el sync) y los publica en
+el minuto siguiente. Interruptor: *Publish Changes Within a Minute* (`tudorsync/general/realtime_enabled`, sí por defecto).
+
+1. **Qué se vigila** (`Model\Realtime\ChangeRecorder`; nunca lanza excepción, va dentro del checkout):
+   - reservas MSI (`AppendReservationsInterface`, plugin): pedido hecho, cancelado, enviado, abonado;
+   - stock guardado por MSI (`SourceItemsSaveInterface`, plugin): admin, import del ERP de Quera;
+   - ficha guardada o borrada (`catalog_product_save_after` / `_delete_after`): se encolan el
+     código de antes y el de después;
+   - stock antiguo sin MSI (`cataloginventory_stock_item_save_after`), para tiendas sin MSI.
+
+   Lo que se escribe con SQL directo (parte del import del ERP de Quera) no pasa por aquí: lo
+   recoge el sync completo.
+2. **Cola:** tabla `tudorsync_pending_stock`, una fila por código de modelo (no por producto). Solo
+   se llama a TUDOR desde el cron, nunca durante la compra.
+3. **Cron cada minuto** (`SyncRunner::publishPending()`):
+   - todos los modelos de la cola siguen disponibles → un `POST /v1/stocks` por modelo (registro
+     completo, cantidad sumada de todas sus fichas, igual que en el batch);
+   - alguno ya no está disponible (agotado, desactivado, borrado), o hay más de 20 → **un batch
+     completo**: TUDOR pone a 0 lo que falta, que es la forma documentada de retirar un modelo;
+   - un modelo que falla sigue en la cola y se reintenta al minuto siguiente.
+4. **Red de seguridad:** el sync completo sigue cada hora y vacía la cola de todo lo anterior a él.
+5. Mientras no se pueda hablar con TUDOR (credenciales, OAuth en core, país) la cola se conserva.
+
+`tudorsync:realtime:publish` enseña la cola y qué se haría, sin llamar a TUDOR; `--send` hace lo
+mismo que el cron.
 
 ## Pedidos que llegan desde TUDOR (informe mensual)
 

@@ -28,4 +28,21 @@
             <column name="created_at"/>
         </index>
     </table>
+    <!--
+        TUDOR model codes whose stock or product data changed since they were last published
+        (Model\Realtime\PendingQueue). One row per model code, re-queuing just refreshes it.
+        Written by the stock/order/product hooks, emptied every minute by Cron\PublishPending
+        and by every successful full sync. Losing it is harmless: the hourly full batch
+        publishes everything anyway.
+    -->
+    <table name="tudorsync_pending_stock" resource="default" engine="innodb"
+           comment="TUDOR e-Stock: model codes waiting to be republished">
+        <column xsi:type="varchar" name="model_code" length="64" nullable="false" comment="TUDOR model code (mc)"/>
+        <column xsi:type="varchar" name="reason" length="255" nullable="true" comment="Last change that queued it"/>
+        <column xsi:type="timestamp" name="queued_at" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Last queued at"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="model_code"/>
+        </constraint>
+    </table>
 </schema>

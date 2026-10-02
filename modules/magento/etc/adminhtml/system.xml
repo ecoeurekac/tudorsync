@@ -51,6 +51,11 @@
                     <label>Sync Frequency (cron expression)</label>
                     <comment>Standard cron expression, e.g. "0 * * * *" for hourly. Applies globally regardless of store/website scope.</comment>
                 </field>
+                <field id="realtime_enabled" translate="label comment" type="select" sortOrder="65" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Publish Changes Within a Minute</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>When a TUDOR watch is sold or its stock or product data changes, republish that model within a minute instead of waiting for the next full sync. Only TUDOR products are watched. The full sync keeps running as a safety net.</comment>
+                </field>
                 <field id="status_and_actions" translate="label" type="text" sortOrder="70" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Connection &amp; Sync</label>
                     <frontend_model>Tudorsync\EcommerceSync\Block\Adminhtml\System\Config\StatusAndActions</frontend_model>

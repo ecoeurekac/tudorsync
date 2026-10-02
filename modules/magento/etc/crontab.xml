@@ -4,5 +4,9 @@
         <job name="tudorsync_run_sync" instance="Tudorsync\EcommerceSync\Cron\RunSync" method="execute">
             <config_path>tudorsync/general/cron_schedule</config_path>
         </job>
+        <!-- Real-time: models queued by a sale or a stock/product change (empty queue = no-op). -->
+        <job name="tudorsync_publish_pending" instance="Tudorsync\EcommerceSync\Cron\PublishPending" method="execute">
+            <schedule>* * * * *</schedule>
+        </job>
     </group>
 </config>

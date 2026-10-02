@@ -85,6 +85,18 @@ Acordado con Bea el 02-10. La instalación de Magento donde vive este checkout p
   (`private_html/.ssh-tudorsync` y `core.sshCommand`) para poder hacer push. Apagar ahí PQnetStock y los
   crons del ERP si Bea no dice lo contrario: con las dos instalaciones activas, los pedidos de prueba
   descontarían stock real.
+- **Desde el 02-10 Magento está en modo PRODUCCIÓN** (código compilado en `generated/`). Consecuencias:
+  - Antes de llevar a producción **cualquier** cambio de `modules/magento` (o de `core/` que use el
+    módulo), lanzar `bin/magento setup:di:compile` en el staging, comprobar que
+    `grep -c __set_state generated/metadata/global.php` da 0 y pasar `tudorsync:catalog:preview`.
+  - En producción, un cambio de código exige `setup:di:compile` + `setup:static-content:deploy` +
+    `cache:flush`. Borrar `generated/code/Tudorsync` solo sirve en developer.
+  - **Prohibido un objeto como valor por defecto de un parámetro de constructor** (`Foo $foo = new Foo()`,
+    PHP 8.1) en cualquier clase que cree el DI de Magento: `di:compile` lo escribe como `Foo::__set_state()`,
+    que no existe, y **toda** petición y todo `bin/magento` fallan («There is an error in
+    generated/metadata/global.php»). Usar `?Foo $foo = null` y `$this->foo = $foo ?? new Foo()`. Pasó el
+    02-10 en `CatalogConnector` (arreglado en `55d2468`). En `core/` hoy no rompe porque el módulo crea
+    `TudorApiClient` con `new`, pero lo rompería si algún día se inyectara por DI.
 - **En el go-live:** si se recargan pedidos desde la instalación vieja, vaciar `tudorsync_order_attribution`
   y `tudorsync_pending_stock`. Comprobar que la config `tudorsync/*` (regla de SKU, país ES) sigue en la
   BD y, si se han perdido los códigos, relanzar `bin/magento tudorsync:model-code:fill --apply`.

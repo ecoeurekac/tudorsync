@@ -153,7 +153,14 @@ Sin MSI el módulo también funciona: usa la cantidad física (el preview lo avi
 
 **Si cambias constructores** de clases del módulo en modo developer, borra
 `generated/code/Tudorsync`: los interceptores generados copian el constructor antiguo y dan
-un error fatal.
+un error fatal. **En modo producción** (Quera desde el 02-10) hay que `setup:di:compile`; antes de
+subir un cambio, compilar en staging y comprobar que `generated/metadata/global.php` no tiene
+`__set_state`.
+
+**Nunca `= new Clase()` como valor por defecto de un parámetro de constructor** en clases que crea el
+DI de Magento: `di:compile` lo serializa como `Clase::__set_state()`, que no existe, y la tienda entera
+deja de arrancar en modo producción. Usar `?Clase $x = null` y crearlo dentro del constructor (ver
+`CatalogConnector`).
 
 ## Pendiente
 

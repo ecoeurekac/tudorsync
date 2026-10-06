@@ -93,7 +93,7 @@ el minuto siguiente. Interruptor: *Publish Changes Within a Minute* (`tudorsync/
      cada hora no se pausa. Un fallo de credenciales o del servicio de token también corta la
      ejecución, porque daría lo mismo con todos los modelos.
 4. **Red de seguridad:** el sync completo sigue cada hora y vacía la cola de todo lo anterior a él.
-5. Mientras no se pueda hablar con TUDOR (credenciales, OAuth en core, país) la cola se conserva.
+5. Mientras no se pueda hablar con TUDOR (credenciales, país) la cola se conserva.
 
 `tudorsync:realtime:publish` enseña la cola y qué se haría, sin llamar a TUDOR; `--send` hace lo
 mismo que el cron.
@@ -167,8 +167,4 @@ deja de arrancar en modo producción. Usar `?Clase $x = null` y crearlo dentro d
 - Click & collect por punto de venta (`storesAvailabilityDetails`, RSWI): depende de TUDOR.
 - MSI con **varias** fuentes o stocks por website: hoy se usa el stock del website de la
   tienda por defecto (en Quera solo hay uno).
-- **Autenticación OAuth en core:** las credenciales ya se guardan en el admin, pero hasta que
-  `ClientConfig`/`TudorApiClient` pidan el token a Okta, test y sync se saltan con el aviso
-  «OAuth pending in core». Al llegar, pasarlas en `Model\Config::getClientConfig()` y quitar el
-  aviso temporal de `SyncRunner::getCredentialsProblem()`.
 - Una tienda con varios mercados (un país por website) necesitaría un batch por país.

@@ -318,11 +318,6 @@ class SyncRunner
             return (string) __('No TUDOR Client ID / Client Secret configured for the %1 environment.', $clientConfig->environment->value);
         }
 
-        if ($clientConfig->tudorApiKey === '') {
-            // Temporary: remove once core requests the OAuth token itself.
-            return (string) __('TUDOR credentials saved, but tudorsync/core cannot authenticate with them yet (OAuth pending in core).');
-        }
-
         return null;
     }
 

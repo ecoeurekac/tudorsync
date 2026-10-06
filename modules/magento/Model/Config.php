@@ -47,10 +47,11 @@ class Config
             market: $this->getCountry($storeId),
             languages: [], // not used by the Magento connector: locales come from the store views
             environment: $environment,
-            // TUDOR authenticates with OAuth2 client credentials (getClientId()/getClientSecret()),
-            // which core's ClientConfig doesn't take yet — pending in core, coordinate with Jorge.
-            tudorApiKey: '',
             offersClickAndCollect: $this->scopeConfig->isSetFlag(self::XML_PATH_CLICK_AND_COLLECT_ENABLED, ScopeInterface::SCOPE_STORE, $storeId),
+            // OAuth2 client credentials of the retailer's Okta app for this environment: core's
+            // TudorApiClient exchanges them for the access token.
+            clientId: $this->getClientId($environment, $storeId),
+            clientSecret: $this->getClientSecret($environment, $storeId),
         );
     }
 

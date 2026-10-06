@@ -184,8 +184,8 @@ installation — see "What's still open" below for what each still needs before 
 
 ## What's still open
 
-- **Modules still on `tudorApiKey`**: core authenticates with OAuth2 since 2026-10-02, but
-  the three modules don't pass `clientId`/`clientSecret` to `ClientConfig` yet (see
+- **Modules still on `tudorApiKey`**: core authenticates with OAuth2 since 2026-10-02. Magento
+  passes `clientId`/`clientSecret` since 2026-10-06; PrestaShop and WooCommerce don't yet (see
   `intercambio/2026-10-02-jorge-oauth-listo.md`). Remove `tudorApiKey` once all three have.
 - **Per-platform `CatalogConnector` implementations exist but are unverified against a real
   store.** Each uses a *new* field (attribute/Feature/meta) for the TUDOR model code rather

@@ -1,0 +1,176 @@
+<?php
+/**
+ * Programme data: connection, catalog sent to TUDOR, real-time queue, orders from tudorwatch.com.
+ *
+ * @var \Tudorsync\EcommerceSync\Block\Adminhtml\Data\Overview $block
+ * @var \Magento\Framework\Escaper $escaper
+ */
+use Tudorsync\EcommerceSync\Block\Adminhtml\Data\Overview;
+use Tudorsync\EcommerceSync\Model\CatalogSnapshot;
+
+$info = $block->getConnectionInfo();
+$snapshot = $block->getSnapshot();
+$filter = $block->getFilter();
+$urls = $block->getSentUrls();
+$pending = $block->getPending();
+$orders = $block->getAttributedOrders();
+$yesNo = static fn (bool $value) => $value ? __('Yes') : __('No');
+$statusLabels = [
+    CatalogSnapshot::STATUS_SENT => __('Sent'),
+    CatalogSnapshot::STATUS_MERGED => __('Merged'),
+    CatalogSnapshot::STATUS_EXCLUDED => __('Excluded'),
+];
+?>
+<div class="tudorsync-data">
+    <p>
+        <?= $escaper->escapeHtml(__('What this store publishes to TUDOR and what comes back from the programme. Nothing on this page sends anything to TUDOR.')) ?>
+        <a href="<?= $escaper->escapeUrl($block->getReportUrl()) ?>"><?= $escaper->escapeHtml(__('Monthly report')) ?></a> ·
+        <a href="<?= $escaper->escapeUrl($block->getConfigUrl()) ?>"><?= $escaper->escapeHtml(__('Settings and Test Connection / Run Sync Now')) ?></a>
+    </p>
+
+    <div class="admin__page-section">
+        <div class="admin__page-section-title"><strong class="title"><?= $escaper->escapeHtml(__('Connection with TUDOR')) ?></strong></div>
+        <table class="admin__table-secondary">
+            <tbody>
+            <tr><th><?= $escaper->escapeHtml(__('Environment')) ?></th><td><?= $escaper->escapeHtml($info['environment'] === 'production' ? __('Production (tudorwatch.com)') : __('Staging (PREPROD, not shown on tudorwatch.com)')) ?></td></tr>
+            <tr><th><?= $escaper->escapeHtml(__('Market')) ?></th><td><?= $escaper->escapeHtml($info['market'] ?: '—') ?></td></tr>
+            <tr><th><?= $escaper->escapeHtml(__('Credentials for this environment')) ?></th><td><?= $escaper->escapeHtml($yesNo((bool) $info['has_credentials'])) ?></td></tr>
+            <tr><th><?= $escaper->escapeHtml(__('Last connection test')) ?></th><td><?= $escaper->escapeHtml($info['last_test'] ?: '—') ?></td></tr>
+            <tr><th><?= $escaper->escapeHtml(__('Last full sync')) ?></th><td><?= $escaper->escapeHtml($info['last_sync'] ?: '—') ?></td></tr>
+            <tr><th><?= $escaper->escapeHtml(__('Full sync schedule (cron)')) ?></th><td><code><?= $escaper->escapeHtml($info['cron_schedule'] ?: '—') ?></code></td></tr>
+            <tr><th><?= $escaper->escapeHtml(__('Real-time publishing (every minute)')) ?></th><td><?= $escaper->escapeHtml($yesNo((bool) $info['realtime_enabled'])) ?>
+                <?php if ($info['paused_until']): ?> · <?= $escaper->escapeHtml(__('paused by TUDOR (HTTP 429) until %1', $info['paused_until'])) ?><?php endif; ?></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="admin__page-section" id="catalog">
+        <div class="admin__page-section-title"><strong class="title"><?= $escaper->escapeHtml(__('Catalog that would be sent now')) ?></strong></div>
+        <?php if ($snapshot === null): ?>
+            <div class="message message-error error"><div><?= $escaper->escapeHtml(__('The catalog could not be read: %1', (string) $block->getSnapshotError())) ?></div></div>
+        <?php else: ?>
+            <?php $counts = $snapshot->countByStatus(); ?>
+            <p>
+                <?= $escaper->escapeHtml(__('%1 TUDOR model(s) available to send, from %2 product(s). %3 product(s) left out.', count($snapshot->items), $counts[CatalogSnapshot::STATUS_SENT], $counts[CatalogSnapshot::STATUS_EXCLUDED] + $counts[CatalogSnapshot::STATUS_MERGED])) ?>
+            </p>
+            <?php if ($block->getExclusionReasons() !== []): ?>
+                <ul>
+                    <?php foreach ($block->getExclusionReasons() as $reason => $count): ?>
+                        <li><?= $escaper->escapeHtml($count) ?> × <?= $escaper->escapeHtml($reason) ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+            <?php foreach ($snapshot->warnings as $warning): ?>
+                <div class="message message-warning warning"><div><?= $escaper->escapeHtml($warning) ?></div></div>
+            <?php endforeach; ?>
+            <p>
+                <?php foreach ([Overview::FILTER_SENT => __('Sent'), Overview::FILTER_EXCLUDED => __('Left out'), Overview::FILTER_ALL => __('All')] as $key => $label): ?>
+                    <?php if ($key === $filter): ?>
+                        <strong><?= $escaper->escapeHtml($label) ?></strong>
+                    <?php else: ?>
+                        <a href="<?= $escaper->escapeUrl($block->getFilterUrl($key)) ?>"><?= $escaper->escapeHtml($label) ?></a>
+                    <?php endif; ?>
+                    <?php if ($key !== Overview::FILTER_ALL): ?> · <?php endif; ?>
+                <?php endforeach; ?>
+            </p>
+            <div class="admin__data-grid-wrap admin__data-grid-wrap-static">
+                <table class="data-grid">
+                    <thead>
+                    <tr>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('TUDOR model')) ?></th>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('SKU')) ?></th>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('Product')) ?></th>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('Salable qty')) ?></th>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('Status')) ?></th>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('Reason / URL sent')) ?></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($block->getProducts() as $row): ?>
+                        <tr class="data-row">
+                            <td><?= $escaper->escapeHtml($row['model_code'] ?? '—') ?>
+                                <?php if ($row['model_code'] !== null): ?><br><small><?= $escaper->escapeHtml($row['model_code_source'] === 'attribute' ? __('from tudor_model_code') : __('from the SKU rule')) ?></small><?php endif; ?></td>
+                            <td><?= $escaper->escapeHtml($row['sku']) ?></td>
+                            <td><a href="<?= $escaper->escapeUrl($block->getProductUrl((int) $row['product_id'])) ?>"><?= $escaper->escapeHtml($row['name']) ?></a></td>
+                            <td><?= $escaper->escapeHtml($row['salable_qty'] ?? '—') ?></td>
+                            <td>
+                                <span class="<?= $row['status'] === CatalogSnapshot::STATUS_SENT ? 'grid-severity-notice' : 'grid-severity-minor' ?>"><span><?= $escaper->escapeHtml($statusLabels[$row['status']] ?? $row['status']) ?></span></span>
+                            </td>
+                            <td>
+                                <?php if ($row['status'] === CatalogSnapshot::STATUS_SENT && isset($urls[$row['model_code']])): ?>
+                                    <a href="<?= $escaper->escapeUrl($urls[$row['model_code']]) ?>" target="_blank" rel="noopener"><?= $escaper->escapeHtml(__('Product page')) ?></a>
+                                <?php else: ?>
+                                    <?= $escaper->escapeHtml($row['reason'] ?? '') ?>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <div class="admin__page-section">
+        <div class="admin__page-section-title"><strong class="title"><?= $escaper->escapeHtml(__('Waiting for real-time publishing')) ?></strong></div>
+        <?php if ($pending === []): ?>
+            <p><?= $escaper->escapeHtml(__('Nothing queued.')) ?></p>
+        <?php else: ?>
+            <p><?= $escaper->escapeHtml(__('%1 TUDOR model(s) changed since they were last published.', count($pending))) ?></p>
+            <div class="admin__data-grid-wrap admin__data-grid-wrap-static">
+                <table class="data-grid">
+                    <thead>
+                    <tr>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('TUDOR model')) ?></th>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('Change')) ?></th>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('Queued (UTC)')) ?></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($pending as $row): ?>
+                        <tr class="data-row">
+                            <td><?= $escaper->escapeHtml($row['model_code']) ?></td>
+                            <td><?= $escaper->escapeHtml($row['reason']) ?></td>
+                            <td><?= $escaper->escapeHtml($row['queued_at']) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <div class="admin__page-section">
+        <div class="admin__page-section-title"><strong class="title"><?= $escaper->escapeHtml(__('Orders from tudorwatch.com')) ?></strong></div>
+        <?php if ($orders === []): ?>
+            <p><?= $escaper->escapeHtml(__('No order has come from tudorwatch.com yet.')) ?></p>
+        <?php else: ?>
+            <div class="admin__data-grid-wrap admin__data-grid-wrap-static">
+                <table class="data-grid">
+                    <thead>
+                    <tr>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('Order')) ?></th>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('Placed (UTC)')) ?></th>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('Status')) ?></th>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('Total')) ?></th>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('Landed from TUDOR (UTC)')) ?></th>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('Campaign')) ?></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($orders as $order): ?>
+                        <tr class="data-row">
+                            <td><a href="<?= $escaper->escapeUrl($block->getOrderUrl((int) $order['entity_id'])) ?>"><?= $escaper->escapeHtml($order['increment_id']) ?></a></td>
+                            <td><?= $escaper->escapeHtml($order['created_at']) ?></td>
+                            <td><?= $escaper->escapeHtml($order['status']) ?></td>
+                            <td><?= $escaper->escapeHtml(number_format((float) $order['grand_total'], 2, ',', '.') . ' ' . $order['order_currency_code']) ?></td>
+                            <td><?= $escaper->escapeHtml($order['landed_at'] ?? '—') ?></td>
+                            <td><?= $escaper->escapeHtml(trim(($order['utm_medium'] ?? '') . ' / ' . ($order['utm_campaign'] ?? ''), ' /')) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>

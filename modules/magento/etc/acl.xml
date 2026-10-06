@@ -10,6 +10,9 @@
                         </resource>
                     </resource>
                 </resource>
+                <resource id="Magento_Reports::report">
+                    <resource id="Tudorsync_EcommerceSync::reports" title="TUDOR e-Stock: monthly report and programme data" sortOrder="90"/>
+                </resource>
             </resource>
         </resources>
     </acl>

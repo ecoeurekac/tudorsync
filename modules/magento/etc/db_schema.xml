@@ -45,4 +45,50 @@
             <column name="model_code"/>
         </constraint>
     </table>
+    <!--
+        Figures of TUDOR's monthly report that this store can't count by itself, typed in the admin
+        (Reports > TUDOR e-Stock > Monthly report): web analytics until core brings them from GA4,
+        and the boutique figures, which TUDOR itself expects to be estimated by the staff. The
+        online sales are never stored here: they are counted from the orders when the report is built.
+    -->
+    <table name="tudorsync_report_period" resource="default" engine="innodb"
+           comment="TUDOR e-Stock monthly report: manually entered figures per month">
+        <column xsi:type="varchar" name="period" length="7" nullable="false" comment="Month, YYYY-MM"/>
+        <column xsi:type="int" name="sessions" unsigned="true" nullable="true" comment="Sessions from tudorwatch.com"/>
+        <column xsi:type="int" name="unique_visitors" unsigned="true" nullable="true" comment="Unique visitors from tudorwatch.com"/>
+        <column xsi:type="int" name="added_to_cart" unsigned="true" nullable="true" comment="People who added a TUDOR watch to the cart"/>
+        <column xsi:type="int" name="boutique_sales" unsigned="true" nullable="true" comment="TUDOR watches sold in boutique through the programme"/>
+        <column xsi:type="int" name="boutique_appointments" unsigned="true" nullable="true" comment="Boutique appointments through the programme"/>
+        <column xsi:type="text" name="comments" nullable="true" comment="Comments column of the report"/>
+        <column xsi:type="varchar" name="updated_by" length="100" nullable="true" comment="Admin user"/>
+        <column xsi:type="timestamp" name="updated_at" nullable="false" default="CURRENT_TIMESTAMP" on_update="true"
+                comment="Last change"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="period"/>
+        </constraint>
+    </table>
+    <!--
+        Every Excel report generated from the admin, kept in the database (not in var/, which gets
+        emptied) with the figures it was built from, so a report already sent to TUDOR can be
+        downloaded again exactly as it was.
+    -->
+    <table name="tudorsync_report_file" resource="default" engine="innodb"
+           comment="TUDOR e-Stock monthly report: generated Excel files">
+        <column xsi:type="int" name="file_id" unsigned="true" nullable="false" identity="true" comment="ID"/>
+        <column xsi:type="varchar" name="period_from" length="7" nullable="false" comment="First month, YYYY-MM"/>
+        <column xsi:type="varchar" name="period_to" length="7" nullable="false" comment="Last month, YYYY-MM"/>
+        <column xsi:type="varchar" name="language" length="2" nullable="false" comment="Template language"/>
+        <column xsi:type="boolean" name="is_draft" nullable="false" default="false" comment="Generated with mandatory figures missing"/>
+        <column xsi:type="varchar" name="filename" length="255" nullable="false" comment="File name"/>
+        <column xsi:type="mediumblob" name="content" nullable="false" comment="xlsx file"/>
+        <column xsi:type="text" name="figures" nullable="true" comment="JSON: the rows written into the file"/>
+        <column xsi:type="varchar" name="created_by" length="100" nullable="true" comment="Admin user"/>
+        <column xsi:type="timestamp" name="created_at" nullable="false" default="CURRENT_TIMESTAMP" comment="Generated at"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="file_id"/>
+        </constraint>
+        <index referenceId="TUDORSYNC_REPORT_FILE_CREATED_AT" indexType="btree">
+            <column name="created_at"/>
+        </index>
+    </table>
 </schema>

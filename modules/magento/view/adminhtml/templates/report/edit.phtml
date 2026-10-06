@@ -1,0 +1,92 @@
+<?php
+/**
+ * One month of the report: figures counted from the orders, and the form for the ones typed in.
+ *
+ * @var \Tudorsync\EcommerceSync\Block\Adminhtml\Report\Edit $block
+ * @var \Magento\Framework\Escaper $escaper
+ */
+$month = $block->getMonth();
+$manual = $month['manual'];
+$sales = $month['sales'];
+$fields = [
+    'sessions' => [__('Sessions (visits)*'), __('Visits to the shop referred by tudorwatch.com. GA4: sessions with utm_source = tudorwatch.com.')],
+    'unique_visitors' => [__('Unique visitors*'), __('Different people referred by tudorwatch.com. GA4: users with utm_source = tudorwatch.com.')],
+    'added_to_cart' => [__('Added to cart'), __('People who added a TUDOR watch to the cart.')],
+    'boutique_sales' => [__('Boutique sales'), __('TUDOR watches sold in boutique through the programme (estimated by the staff, when possible).')],
+    'boutique_appointments' => [__('Boutique appointments'), __('Boutique appointments booked through the programme.')],
+];
+?>
+<div class="tudorsync-report-month">
+    <p><a href="<?= $escaper->escapeUrl($block->getBackUrl()) ?>">← <?= $escaper->escapeHtml(__('Back to the monthly report')) ?></a></p>
+
+    <div class="admin__page-section">
+        <div class="admin__page-section-title">
+            <strong class="title"><?= $escaper->escapeHtml(__('%1: counted from the orders', $block->getPeriodLabel())) ?></strong>
+        </div>
+        <p>
+            <?= $escaper->escapeHtml(__('Online sales*: %1 TUDOR watch(es) · of which click & collect: %2.', $sales->watchesSoldOnline, $sales->clickAndCollectSales ?? '—')) ?>
+            <?= $escaper->escapeHtml(__('Orders from customers who came from tudorwatch.com (last click, 30 days), not cancelled, month in %1.', $block->getTimeZoneName())) ?>
+        </p>
+        <?php if ($sales->lines !== []): ?>
+            <div class="admin__data-grid-wrap admin__data-grid-wrap-static">
+                <table class="data-grid">
+                    <thead>
+                    <tr>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('Order')) ?></th>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('Placed (UTC)')) ?></th>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('SKU')) ?></th>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('TUDOR model')) ?></th>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('Units')) ?></th>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('Click & collect')) ?></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($sales->lines as $line): ?>
+                        <tr class="data-row">
+                            <td><?= $escaper->escapeHtml($line['increment_id']) ?></td>
+                            <td><?= $escaper->escapeHtml($line['created_at']) ?></td>
+                            <td><?= $escaper->escapeHtml($line['sku']) ?></td>
+                            <td><?= $escaper->escapeHtml($line['model_code']) ?></td>
+                            <td><?= $escaper->escapeHtml($line['units']) ?></td>
+                            <td><?= $escaper->escapeHtml($line['click_and_collect'] ? __('Yes') : __('No')) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <div class="admin__page-section">
+        <div class="admin__page-section-title"><strong class="title"><?= $escaper->escapeHtml(__('Figures typed in')) ?></strong></div>
+        <form method="post" action="<?= $escaper->escapeUrl($block->getSaveUrl()) ?>" class="admin__fieldset">
+            <input name="form_key" type="hidden" value="<?= $escaper->escapeHtmlAttr($block->getFormKey()) ?>"/>
+            <input name="period" type="hidden" value="<?= $escaper->escapeHtmlAttr($block->getPeriod()) ?>"/>
+            <?php foreach ($fields as $field => [$label, $note]): ?>
+                <div class="admin__field">
+                    <label class="admin__field-label" for="tudorsync-<?= $escaper->escapeHtmlAttr($field) ?>"><span><?= $escaper->escapeHtml($label) ?></span></label>
+                    <div class="admin__field-control">
+                        <input id="tudorsync-<?= $escaper->escapeHtmlAttr($field) ?>" type="number" min="0" step="1"
+                               name="figures[<?= $escaper->escapeHtmlAttr($field) ?>]" class="admin__control-text"
+                               value="<?= $escaper->escapeHtmlAttr($manual[$field] ?? '') ?>"/>
+                        <div class="admin__field-note"><?= $escaper->escapeHtml($note) ?></div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+            <div class="admin__field">
+                <label class="admin__field-label" for="tudorsync-comments"><span><?= $escaper->escapeHtml(__('Comments')) ?></span></label>
+                <div class="admin__field-control">
+                    <textarea id="tudorsync-comments" name="figures[comments]" rows="3" class="admin__control-textarea"><?= $escaper->escapeHtml($manual['comments'] ?? '') ?></textarea>
+                </div>
+            </div>
+            <?php if ($manual['updated_at']): ?>
+                <p class="note"><?= $escaper->escapeHtml(__('Last changed %1 by %2.', $manual['updated_at'], $manual['updated_by'] ?? '—')) ?></p>
+            <?php endif; ?>
+            <div class="admin__field">
+                <div class="admin__field-control">
+                    <button type="submit" class="action-primary"><span><?= $escaper->escapeHtml(__('Save')) ?></span></button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

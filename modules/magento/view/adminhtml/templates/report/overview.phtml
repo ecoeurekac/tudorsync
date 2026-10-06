@@ -1,0 +1,175 @@
+<?php
+/**
+ * Monthly report: months with their figures, Excel generator and generated reports.
+ *
+ * @var \Tudorsync\EcommerceSync\Block\Adminhtml\Report\Overview $block
+ * @var \Magento\Framework\Escaper $escaper
+ * @var \Magento\Framework\View\Helper\SecureHtmlRenderer $secureRenderer
+ */
+$number = static fn ($value): string => $value === null ? '—' : (string) $value;
+$months = $block->getMonths();
+[$defaultFrom, $defaultTo] = $block->getDefaultRange();
+$periodOptions = $block->getPeriodOptions();
+$files = $block->getFiles();
+?>
+<div class="tudorsync-report">
+    <p>
+        <?= $escaper->escapeHtml(__('TUDOR asks for this report every month, in its own Excel template. Online sales are counted from the orders of customers who came from tudorwatch.com; the rest of the figures are typed in here.')) ?>
+        <?= $escaper->escapeHtml(__('Sessions and unique visitors (mandatory) come from web analytics: until they are read from GA4 automatically, copy them from GA4 filtering by utm_source = tudorwatch.com.')) ?>
+        <a href="<?= $escaper->escapeUrl($block->getDataUrl()) ?>"><?= $escaper->escapeHtml(__('See programme data')) ?></a>
+    </p>
+
+    <div class="admin__page-section">
+        <div class="admin__page-section-title"><strong class="title"><?= $escaper->escapeHtml(__('Months')) ?></strong></div>
+        <div class="admin__data-grid-wrap admin__data-grid-wrap-static">
+            <table class="data-grid">
+                <thead>
+                <tr>
+                    <th class="data-grid-th"><?= $escaper->escapeHtml(__('Month')) ?></th>
+                    <th class="data-grid-th"><?= $escaper->escapeHtml(__('Online sales*')) ?></th>
+                    <th class="data-grid-th"><?= $escaper->escapeHtml(__('Of which click & collect')) ?></th>
+                    <th class="data-grid-th"><?= $escaper->escapeHtml(__('Sessions*')) ?></th>
+                    <th class="data-grid-th"><?= $escaper->escapeHtml(__('Unique visitors*')) ?></th>
+                    <th class="data-grid-th"><?= $escaper->escapeHtml(__('Added to cart')) ?></th>
+                    <th class="data-grid-th"><?= $escaper->escapeHtml(__('Boutique sales')) ?></th>
+                    <th class="data-grid-th"><?= $escaper->escapeHtml(__('Boutique appointments')) ?></th>
+                    <th class="data-grid-th"><?= $escaper->escapeHtml(__('Status')) ?></th>
+                    <th class="data-grid-th"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($months as $month): ?>
+                    <?php $manual = $month['manual']; ?>
+                    <tr class="data-row">
+                        <td><strong><?= $escaper->escapeHtml($block->formatPeriod($month['period'])) ?></strong></td>
+                        <td><?= $escaper->escapeHtml($month['sales']->watchesSoldOnline) ?></td>
+                        <td><?= $escaper->escapeHtml($number($month['sales']->clickAndCollectSales)) ?></td>
+                        <td><?= $escaper->escapeHtml($number($manual['sessions'])) ?></td>
+                        <td><?= $escaper->escapeHtml($number($manual['unique_visitors'])) ?></td>
+                        <td><?= $escaper->escapeHtml($number($manual['added_to_cart'])) ?></td>
+                        <td><?= $escaper->escapeHtml($number($manual['boutique_sales'])) ?></td>
+                        <td><?= $escaper->escapeHtml($number($manual['boutique_appointments'])) ?></td>
+                        <td>
+                            <?php if ($month['missing'] === []): ?>
+                                <span class="grid-severity-notice"><span><?= $escaper->escapeHtml(__('Complete')) ?></span></span>
+                            <?php else: ?>
+                                <span class="grid-severity-minor"><span><?= $escaper->escapeHtml(__('Missing analytics')) ?></span></span>
+                            <?php endif; ?>
+                        </td>
+                        <td><a href="<?= $escaper->escapeUrl($block->getEditUrl($month['period'])) ?>"><?= $escaper->escapeHtml(__('Edit')) ?></a></td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <p class="note"><?= $escaper->escapeHtml(__('* Mandatory in TUDOR\'s template. Cancelled orders are not counted; returns are not subtracted.')) ?></p>
+    </div>
+
+    <div class="admin__page-section">
+        <div class="admin__page-section-title"><strong class="title"><?= $escaper->escapeHtml(__('Generate the Excel for TUDOR')) ?></strong></div>
+        <form method="post" action="<?= $escaper->escapeUrl($block->getGenerateUrl()) ?>" class="admin__fieldset">
+            <input name="form_key" type="hidden" value="<?= $escaper->escapeHtmlAttr($block->getFormKey()) ?>"/>
+            <div class="admin__field">
+                <label class="admin__field-label" for="tudorsync-period-from"><span><?= $escaper->escapeHtml(__('From')) ?></span></label>
+                <div class="admin__field-control">
+                    <select id="tudorsync-period-from" name="period_from" class="admin__control-select">
+                        <?php foreach ($periodOptions as $period): ?>
+                            <option value="<?= $escaper->escapeHtmlAttr($period) ?>"<?= $period === $defaultFrom ? ' selected' : '' ?>><?= $escaper->escapeHtml($block->formatPeriod($period)) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+            <div class="admin__field">
+                <label class="admin__field-label" for="tudorsync-period-to"><span><?= $escaper->escapeHtml(__('To')) ?></span></label>
+                <div class="admin__field-control">
+                    <select id="tudorsync-period-to" name="period_to" class="admin__control-select">
+                        <?php foreach ($periodOptions as $period): ?>
+                            <option value="<?= $escaper->escapeHtmlAttr($period) ?>"<?= $period === $defaultTo ? ' selected' : '' ?>><?= $escaper->escapeHtml($block->formatPeriod($period)) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <div class="admin__field-note"><?= $escaper->escapeHtml(__('One row per month, %1 months at most (what TUDOR\'s template holds).', $block->getMaxPeriods())) ?></div>
+                </div>
+            </div>
+            <div class="admin__field">
+                <label class="admin__field-label" for="tudorsync-language"><span><?= $escaper->escapeHtml(__('Template language')) ?></span></label>
+                <div class="admin__field-control">
+                    <select id="tudorsync-language" name="language" class="admin__control-select">
+                        <?php foreach ($block->getLanguages() as $code => $label): ?>
+                            <option value="<?= $escaper->escapeHtmlAttr($code) ?>"<?= $code === 'ES' ? ' selected' : '' ?>><?= $escaper->escapeHtml($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+            <div class="admin__field admin__field-option">
+                <input id="tudorsync-draft" type="checkbox" name="draft" value="1" class="admin__control-checkbox"/>
+                <label class="admin__field-label" for="tudorsync-draft"><?= $escaper->escapeHtml(__('Draft: allow months without sessions or visitors (written as 0, file marked BORRADOR)')) ?></label>
+            </div>
+            <div class="admin__field">
+                <div class="admin__field-control">
+                    <button type="submit" class="action-primary"><span><?= $escaper->escapeHtml(__('Generate Excel')) ?></span></button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="admin__page-section">
+        <div class="admin__page-section-title"><strong class="title"><?= $escaper->escapeHtml(__('Generated reports')) ?></strong></div>
+        <?php if ($files === []): ?>
+            <p><?= $escaper->escapeHtml(__('No report has been generated yet.')) ?></p>
+        <?php else: ?>
+            <div class="admin__data-grid-wrap admin__data-grid-wrap-static">
+                <table class="data-grid">
+                    <thead>
+                    <tr>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('Generated')) ?></th>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('Months')) ?></th>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('Language')) ?></th>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('Type')) ?></th>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('Online sales')) ?></th>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('By')) ?></th>
+                        <th class="data-grid-th"><?= $escaper->escapeHtml(__('File')) ?></th>
+                        <th class="data-grid-th"></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($files as $file): ?>
+                        <?php $fileId = (int) $file['file_id']; ?>
+                        <tr class="data-row" id="report-file-<?= $fileId ?>">
+                            <td><?= $escaper->escapeHtml($block->formatDate($file['created_at'], \IntlDateFormatter::MEDIUM, true)) ?></td>
+                            <td><?= $escaper->escapeHtml($block->formatPeriod((string) $file['period_from'])) ?>
+                                <?php if ($file['period_from'] !== $file['period_to']): ?>
+                                    – <?= $escaper->escapeHtml($block->formatPeriod((string) $file['period_to'])) ?>
+                                <?php endif; ?>
+                            </td>
+                            <td><?= $escaper->escapeHtml($file['language']) ?></td>
+                            <td>
+                                <?php if ((int) $file['is_draft']): ?>
+                                    <span class="grid-severity-minor"><span><?= $escaper->escapeHtml(__('Draft')) ?></span></span>
+                                <?php else: ?>
+                                    <span class="grid-severity-notice"><span><?= $escaper->escapeHtml(__('Final')) ?></span></span>
+                                <?php endif; ?>
+                            </td>
+                            <td><?= $escaper->escapeHtml(array_sum(array_column($file['figures'], 'totalOnlineSales'))) ?></td>
+                            <td><?= $escaper->escapeHtml($file['created_by']) ?></td>
+                            <td><a href="<?= $escaper->escapeUrl($block->getDownloadUrl($fileId)) ?>"><?= $escaper->escapeHtml($file['filename']) ?></a>
+                                (<?= $escaper->escapeHtml(round((int) $file['size'] / 1024)) ?> KB)</td>
+                            <td>
+                                <form method="post" action="<?= $escaper->escapeUrl($block->getDeleteUrl()) ?>" id="tudorsync-delete-<?= $fileId ?>">
+                                    <input name="form_key" type="hidden" value="<?= $escaper->escapeHtmlAttr($block->getFormKey()) ?>"/>
+                                    <input name="id" type="hidden" value="<?= $fileId ?>"/>
+                                    <button type="submit" class="action-secondary"><span><?= $escaper->escapeHtml(__('Delete')) ?></span></button>
+                                </form>
+                                <?= /* @noEscape */ $secureRenderer->renderEventListenerAsTag(
+                                    'onsubmit',
+                                    'return confirm(' . json_encode((string) __('Delete this report? It cannot be recovered.')) . ');',
+                                    '#tudorsync-delete-' . $fileId
+                                ) ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>

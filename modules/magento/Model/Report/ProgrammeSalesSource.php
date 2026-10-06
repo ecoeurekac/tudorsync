@@ -121,6 +121,45 @@ class ProgrammeSalesSource
         );
     }
 
+    /**
+     * When the first order referred by tudorwatch.com was placed (UTC), or null if there is none.
+     */
+    public function getFirstAttributedOrderDate(): ?\DateTimeImmutable
+    {
+        $connection = $this->resource->getConnection('sales');
+        $first = $connection->fetchOne(
+            $connection->select()
+                ->from(['a' => $this->resource->getTableName(self::ATTRIBUTION_TABLE, 'sales')], [])
+                ->join(['o' => $this->resource->getTableName('sales_order', 'sales')], 'o.entity_id = a.order_id', [])
+                ->columns(['first' => new \Zend_Db_Expr('MIN(o.created_at)')])
+        );
+
+        return $first ? new \DateTimeImmutable((string) $first, new \DateTimeZone('UTC')) : null;
+    }
+
+    /**
+     * Latest orders referred by tudorwatch.com, whatever they contain, newest first.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function getRecentAttributedOrders(int $limit = 50): array
+    {
+        $connection = $this->resource->getConnection('sales');
+
+        return $connection->fetchAll(
+            $connection->select()
+                ->from(['a' => $this->resource->getTableName(self::ATTRIBUTION_TABLE, 'sales')], [
+                    'utm_medium', 'utm_campaign', 'landed_at',
+                ])
+                ->join(['o' => $this->resource->getTableName('sales_order', 'sales')], 'o.entity_id = a.order_id', [
+                    'entity_id', 'increment_id', 'created_at', 'state', 'status', 'grand_total',
+                    'order_currency_code', 'shipping_method',
+                ])
+                ->order('o.created_at DESC')
+                ->limit($limit)
+        );
+    }
+
     private function isPickup(string $shippingMethod): bool
     {
         foreach ($this->pickupShippingMethodPrefixes as $prefix) {

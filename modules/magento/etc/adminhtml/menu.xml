@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="Tudorsync_EcommerceSync::tudor" title="TUDOR e-Stock" translate="title" module="Tudorsync_EcommerceSync"
+             sortOrder="90" parent="Magento_Reports::report" resource="Tudorsync_EcommerceSync::reports"/>
+        <add id="Tudorsync_EcommerceSync::report_monthly" title="Monthly report" translate="title" module="Tudorsync_EcommerceSync"
+             sortOrder="10" parent="Tudorsync_EcommerceSync::tudor" action="tudorsync/report/index"
+             resource="Tudorsync_EcommerceSync::reports"/>
+        <add id="Tudorsync_EcommerceSync::programme_data" title="Programme data" translate="title" module="Tudorsync_EcommerceSync"
+             sortOrder="20" parent="Tudorsync_EcommerceSync::tudor" action="tudorsync/data/index"
+             resource="Tudorsync_EcommerceSync::reports"/>
+    </menu>
+</config>

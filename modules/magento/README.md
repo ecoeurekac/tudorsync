@@ -140,6 +140,34 @@ que Jorge lo confirme** para que los 3 conectores cuenten igual:
 Cuando core publique la interfaz de la fuente de ventas, esta clase la implementa (la forma de
 `ProgrammeSales` es la de la propuesta).
 
+## Informes y datos en el admin
+
+Menú **Informes › TUDOR e-Stock** (permiso `Tudorsync_EcommerceSync::reports`, colgado de
+`Magento_Reports::report`):
+
+- **Informe mensual** (`tudorsync/report/index`): una fila por mes desde el primero que importa (el
+  del primer pedido atribuido o con datos guardados, y como mínimo el mes pasado). Las ventas online
+  y el click & collect se calculan siempre al vuelo con `ProgrammeSalesSource`; lo demás se escribe a
+  mano en «Editar» (`tudorsync/report/edit`) y se guarda en `tudorsync_report_period`:
+  sesiones y visitantes únicos (obligatorios en la plantilla; a mano hasta que core los lea de GA4),
+  añadidos a la cesta, ventas y citas en boutique, comentarios.
+- **Generar Excel**: rango de meses (máximo 15, lo que cabe en la plantilla) e idioma (ES/EN/FR/DE/IT).
+  Escribe la plantilla oficial con `MonthlyReportWriter` de core (sin tocar core: se usa tal cual).
+  Sin sesiones o visitantes en algún mes se niega, salvo que se marque «Borrador» (van a 0 y el
+  fichero lleva `_BORRADOR`). El periodo sale como «Octubre 2026» en el idioma elegido y el país
+  con su nombre en ese idioma.
+- **Informes generados**: cada Excel se guarda **en la base de datos** (`tudorsync_report_file`, no en
+  `var/`, que se vacía) con las cifras con que se hizo, para volver a descargar exactamente lo que se
+  mandó a TUDOR. Se pueden borrar.
+- **Datos del programa** (`tudorsync/data/index`): conexión y última prueba/sincronización, el catálogo
+  que se enviaría ahora (mismo `CatalogConnector` que la sync; filtro enviados / fuera / todos, con
+  el motivo de cada exclusión y la URL enviada), la cola de publicación en el minuto y los últimos
+  pedidos llegados desde tudorwatch.com. Esta página no envía nada a TUDOR.
+
+Las dos tablas nuevas requieren `setup:upgrade` (en Quera, con el guion de intercambio de
+`sales_sequence_meta`). Textos en inglés con traducción en `i18n/es_ES.csv` (solo frases propias:
+las palabras genéricas las traducen los paquetes de idioma instalados).
+
 ## Instalación en otra tienda (PLO)
 
 1. Path repos o paquete de `tudorsync/core` + `tudorsync/module-magento` en el `composer.json`

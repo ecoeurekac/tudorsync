@@ -1,0 +1,41 @@
+<?php
+/**
+ * One call of the API log, in full.
+ *
+ * @var \Tudorsync\EcommerceSync\Block\Adminhtml\Apilog\View $block
+ * @var \Magento\Framework\Escaper $escaper
+ */
+$row = $block->getRow();
+?>
+<div class="tudorsync-api-log-view">
+    <p><a href="<?= $escaper->escapeUrl($block->getBackUrl()) ?>">← <?= $escaper->escapeHtml(__('Back to the API log')) ?></a></p>
+    <?php if ($row === null): ?>
+        <p><?= $escaper->escapeHtml(__('That call is not in the log (it may have been deleted after %1 days).', \Tudorsync\EcommerceSync\Model\Api\ApiLog::RETENTION_DAYS)) ?></p>
+    <?php else: ?>
+        <?php $ok = $row['status_code'] !== null && (int) $row['status_code'] >= 200 && (int) $row['status_code'] < 300; ?>
+        <table class="admin__table-secondary">
+            <tbody>
+            <tr><th><?= $escaper->escapeHtml(__('Date (UTC)')) ?></th><td><?= $escaper->escapeHtml($row['created_at']) ?></td></tr>
+            <tr><th><?= $escaper->escapeHtml(__('Origin')) ?></th><td><?= $escaper->escapeHtml($row['origin'] . ($row['admin_user'] ? ' · ' . $row['admin_user'] : '')) ?></td></tr>
+            <tr><th><?= $escaper->escapeHtml(__('Operation')) ?></th><td><?= $escaper->escapeHtml($row['operation']) ?>
+                <?php if ($row['run_id']): ?> · <a href="<?= $escaper->escapeUrl($block->getRunUrl((string) $row['run_id'])) ?>"><?= $escaper->escapeHtml(__('all the calls of this operation')) ?></a><?php endif; ?></td></tr>
+            <tr><th><?= $escaper->escapeHtml(__('Environment')) ?></th><td><?= $escaper->escapeHtml($row['environment'] === 'production' ? 'PROD' : 'PREPROD') ?></td></tr>
+            <tr><th><?= $escaper->escapeHtml(__('Call')) ?></th><td><code><?= $escaper->escapeHtml($row['method'] . ' ' . $row['url']) ?></code></td></tr>
+            <tr><th><?= $escaper->escapeHtml(__('HTTP')) ?></th><td><span class="<?= $ok ? 'tudorsync-status-ok' : 'tudorsync-status-error' ?>"><?= $escaper->escapeHtml($row['status_code'] ?? __('no response')) ?></span> · <?= $escaper->escapeHtml($row['duration_ms']) ?> ms</td></tr>
+            </tbody>
+        </table>
+
+        <?php if ($row['error']): ?>
+            <h3><?= $escaper->escapeHtml(__('Error')) ?></h3>
+            <pre class="tudorsync-pre"><?= $escaper->escapeHtml($row['error']) ?></pre>
+        <?php endif; ?>
+        <h3><?= $escaper->escapeHtml(__('Request headers')) ?></h3>
+        <pre class="tudorsync-pre"><?= $escaper->escapeHtml($block->pretty($row['request_headers'])) ?></pre>
+        <?php if ($row['request_body'] !== null): ?>
+            <h3><?= $escaper->escapeHtml(__('Request body')) ?></h3>
+            <pre class="tudorsync-pre"><?= $escaper->escapeHtml($block->pretty($row['request_body'])) ?></pre>
+        <?php endif; ?>
+        <h3><?= $escaper->escapeHtml(__('Response body')) ?></h3>
+        <pre class="tudorsync-pre"><?= $escaper->escapeHtml($block->pretty($row['response_body'])) ?></pre>
+    <?php endif; ?>
+</div>

@@ -164,7 +164,31 @@ Menú **Informes › TUDOR e-Stock** (permiso `Tudorsync_EcommerceSync::reports`
   el motivo de cada exclusión y la URL enviada), la cola de publicación en el minuto y los últimos
   pedidos llegados desde tudorwatch.com. Esta página no envía nada a TUDOR.
 
-Las dos tablas nuevas requieren `setup:upgrade` (en Quera, con el guion de intercambio de
+- **Pruebas de API** (`tudorsync/apitest/index`, JS propio `view/adminhtml/web/js/api-tester.js`): un botón
+  por endpoint — `GET /health`, `GET /v1/point-of-sales`, `GET /v1/stocks` (página y tamaño), `POST /v1/stocks`
+  y `POST /v1/stocks/batch` — y la petición y la respuesta completas en pantalla. Para los POST se buscan
+  productos TUDOR (SKU o nombre), se ve el JSON antes de enviar y se puede forzar el valor (0 = retirar). El
+  batch puede ser el catálogo completo o solo los elegidos (pide confirmar: pone a 0 lo que no va). Todo pasa
+  por `TudorApiClient` de core salvo `/health`, que core no tiene (`Model\Api\ApiTester` copia sus URL base;
+  petición en `intercambio/2026-10-06-juanjo-peticion-health.md`). **Los POST se niegan en el entorno de
+  producción** (en pantalla y en el servidor).
+- **Registro de API** (`tudorsync/apilog/index`): cada llamada HTTP a TUDOR —token, API y health— con fecha,
+  origen (`cron`, `admin`, `cli`, `test`), operación (`full_sync`, `realtime`, `test_connection`,
+  `api_test:…`), usuario del admin, entorno, endpoint, cabeceras, cuerpo enviado y recibido y duración.
+  Filtros por origen, operación, endpoint, resultado y fechas; las llamadas de una misma operación comparten
+  `run_id`. Lo hace `Model\Api\LoggingHttpClient`, el `HttpClientInterface` que el módulo pasa a core, así
+  que las sincronizaciones reales quedan igual de registradas que las pruebas. El client secret, el Bearer y
+  los `access_token` se guardan como `***`. Tabla `tudorsync_api_log`; el cron `tudorsync_clean_api_log`
+  borra lo de más de 60 días (`ApiLog::RETENTION_DAYS`).
+
+Despliegue de esta parte en modo producción: `setup:upgrade` (tabla del registro) + `di:compile` +
+`setup:static-content:deploy -f --area adminhtml es_ES en_US` (el JS y el CSS nuevos). Ojo: el despliegue **no
+sobrescribe** ficheros que ya existen en `pub/static`; para que entren textos nuevos del JS hay que borrar antes
+`pub/static/adminhtml/Magento/backend/<locale>/js-translation.json` (y el `.js`/`.css` del módulo si cambian).
+Al cambiar un constructor o la firma de un método público, `generated/code/Tudorsync` queda desfasado y
+`bin/magento` falla hasta borrarlo y recompilar.
+
+Las tablas nuevas requieren `setup:upgrade` (en Quera, con el guion de intercambio de
 `sales_sequence_meta`). Textos en inglés con traducción en `i18n/es_ES.csv` (solo frases propias:
 las palabras genéricas las traducen los paquetes de idioma instalados).
 

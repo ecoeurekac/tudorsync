@@ -1,0 +1,90 @@
+<?php
+/**
+ * API test page. Markup only: web/js/api-tester.js wires the buttons, the product picker and the
+ * responses.
+ *
+ * @var \Tudorsync\EcommerceSync\Block\Adminhtml\Apitest\Index $block
+ * @var \Magento\Framework\Escaper $escaper
+ */
+$postDisabled = $block->isProduction() ? ' disabled' : '';
+?>
+<div id="tudorsync-api-tester" data-mage-init='<?= $escaper->escapeHtmlAttr('{"Tudorsync_EcommerceSync/js/api-tester": ' . $block->getWidgetConfig() . '}') ?>'>
+    <div class="tudorsync-env<?= $block->isProduction() ? ' is-production' : '' ?>">
+        <?php if ($block->isProduction()): ?>
+            <strong><?= $escaper->escapeHtml(__('Environment: PRODUCTION (tudorwatch.com).')) ?></strong>
+            <?= $escaper->escapeHtml(__('Only the GET tests are available: the POST tests would change what tudorwatch.com shows.')) ?>
+        <?php else: ?>
+            <strong><?= $escaper->escapeHtml(__('Environment: staging (TUDOR PREPROD).')) ?></strong>
+            <?= $escaper->escapeHtml(__('Nothing sent from here reaches tudorwatch.com, but it does change what PREPROD has stored.')) ?>
+        <?php endif; ?>
+        <?php if (!$block->hasCredentials()): ?>
+            <br><span class="tudorsync-warning"><?= $escaper->escapeHtml(__('There are no TUDOR credentials for this environment: every test will fail.')) ?></span>
+            <a href="<?= $escaper->escapeUrl($block->getConfigUrl()) ?>"><?= $escaper->escapeHtml(__('Settings')) ?></a>
+        <?php endif; ?>
+        <br><?= $escaper->escapeHtml(__('Every test is saved in the API log with origin "test".')) ?>
+        <a href="<?= $escaper->escapeUrl($block->getLogUrl()) ?>"><?= $escaper->escapeHtml(__('See the tests in the API log')) ?></a>
+    </div>
+
+    <div class="admin__page-section">
+        <div class="admin__page-section-title"><strong class="title"><?= $escaper->escapeHtml(__('Read from TUDOR (GET)')) ?></strong></div>
+        <div class="tudorsync-buttons">
+            <button type="button" class="action-secondary" data-test="health"><span>GET /health</span></button>
+            <button type="button" class="action-secondary" data-test="point_of_sales"><span>GET /v1/point-of-sales</span></button>
+            <span>
+                <button type="button" class="action-secondary" data-test="get_stocks"><span>GET /v1/stocks</span></button>
+                <label for="tudorsync-stocks-page"><?= $escaper->escapeHtml(__('page')) ?></label>
+                <input id="tudorsync-stocks-page" type="number" min="0" value="0" class="admin__control-text"/>
+                <label for="tudorsync-stocks-size"><?= $escaper->escapeHtml(__('size')) ?></label>
+                <input id="tudorsync-stocks-size" type="number" min="1" max="500" value="100" class="admin__control-text"/>
+            </span>
+        </div>
+        <p class="note">
+            <?= $escaper->escapeHtml(__('/health: is the service up. /v1/point-of-sales: your stores registered with TUDOR. /v1/stocks: what TUDOR has stored from you.')) ?>
+        </p>
+    </div>
+
+    <div class="admin__page-section">
+        <div class="admin__page-section-title"><strong class="title"><?= $escaper->escapeHtml(__('Send to TUDOR (POST) with chosen products')) ?></strong></div>
+        <div class="admin__field">
+            <label class="admin__field-label" for="tudorsync-product-search"><span><?= $escaper->escapeHtml(__('Find a TUDOR product (SKU or name)')) ?></span></label>
+            <div class="admin__field-control">
+                <input id="tudorsync-product-search" type="text" class="admin__control-text" placeholder="1001TU79360 / Black Bay"<?= $postDisabled ?>/>
+            </div>
+        </div>
+        <div class="tudorsync-results-list" id="tudorsync-product-results"></div>
+
+        <div class="tudorsync-selected" id="tudorsync-selected" hidden>
+            <h3><?= $escaper->escapeHtml(__('Chosen products')) ?></h3>
+            <div id="tudorsync-selected-list"></div>
+            <p class="note"><?= $escaper->escapeHtml(__('Value: empty = the salable quantity now; 0 = withdraw the model from TUDOR.')) ?></p>
+
+            <div class="tudorsync-buttons">
+                <button type="button" class="action-primary" data-test="create_stock"<?= $postDisabled ?>><span>POST /v1/stocks</span></button>
+                <span class="note"><?= $escaper->escapeHtml(__('Incremental update of one model: uses the first chosen product. Other published models are left as they are.')) ?></span>
+            </div>
+        </div>
+
+        <h3><?= $escaper->escapeHtml(__('Full synchronisation (POST /v1/stocks/batch)')) ?></h3>
+        <p class="tudorsync-warning"><?= $escaper->escapeHtml(__('The batch replaces everything: TUDOR sets to 0 every model of yours that is not in it.')) ?></p>
+        <div class="admin__field admin__field-option">
+            <input id="tudorsync-batch-catalog" type="radio" name="tudorsync-batch-scope" value="catalog" class="admin__control-radio" checked/>
+            <label class="admin__field-label" for="tudorsync-batch-catalog"><?= $escaper->escapeHtml(__('The whole catalog, as the sync would send it now')) ?></label>
+        </div>
+        <div class="admin__field admin__field-option">
+            <input id="tudorsync-batch-chosen" type="radio" name="tudorsync-batch-scope" value="chosen" class="admin__control-radio"/>
+            <label class="admin__field-label" for="tudorsync-batch-chosen"><?= $escaper->escapeHtml(__('Only the chosen products (the rest of your models go to 0)')) ?></label>
+        </div>
+        <div class="admin__field admin__field-option">
+            <input id="tudorsync-batch-confirm" type="checkbox" class="admin__control-checkbox"<?= $postDisabled ?>/>
+            <label class="admin__field-label" for="tudorsync-batch-confirm"><?= $escaper->escapeHtml(__('I understand the batch sets to 0 every model that is not sent')) ?></label>
+        </div>
+        <div class="tudorsync-buttons">
+            <button type="button" class="action-primary" data-test="batch" disabled><span>POST /v1/stocks/batch</span></button>
+        </div>
+    </div>
+
+    <div class="admin__page-section">
+        <div class="admin__page-section-title"><strong class="title"><?= $escaper->escapeHtml(__('Responses')) ?></strong></div>
+        <div id="tudorsync-runs"><p class="note"><?= $escaper->escapeHtml(__('Run a test: the full request and response will appear here, newest first.')) ?></p></div>
+    </div>
+</div>

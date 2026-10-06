@@ -9,5 +9,11 @@
         <add id="Tudorsync_EcommerceSync::programme_data" title="Programme data" translate="title" module="Tudorsync_EcommerceSync"
              sortOrder="20" parent="Tudorsync_EcommerceSync::tudor" action="tudorsync/data/index"
              resource="Tudorsync_EcommerceSync::reports"/>
+        <add id="Tudorsync_EcommerceSync::api_tests" title="API tests" translate="title" module="Tudorsync_EcommerceSync"
+             sortOrder="30" parent="Tudorsync_EcommerceSync::tudor" action="tudorsync/apitest/index"
+             resource="Tudorsync_EcommerceSync::reports"/>
+        <add id="Tudorsync_EcommerceSync::api_log" title="API log" translate="title" module="Tudorsync_EcommerceSync"
+             sortOrder="40" parent="Tudorsync_EcommerceSync::tudor" action="tudorsync/apilog/index"
+             resource="Tudorsync_EcommerceSync::reports"/>
     </menu>
 </config>

@@ -8,5 +8,9 @@
         <job name="tudorsync_publish_pending" instance="Tudorsync\EcommerceSync\Cron\PublishPending" method="execute">
             <schedule>* * * * *</schedule>
         </job>
+        <!-- API log retention (Model\Api\ApiLog::RETENTION_DAYS). -->
+        <job name="tudorsync_clean_api_log" instance="Tudorsync\EcommerceSync\Cron\CleanApiLog" method="execute">
+            <schedule>40 3 * * *</schedule>
+        </job>
     </group>
 </config>

@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <css src="Tudorsync_EcommerceSync::css/api-tester.css"/>
+    </head>
+    <body>
+        <referenceContainer name="content">
+            <block class="Tudorsync\EcommerceSync\Block\Adminhtml\Apilog\View" name="tudorsync.apilog.view"
+                   template="Tudorsync_EcommerceSync::apilog/view.phtml"/>
+        </referenceContainer>
+    </body>
+</page>

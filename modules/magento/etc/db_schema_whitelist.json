@@ -63,5 +63,32 @@
         "constraint": {
             "PRIMARY": true
         }
+    },
+    "tudorsync_api_log": {
+        "column": {
+            "log_id": true,
+            "run_id": true,
+            "origin": true,
+            "operation": true,
+            "admin_user": true,
+            "environment": true,
+            "method": true,
+            "endpoint": true,
+            "url": true,
+            "request_headers": true,
+            "request_body": true,
+            "status_code": true,
+            "response_body": true,
+            "error": true,
+            "duration_ms": true,
+            "created_at": true
+        },
+        "index": {
+            "TUDORSYNC_API_LOG_CREATED_AT": true,
+            "TUDORSYNC_API_LOG_RUN_ID": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
     }
 }

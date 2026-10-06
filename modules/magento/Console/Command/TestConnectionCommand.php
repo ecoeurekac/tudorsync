@@ -28,7 +28,7 @@ class TestConnectionCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $outcome = $this->syncRunner->testConnection();
+        $outcome = $this->syncRunner->testConnection('cli');
         $output->writeln($outcome->success ? '<info>' . $outcome->message . '</info>' : '<error>' . $outcome->message . '</error>');
 
         return $outcome->success ? Command::SUCCESS : Command::FAILURE;

@@ -1,0 +1,121 @@
+<?php
+/**
+ * API log: filters and one row per HTTP call to TUDOR.
+ *
+ * @var \Tudorsync\EcommerceSync\Block\Adminhtml\Apilog\Index $block
+ * @var \Magento\Framework\Escaper $escaper
+ */
+$filters = $block->getFilters();
+$rows = $block->getRows();
+$total = $block->getTotal();
+$page = $block->getPage();
+$pages = $block->getPageCount();
+$originLabels = [
+    'cron' => __('Cron'),
+    'admin' => __('Admin button'),
+    'cli' => __('Command line'),
+    'test' => __('API test'),
+    'other' => __('Other'),
+];
+$select = static function (string $name, array $options, string $current, string $allLabel) use ($escaper): string {
+    $html = '<select name="' . $escaper->escapeHtmlAttr($name) . '" class="admin__control-select">';
+    $html .= '<option value="">' . $escaper->escapeHtml($allLabel) . '</option>';
+
+    foreach ($options as $value => $label) {
+        $html .= '<option value="' . $escaper->escapeHtmlAttr((string) $value) . '"'
+            . ((string) $value === $current ? ' selected' : '') . '>' . $escaper->escapeHtml((string) $label) . '</option>';
+    }
+
+    return $html . '</select>';
+};
+$asOptions = static fn (array $values): array => array_combine($values, $values) ?: [];
+?>
+<div class="tudorsync-api-log">
+    <p>
+        <?= $escaper->escapeHtml(__('Every HTTP call made to TUDOR: syncs (cron, admin button, command line), real-time publishing, connection tests and API tests. Client secret and tokens are masked. Kept %1 days.', $block->getRetentionDays())) ?>
+    </p>
+
+    <form method="get" action="<?= $escaper->escapeUrl($block->getFilterUrl()) ?>" class="tudorsync-filters">
+        <label><?= $escaper->escapeHtml(__('Origin')) ?>
+            <?= /* @noEscape */ $select('origin', array_intersect_key($originLabels, array_flip($block->getOptions('origin'))) + $asOptions($block->getOptions('origin')), $filters['origin'], (string) __('All')) ?>
+        </label>
+        <label><?= $escaper->escapeHtml(__('Operation')) ?>
+            <?= /* @noEscape */ $select('operation', $asOptions($block->getOptions('operation')), $filters['operation'], (string) __('All')) ?>
+        </label>
+        <label><?= $escaper->escapeHtml(__('Endpoint')) ?>
+            <?= /* @noEscape */ $select('endpoint', $asOptions($block->getOptions('endpoint')), $filters['endpoint'], (string) __('All')) ?>
+        </label>
+        <label><?= $escaper->escapeHtml(__('Result')) ?>
+            <?= /* @noEscape */ $select('result', ['ok' => __('2xx'), 'error' => __('Error')], $filters['result'], (string) __('All')) ?>
+        </label>
+        <label><?= $escaper->escapeHtml(__('From (UTC)')) ?>
+            <input type="date" name="date_from" class="admin__control-text" value="<?= $escaper->escapeHtmlAttr($filters['date_from']) ?>"/>
+        </label>
+        <label><?= $escaper->escapeHtml(__('To (UTC)')) ?>
+            <input type="date" name="date_to" class="admin__control-text" value="<?= $escaper->escapeHtmlAttr($filters['date_to']) ?>"/>
+        </label>
+        <?php if ($filters['run_id'] !== ''): ?>
+            <input type="hidden" name="run_id" value="<?= $escaper->escapeHtmlAttr($filters['run_id']) ?>"/>
+        <?php endif; ?>
+        <button type="submit" class="action-secondary"><span><?= $escaper->escapeHtml(__('Filter')) ?></span></button>
+        <a href="<?= $escaper->escapeUrl($block->getFilterUrl()) ?>"><?= $escaper->escapeHtml(__('Clear')) ?></a>
+    </form>
+
+    <?php if ($filters['run_id'] !== ''): ?>
+        <p><?= $escaper->escapeHtml(__('Showing only the calls of operation %1.', $filters['run_id'])) ?></p>
+    <?php endif; ?>
+
+    <p><?= $escaper->escapeHtml(__('%1 call(s).', $total)) ?></p>
+
+    <?php if ($rows !== []): ?>
+        <div class="admin__data-grid-wrap admin__data-grid-wrap-static">
+            <table class="data-grid">
+                <thead>
+                <tr>
+                    <th class="data-grid-th"><?= $escaper->escapeHtml(__('Date (UTC)')) ?></th>
+                    <th class="data-grid-th"><?= $escaper->escapeHtml(__('Origin')) ?></th>
+                    <th class="data-grid-th"><?= $escaper->escapeHtml(__('Operation')) ?></th>
+                    <th class="data-grid-th"><?= $escaper->escapeHtml(__('Environment')) ?></th>
+                    <th class="data-grid-th"><?= $escaper->escapeHtml(__('Call')) ?></th>
+                    <th class="data-grid-th"><?= $escaper->escapeHtml(__('HTTP')) ?></th>
+                    <th class="data-grid-th"><?= $escaper->escapeHtml(__('Time')) ?></th>
+                    <th class="data-grid-th"><?= $escaper->escapeHtml(__('Sent / received')) ?></th>
+                    <th class="data-grid-th"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($rows as $row): ?>
+                    <?php $ok = $row['status_code'] !== null && (int) $row['status_code'] >= 200 && (int) $row['status_code'] < 300; ?>
+                    <tr class="data-row">
+                        <td><?= $escaper->escapeHtml($row['created_at']) ?></td>
+                        <td><?= $escaper->escapeHtml($originLabels[$row['origin']] ?? $row['origin']) ?>
+                            <?php if ($row['admin_user']): ?><br><small><?= $escaper->escapeHtml($row['admin_user']) ?></small><?php endif; ?></td>
+                        <td>
+                            <?php if ($row['run_id']): ?>
+                                <a href="<?= $escaper->escapeUrl($block->getRunUrl((string) $row['run_id'])) ?>"><?= $escaper->escapeHtml($row['operation']) ?></a>
+                            <?php else: ?>
+                                <?= $escaper->escapeHtml($row['operation']) ?>
+                            <?php endif; ?>
+                        </td>
+                        <td><?= $escaper->escapeHtml($row['environment'] === 'production' ? 'PROD' : 'PREPROD') ?></td>
+                        <td><code><?= $escaper->escapeHtml($row['method'] . ' ' . $row['endpoint']) ?></code></td>
+                        <td><span class="<?= $ok ? 'tudorsync-status-ok' : 'tudorsync-status-error' ?>"><?= $escaper->escapeHtml($row['status_code'] ?? __('no response')) ?></span></td>
+                        <td><?= $escaper->escapeHtml($row['duration_ms']) ?> ms</td>
+                        <td><?= $escaper->escapeHtml(round((int) $row['request_size'] / 1024, 1)) ?> / <?= $escaper->escapeHtml(round((int) $row['response_size'] / 1024, 1)) ?> KB</td>
+                        <td><a href="<?= $escaper->escapeUrl($block->getViewUrl((int) $row['log_id'])) ?>"><?= $escaper->escapeHtml(__('View')) ?></a></td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <div class="tudorsync-pager">
+            <?php if ($page > 1): ?>
+                <a href="<?= $escaper->escapeUrl($block->getPageUrl($page - 1)) ?>">← <?= $escaper->escapeHtml(__('Newer')) ?></a>
+            <?php endif; ?>
+            <span><?= $escaper->escapeHtml(__('Page %1 of %2', $page, $pages)) ?></span>
+            <?php if ($page < $pages): ?>
+                <a href="<?= $escaper->escapeUrl($block->getPageUrl($page + 1)) ?>"><?= $escaper->escapeHtml(__('Older')) ?> →</a>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
+</div>

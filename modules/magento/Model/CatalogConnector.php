@@ -171,6 +171,92 @@ class CatalogConnector implements CatalogConnectorInterface
         return new CatalogSnapshot($items, $products, $warnings);
     }
 
+    /**
+     * TUDOR products (same candidates as the sync) whose SKU or name contains $query, for the API
+     * test page. Includes the ones the sync would leave out, with the reason.
+     *
+     * @return list<array{product_id: int, sku: string, name: string, model_code: ?string,
+     *     salable_qty: ?int, excluded_reason: ?string}>
+     */
+    public function searchCandidates(string $query, int $limit = 20): array
+    {
+        $defaultStore = $this->storeManager->getDefaultStoreView();
+        $websiteCode = (string) $this->storeManager->getWebsite($defaultStore->getWebsiteId())->getCode();
+        $collection = $this->getCandidateCollection((int) $defaultStore->getId());
+        $like = '%' . addcslashes(trim($query), '%_') . '%';
+        $collection->addAttributeToFilter([['attribute' => 'sku', 'like' => $like], ['attribute' => 'name', 'like' => $like]], null, 'left')
+            ->setOrder('sku', 'ASC')
+            ->setPageSize($limit);
+        $rows = [];
+
+        /** @var Product $product */
+        foreach ($collection as $product) {
+            $productId = (int) $product->getId();
+            $sku = (string) $product->getSku();
+            $modelCode = $this->modelCodeResolver->resolve((string) $product->getData(ModelCodeResolver::ATTRIBUTE_CODE), $sku);
+            $reason = $modelCode === null ? 'no model code' : $this->getProductExclusionReason($product);
+            $stock = $this->salableQtyProvider->getStockData($productId, $sku, $websiteCode);
+
+            $rows[] = [
+                'product_id' => $productId,
+                'sku' => $sku,
+                'name' => (string) $product->getName(),
+                'model_code' => $modelCode,
+                'salable_qty' => $stock['salable_qty'],
+                'excluded_reason' => $reason ?? $this->getStockExclusionReason($stock),
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * The record this product would publish, built the same way as in collect() but for this
+     * product alone and whatever its stock (API tests: e.g. publish a model or send it with 0).
+     * $value replaces the quantity; null = its salable quantity (or 1 in signal mode). Null when the
+     * product has no model code or no URL in the default store view.
+     */
+    public function buildAvailability(int $productId, ?int $value = null): ?StockAvailability
+    {
+        $defaultStore = $this->storeManager->getDefaultStoreView();
+        $defaultStoreId = (int) $defaultStore->getId();
+
+        try {
+            /** @var Product $product */
+            $product = $this->productRepository->getById($productId, false, $defaultStoreId);
+        } catch (NoSuchEntityException) {
+            return null;
+        }
+
+        $modelCode = $this->modelCodeResolver->resolve(
+            (string) $product->getData(ModelCodeResolver::ATTRIBUTE_CODE),
+            (string) $product->getSku(),
+        );
+        $defaultUrl = $this->getTrackedUrl($productId, $defaultStore);
+
+        if ($modelCode === null || $defaultUrl === null) {
+            return null;
+        }
+
+        if ($value === null) {
+            $websiteCode = (string) $this->storeManager->getWebsite($defaultStore->getWebsiteId())->getCode();
+            $value = $this->config->getValueMode($defaultStoreId) === ValueMode::SIGNAL
+                ? 1
+                : max(0, (int) $this->salableQtyProvider->getStockData($productId, (string) $product->getSku(), $websiteCode)['salable_qty']);
+        }
+
+        return new StockAvailability(
+            modelCode: $modelCode,
+            country: $this->config->getCountry($defaultStoreId),
+            value: $value,
+            defaultUrl: $defaultUrl,
+            localizedUrls: $this->getLocalizedUrls($productId),
+            onlinePurchaseEnabled: true,
+            storePickupAvailable: $this->config->getClientConfig($defaultStoreId)->offersClickAndCollect,
+            homeDeliveryTimingHours: $this->config->getHomeDeliveryTimingHours($defaultStoreId),
+        );
+    }
+
     private function getCandidateCollection(int $storeId): \Magento\Catalog\Model\ResourceModel\Product\Collection
     {
         $collection = $this->productCollectionFactory->create();

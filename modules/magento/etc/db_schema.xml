@@ -91,4 +91,38 @@
             <column name="created_at"/>
         </index>
     </table>
+    <!--
+        Every HTTP call made to TUDOR (token, API and health), whoever started it: the scheduled and
+        manual syncs, real-time publishing, connection tests and the API test page
+        (Model\Api\LoggingHttpClient). Secrets and tokens are masked before saving. Rows of one
+        operation share run_id. Old rows are deleted by Cron\CleanApiLog.
+    -->
+    <table name="tudorsync_api_log" resource="default" engine="innodb"
+           comment="TUDOR e-Stock: log of every HTTP call to TUDOR">
+        <column xsi:type="int" name="log_id" unsigned="true" nullable="false" identity="true" comment="ID"/>
+        <column xsi:type="varchar" name="run_id" length="32" nullable="true" comment="Groups the calls of one operation"/>
+        <column xsi:type="varchar" name="origin" length="20" nullable="false" default="other" comment="cron, admin, cli, test, other"/>
+        <column xsi:type="varchar" name="operation" length="40" nullable="false" default="other" comment="full_sync, realtime, test_connection, api_test..."/>
+        <column xsi:type="varchar" name="admin_user" length="100" nullable="true" comment="Admin user, when started from the admin"/>
+        <column xsi:type="varchar" name="environment" length="20" nullable="true" comment="staging (PREPROD) or production"/>
+        <column xsi:type="varchar" name="method" length="10" nullable="false" comment="HTTP method"/>
+        <column xsi:type="varchar" name="endpoint" length="100" nullable="false" comment="token, /v1/stocks, /health..."/>
+        <column xsi:type="varchar" name="url" length="500" nullable="false" comment="Full URL"/>
+        <column xsi:type="text" name="request_headers" nullable="true" comment="JSON, secrets masked"/>
+        <column xsi:type="mediumtext" name="request_body" nullable="true" comment="Secrets masked"/>
+        <column xsi:type="smallint" name="status_code" unsigned="true" nullable="true" comment="HTTP status, null on transport error"/>
+        <column xsi:type="mediumtext" name="response_body" nullable="true" comment="Tokens masked"/>
+        <column xsi:type="text" name="error" nullable="true" comment="Transport error"/>
+        <column xsi:type="int" name="duration_ms" unsigned="true" nullable="true" comment="Duration in milliseconds"/>
+        <column xsi:type="timestamp" name="created_at" nullable="false" default="CURRENT_TIMESTAMP" comment="Called at (UTC)"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="log_id"/>
+        </constraint>
+        <index referenceId="TUDORSYNC_API_LOG_CREATED_AT" indexType="btree">
+            <column name="created_at"/>
+        </index>
+        <index referenceId="TUDORSYNC_API_LOG_RUN_ID" indexType="btree">
+            <column name="run_id"/>
+        </index>
+    </table>
 </schema>

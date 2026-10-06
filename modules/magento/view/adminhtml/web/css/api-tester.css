@@ -1,0 +1,21 @@
+/* TUDOR e-Stock: API test page and API log (Tudorsync_EcommerceSync). */
+.tudorsync-env { padding: 1rem 1.5rem; margin-bottom: 2rem; border-left: 4px solid #007bdb; background: #f1f8fd; }
+.tudorsync-env.is-production { border-left-color: #e22626; background: #fff5f5; }
+.tudorsync-buttons { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-bottom: 1.5rem; }
+.tudorsync-buttons input[type="number"] { width: 7rem; }
+.tudorsync-results-list .data-grid td { vertical-align: top; }
+.tudorsync-selected { margin: 1rem 0; padding: 1rem; background: #f8f8f8; border: 1px solid #e3e3e3; }
+.tudorsync-pre { max-height: 40rem; overflow: auto; padding: 1rem; margin: .5rem 0 1rem; background: #f8f8f8;
+    border: 1px solid #e3e3e3; font-family: Menlo, Consolas, monospace; font-size: 1.2rem; white-space: pre-wrap;
+    word-break: break-all; }
+.tudorsync-run { margin-bottom: 2rem; padding: 1rem 1.5rem; border: 1px solid #e3e3e3; border-left: 4px solid #79a22e; }
+.tudorsync-run.is-error { border-left-color: #e22626; }
+.tudorsync-run h3 { margin: 0 0 .5rem; font-size: 1.6rem; }
+.tudorsync-call { margin: .5rem 0; }
+.tudorsync-call summary { cursor: pointer; font-family: Menlo, Consolas, monospace; font-size: 1.3rem; }
+.tudorsync-status-ok { color: #185b00; font-weight: 600; }
+.tudorsync-status-error { color: #e22626; font-weight: 600; }
+.tudorsync-warning { color: #e22626; }
+.tudorsync-filters { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; margin-bottom: 1.5rem; }
+.tudorsync-filters label { display: flex; flex-direction: column; gap: .3rem; font-weight: 600; }
+.tudorsync-pager { display: flex; gap: 1rem; align-items: center; margin: 1rem 0; }

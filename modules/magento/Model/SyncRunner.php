@@ -15,7 +15,8 @@ use Tudorsync\Core\Api\TudorApiClient;
 use Tudorsync\Core\Domain\ClientConfig;
 use Tudorsync\Core\Rules\AvailabilityFilter;
 use Tudorsync\Core\Sync\SyncEngine;
-use Tudorsync\EcommerceSync\Model\Api\CurlHttpClient;
+use Tudorsync\EcommerceSync\Model\Api\CallContext;
+use Tudorsync\EcommerceSync\Model\Api\LoggingHttpClient;
 use Tudorsync\EcommerceSync\Model\Realtime\PendingQueue;
 use Tudorsync\EcommerceSync\Model\Realtime\PublishPlan;
 
@@ -27,6 +28,9 @@ use Tudorsync\EcommerceSync\Model\Realtime\PublishPlan;
  * Two ways of publishing: runSync() sends the whole catalog (scheduled, hourly by default);
  * publishPending() sends only the model codes queued by the stock/order/product hooks
  * (Model\Realtime), every minute. A successful full sync also empties that queue.
+ *
+ * Every HTTP call goes through LoggingHttpClient, labelled by CallContext with who started it
+ * (cron, admin, cli) and the operation, so real syncs leave a full trace in tudorsync_api_log.
  */
 class SyncRunner
 {
@@ -40,11 +44,12 @@ class SyncRunner
     public function __construct(
         private readonly Config $config,
         private readonly CatalogConnector $catalogConnector,
-        private readonly CurlHttpClient $httpClient,
+        private readonly LoggingHttpClient $httpClient,
         private readonly Status $status,
         private readonly LoggerInterface $logger,
         private readonly PendingQueue $pendingQueue,
         private readonly FlagManager $flagManager,
+        private readonly CallContext $callContext,
     ) {
     }
 
@@ -52,6 +57,16 @@ class SyncRunner
      * @param string $trigger cron | admin | cli — only used in the status line and the log
      */
     public function runSync(string $trigger): SyncOutcome
+    {
+        return $this->callContext->run(
+            CallContext::originFromTrigger($trigger),
+            'full_sync',
+            null,
+            fn (): SyncOutcome => $this->doRunSync($trigger)
+        );
+    }
+
+    private function doRunSync(string $trigger): SyncOutcome
     {
         $clientConfig = $this->config->getClientConfig();
         $problem = $this->getConfigProblem($clientConfig);
@@ -146,6 +161,16 @@ class SyncRunner
      */
     public function publishPending(string $trigger): SyncOutcome
     {
+        return $this->callContext->run(
+            CallContext::originFromTrigger($trigger),
+            'realtime',
+            null,
+            fn (): SyncOutcome => $this->doPublishPending($trigger)
+        );
+    }
+
+    private function doPublishPending(string $trigger): SyncOutcome
+    {
         $clientConfig = $this->config->getClientConfig();
         $problem = $this->getConfigProblem($clientConfig);
 
@@ -233,7 +258,20 @@ class SyncRunner
         return new SyncOutcome($success, $message);
     }
 
-    public function testConnection(): SyncOutcome
+    /**
+     * @param string $trigger admin | cli — only used to label the API log
+     */
+    public function testConnection(string $trigger = 'admin'): SyncOutcome
+    {
+        return $this->callContext->run(
+            CallContext::originFromTrigger($trigger),
+            'test_connection',
+            null,
+            fn (): SyncOutcome => $this->doTestConnection()
+        );
+    }
+
+    private function doTestConnection(): SyncOutcome
     {
         $clientConfig = $this->config->getClientConfig();
 

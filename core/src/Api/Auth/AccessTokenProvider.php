@@ -39,11 +39,14 @@ final class AccessTokenProvider
 
     private int $expiresAt = 0;
 
+    private readonly ClockInterface $clock;
+
     public function __construct(
         private readonly ClientConfig $config,
         private readonly HttpClientInterface $httpClient,
-        private readonly ClockInterface $clock = new SystemClock(),
+        ?ClockInterface $clock = null,
     ) {
+        $this->clock = $clock ?? new SystemClock();
     }
 
     /**

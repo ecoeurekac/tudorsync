@@ -41,6 +41,8 @@ final class TudorApiClient
     /** Longest piece of an API error body quoted in ApiResponseException. */
     private const ERROR_EXCERPT_LENGTH = 300;
 
+    private readonly NdjsonCodec $ndjsonCodec;
+
     private readonly AccessTokenProvider $tokenProvider;
 
     /** Token sent on the last call, only so it can be scrubbed from error messages. */
@@ -53,9 +55,10 @@ final class TudorApiClient
     public function __construct(
         private readonly ClientConfig $config,
         private readonly HttpClientInterface $httpClient,
-        private readonly NdjsonCodec $ndjsonCodec = new NdjsonCodec(),
+        ?NdjsonCodec $ndjsonCodec = null,
         ?AccessTokenProvider $tokenProvider = null,
     ) {
+        $this->ndjsonCodec = $ndjsonCodec ?? new NdjsonCodec();
         $this->tokenProvider = $tokenProvider ?? new AccessTokenProvider($config, $httpClient);
     }
 

@@ -151,6 +151,31 @@ final class TudorApiClient
     }
 
     /**
+     * GET /health — TUDOR's service status (Spring Boot Actuator): 200 {"status":"UP"} when the
+     * API is up, 503 when it isn't. The path has no /v1 prefix ({base}/health), but it still
+     * needs the Bearer token; a 401 renews the token and retries once, like every other call.
+     *
+     * Unlike the other methods, the response is returned as is, whatever its status code: a
+     * 503 or any other non-2xx answer is the information the caller is asking for (e.g. the
+     * Magento module's API test page shows "UP", 503 or whatever arrives), not an error.
+     * Credential problems still throw (MissingCredentialsException, CredentialsRejectedException,
+     * TokenRequestException), since then the service status couldn't be asked at all.
+     *
+     * @throws TudorApiException
+     */
+    public function getHealth(): HttpResponse
+    {
+        $response = $this->dispatch('GET', '/health', null, null);
+
+        if ($response->statusCode === 401) {
+            $this->tokenProvider->invalidate();
+            $response = $this->dispatch('GET', '/health', null, null);
+        }
+
+        return $response;
+    }
+
+    /**
      * One API call with the cached token; on 401, a fresh token and a single retry.
      *
      * @throws TudorApiException

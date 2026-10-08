@@ -173,7 +173,7 @@ installation — see "What's still open" below for what each still needs before 
 - Only products sellable **immediately online** are ever sent — never "on demand" /
   backorder-only items (`AvailabilityFilter`, gated on `onlinePurchaseEnabled && value > 0`).
 - Only models in TUDOR's current price list for the country are sent (`ValidModelList`, see
-  "Lista de modelos válidos de TUDOR" below).
+  "TUDOR's valid model list" below).
 - An unavailable model must disappear from the feed entirely: always submit the *complete*
   current catalog to `POST /v1/stocks/batch`, never a delta — TUDOR zeroes out whatever's
   missing automatically.
@@ -185,35 +185,35 @@ installation — see "What's still open" below for what each still needs before 
 - Two environments, staging and production, each with their own TUDOR-issued OAuth client
   ID/secret (`Environment`, `ClientConfig`).
 
-## Lista de modelos válidos de TUDOR
+## TUDOR's valid model list
 
-`AvailabilityFilter` quita además los relojes cuyo código de modelo (TMC) no está en la lista
-de precios vigente de TUDOR para su país: `core/resources/valid-models/prices_{PAÍS}.xlsx`
-(`prices_ES.xlsx` para España), el archivo tal cual lo publica TUDOR. De él solo se usa la
-columna titulada «TMC», esté donde esté; los códigos se comparan sin espacios y en
-mayúsculas. Un reloj fuera de la lista no se envía (TUDOR lo pone a 0 al no recibirlo). Se
-aplica a la sincronización completa y a la publicación en el minuto del módulo de Magento.
+`AvailabilityFilter` also drops watches whose model code (TMC) isn't in TUDOR's current price
+list for their country: `core/resources/valid-models/prices_{COUNTRY}.xlsx`
+(`prices_ES.xlsx` for Spain), the file exactly as TUDOR publishes it. Only the column titled
+"TMC" is used, wherever it is; codes are compared without spaces and in upper case. A watch
+not in the list isn't sent (TUDOR sets it to 0 when it doesn't receive it). It applies to the
+full sync and to the Magento module's real-time (every-minute) publishing.
 
-**Si el archivo del país falta, no se puede leer, no tiene columna TMC o tiene menos de 100
-modelos**, o si dejaría sin ningún reloj disponible a ese país, el filtro no se aplica: la
-sincronización sigue como si no existiera y `AvailabilityFilter::getWarnings()` devuelve un
-aviso («Filtro de modelos vigentes DESACTIVADO: no se encuentra prices_ES.xlsx»).
-`getExcludedModelCodes()` da los TMC que ha quitado la lista. Los dos se refieren a la última
-llamada a `keepOnlyAvailable()`, para que los módulos los registren y los muestren.
+**If the country's file is missing, can't be read, has no TMC column or has fewer than 100
+models**, or if it would leave that country without any available watch, the filter isn't
+applied: the sync goes on as if it didn't exist and `AvailabilityFilter::getWarnings()`
+returns a warning ("Filtro de modelos vigentes DESACTIVADO: no se encuentra prices_ES.xlsx").
+`getExcludedModelCodes()` gives the TMCs the list removed. Both refer to the last call to
+`keepOnlyAvailable()`, so the modules can log and display them.
 
-Actualización (sin tocar código ni editar el Excel):
+Updating (without touching code or editing the Excel file):
 
-0. **Cuándo:** cada vez que TUDOR publique una lista de precios nueva, no solo una vez al año
-   (la actual tiene modelos con fechas de validez 01-04, 28-05 y 24-07-2026). Si TUDOR lanza un
-   modelo nuevo y la lista no está actualizada, ese modelo no se enviará.
-1. Descargar la lista de precios nueva de TUDOR.
-2. Guardarla como `core/resources/valid-models/prices_ES.xlsx` (mismo nombre, sustituyendo la
-   anterior; si TUDOR la llama distinto, renombrarla).
-3. `cd core && composer test`. Si falla `RealPriceListTest`, es que TUDOR ha cambiado el
-   formato del archivo.
-4. Commit, push y desplegar en las tiendas.
+0. **When:** every time TUDOR publishes a new price list, not just once a year (the current
+   one has models with validity dates 01-04, 28-05 and 24-07-2026). If TUDOR launches a new
+   model and the list isn't up to date, that model won't be sent.
+1. Download TUDOR's new price list.
+2. Save it as `core/resources/valid-models/prices_ES.xlsx` (same name, replacing the previous
+   one; if TUDOR names it differently, rename it).
+3. `cd core && composer test`. If `RealPriceListTest` fails, TUDOR has changed the file's
+   format.
+4. Commit, push and deploy to the stores.
 
-Para otro mercado basta añadir `prices_XX.xlsx` con el código de país de `StockAvailability::$country`.
+For another market, just add `prices_XX.xlsx` with the country code from `StockAvailability::$country`.
 
 ## What's still open
 

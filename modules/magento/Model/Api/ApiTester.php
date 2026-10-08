@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tudorsync\EcommerceSync\Model\Api;
 
 use Magento\Framework\Exception\LocalizedException;
-use Tudorsync\Core\Api\Auth\AccessTokenProvider;
 use Tudorsync\Core\Api\TudorApiClient;
 use Tudorsync\Core\Domain\Environment;
 use Tudorsync\Core\Domain\StockAvailability;
@@ -22,15 +21,6 @@ use Tudorsync\EcommerceSync\Model\Config;
  */
 class ApiTester
 {
-    /**
-     * Same base URLs as core's TudorApiClient (private there): only needed for GET /health, which
-     * core has no method for yet. Request to core: intercambio/2026-10-06-juanjo-peticion-health.md.
-     */
-    private const BASE_URLS = [
-        'staging' => 'https://pp-api.services.mytudorwatch.com/estock-retail/retailer',
-        'production' => 'https://api.services.mytudorwatch.com/estock-retail/retailer',
-    ];
-
     public const ACTION_HEALTH = 'health';
     public const ACTION_POINT_OF_SALES = 'point_of_sales';
     public const ACTION_GET_STOCKS = 'get_stocks';
@@ -182,12 +172,7 @@ class ApiTester
 
         switch ($action) {
             case self::ACTION_HEALTH:
-                $clientConfig = $this->config->getClientConfig();
-                $token = (new AccessTokenProvider($clientConfig, $this->httpClient))->getAccessToken();
-                $response = $this->httpClient->get(
-                    self::BASE_URLS[$clientConfig->environment->value] . '/health',
-                    ['Authorization' => 'Bearer ' . $token, 'Accept' => 'application/json']
-                );
+                $response = $client->getHealth();
                 $body = json_decode($response->body, true);
 
                 return [

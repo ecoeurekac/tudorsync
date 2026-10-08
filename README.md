@@ -37,10 +37,10 @@ tudorsync/
     src/
       Domain/                 # StockAvailability, StorePickupAvailability, ClientConfig, Environment
       Contract/                # CatalogConnectorInterface — the seam every module implements
-      Rules/                   # AvailabilityFilter — enforces TUDOR's visibility rules; ValidModelList
+      Rules/                   # AvailabilityFilter — reviews every record before sending; Exclusion, ValidModelList
       Url/                     # UtmUrlBuilder, LocaleUrlResolver
       Api/                     # TudorApiClient, NdjsonCodec, BatchSyncResult, StockImportResult, PointOfSale, HttpClientInterface
-      Sync/                    # SyncEngine — orchestrates one run
+      Sync/                    # SyncEngine — orchestrates one run; NothingPassedReviewException
       Reporting/               # MonthlyReportWriter, MonthlySalesReportRow
     resources/
       report-templates/       # TUDOR's real monthly-report .xlsx templates, one per language
@@ -170,10 +170,32 @@ installation — see "What's still open" below for what each still needs before 
 
 ## Business rules encoded in `core/`
 
-- Only products sellable **immediately online** are ever sent — never "on demand" /
-  backorder-only items (`AvailabilityFilter`, gated on `onlinePurchaseEnabled && value > 0`).
-- Only models in TUDOR's current price list for the country are sent (`ValidModelList`, see
-  "TUDOR's valid model list" below).
+- Every record is reviewed before it is sent (`AvailabilityFilter::keepOnlyAvailable()`), in
+  four steps:
+  1. **Normalize** `mc` and `country`: no spaces (non-breaking ones included), upper case.
+  2. **Drop what can't be published**: no `mc`, a country that isn't two letters, not sellable
+     **immediately online** (`value <= 0` or `onlinePurchaseEnabled` false — never "on demand"
+     / backorder-only items), or a default URL that is empty, malformed or not `https://`.
+     `localizedUrls` keys are normalized (`es_ES` → `es-ES`: hyphen, language in lower case,
+     region in upper case) and must be BCP 47 / ISO 639-1, with no closed list of languages: a
+     2–3 letter language (`es`, `ca`, `ast`), optionally a 4-letter script (`zh-Hant`) and/or a
+     region of 2 letters or 3 digits (`es-ES`, `fr-CH`, `es-419`). An entry with a bad URL or
+     key is removed on its own, keeping the watch.
+  3. **One record per `mc` + country** (TUDOR keeps only the last line of a repeated `mc`, and
+     a line it rejects as FAILED zeroes that watch): values are added up, the other fields
+     come from the record with the highest value (the first one on a tie), in order of first
+     appearance.
+  4. **Only models in TUDOR's current price list** for the country (`ValidModelList`, see
+     "TUDOR's valid model list" below).
+
+  `getExclusions()` lists each dropped watch with a reason code (`missing_model_code`,
+  `invalid_country`, `not_available`, `invalid_url`, `not_in_valid_list`) and a Spanish text
+  to display; `getWarnings()` what was fixed or skipped without dropping a watch (localized
+  URLs removed, repeated models merged, price list skipped).
+- **Never an empty batch by mistake:** if the connector returns watches but none passes the
+  review, `SyncEngine` sends nothing and throws `NothingPassedReviewException` with a summary
+  of the reasons — an empty batch would zero the retailer's whole catalog at TUDOR. A
+  connector that really returns nothing (everything sold out) still sends the empty batch.
 - An unavailable model must disappear from the feed entirely: always submit the *complete*
   current catalog to `POST /v1/stocks/batch`, never a delta — TUDOR zeroes out whatever's
   missing automatically.

@@ -18,6 +18,11 @@ use Tudorsync\Core\Rules\AvailabilityFilter;
  * Always run the full current catalog, never a delta: TUDOR's batch endpoint auto-hides
  * anything that was published before but is missing from the latest call (see
  * AvailabilityFilter's docblock).
+ *
+ * That same behavior makes an empty batch dangerous: it would zero the whole catalog. So if
+ * the connector returned watches and none passed the filter, nothing is sent and
+ * NothingPassedReviewException is thrown. A connector that really returns nothing (everything
+ * sold out) still sends the empty batch, as before.
  */
 final class SyncEngine
 {
@@ -32,6 +37,10 @@ final class SyncEngine
     {
         $catalog = $this->connector->getAvailableCatalog();
         $availableOnly = $this->filter->keepOnlyAvailable($catalog);
+
+        if ($catalog !== [] && $availableOnly === []) {
+            throw new NothingPassedReviewException(count($catalog), $this->filter->getExclusions());
+        }
 
         return $this->tudorApiClient->batchUpsertStocks($availableOnly);
     }

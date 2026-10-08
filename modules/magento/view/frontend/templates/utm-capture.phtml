@@ -3,11 +3,16 @@
  * Marks visitors referred by tudorwatch.com with a first-party cookie, read back when the order
  * is placed (Observer\SaveOrderAttribution). Done in the browser because the page itself comes
  * from the full page cache. Last-click: landing with any other utm_source removes the mark.
+ * Behind a consent manager the tag is rendered blocked and only runs once the visitor accepts
+ * (ViewModel\UtmCapture).
  *
  * @var \Magento\Framework\View\Element\Template $block
  * @var \Magento\Framework\View\Helper\SecureHtmlRenderer $secureRenderer
  */
 use Tudorsync\EcommerceSync\Model\Attribution\UtmCookie;
+
+/** @var \Tudorsync\EcommerceSync\ViewModel\UtmCapture $viewModel */
+$viewModel = $block->getData('view_model');
 
 $config = json_encode([
     'name' => UtmCookie::NAME,
@@ -36,4 +41,4 @@ $script = <<<JS
 })({$config});
 JS;
 ?>
-<?= /* @noEscape */ $secureRenderer->renderTag('script', [], $script, false) ?>
+<?= /* @noEscape */ $secureRenderer->renderTag('script', $viewModel->getScriptAttributes(), $script, false) ?>

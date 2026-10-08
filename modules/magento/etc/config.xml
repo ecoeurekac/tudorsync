@@ -14,6 +14,10 @@
             <urls>
                 <locale_format>language_region</locale_format>
             </urls>
+            <attribution>
+                <consent_manager>none</consent_manager>
+                <consent_category>performance</consent_category>
+            </attribution>
         </tudorsync>
     </default>
 </config>

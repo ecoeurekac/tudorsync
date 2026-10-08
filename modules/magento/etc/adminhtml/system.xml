@@ -85,6 +85,23 @@
                     <source_model>Tudorsync\EcommerceSync\Model\Config\Source\LocaleFormat</source_model>
                 </field>
             </group>
+            <group id="attribution" translate="label comment" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Order Attribution (tudorsync_utm cookie)</label>
+                <comment>Cookie that marks visitors arriving from tudorwatch.com, so their orders count in TUDOR's monthly report. It is not strictly necessary: in the EU it needs the visitor's consent.</comment>
+                <field id="consent_manager" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Cookie Consent Manager</label>
+                    <comment>With CookieScript, the cookie is only written once the visitor accepts the category below. Declare tudorsync_utm in that category in CookieScript so it is deleted if the visitor rejects it.</comment>
+                    <source_model>Tudorsync\EcommerceSync\Model\Config\Source\ConsentManager</source_model>
+                </field>
+                <field id="consent_category" translate="label comment" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Consent Category</label>
+                    <comment>CookieScript category the cookie is declared under: strict, functionality, performance or targeting.</comment>
+                    <validate>required-entry validate-alphanum</validate>
+                    <depends>
+                        <field id="consent_manager">cookiescript</field>
+                    </depends>
+                </field>
+            </group>
         </section>
     </system>
 </config>

@@ -109,6 +109,14 @@ de TUDOR (plantilla en `core/resources/report-templates/`).
   fichas salen de la caché de página completa y el PHP no se ejecuta.
 - **Último clic:** si luego llega con cualquier otra `utm_source` (Google, newsletter…), la
   cookie se borra y el pedido ya no cuenta para TUDOR.
+- **Consentimiento:** la cookie no es estrictamente necesaria, así que en la UE requiere el
+  consentimiento del visitante. En *TUDOR E-commerce Sync › Atribución de pedidos*, con el gestor
+  **CookieScript**, el script se pinta bloqueado (`type="text/plain"`, `data-cookiescript="accepted"`,
+  `data-cookiecategory` = la categoría configurada, `performance` por defecto) y CookieScript lo
+  ejecuta cuando el visitante acepta esa categoría, aún en la página de llegada (los UTM siguen en
+  la URL). Si navega a otra página sin aceptar, esa visita no se atribuye. Hay que **declarar
+  `tudorsync_utm` en esa categoría en el panel de CookieScript** para que la borre si se rechaza.
+  Con **Ninguno** (valor por defecto) se escribe sin preguntar, como antes.
 - **Al hacer el pedido:** `Observer\SaveOrderAttribution` (evento
   `sales_model_service_quote_submit_success`, solo en frontend y REST, nunca en el admin) guarda
   una fila en **`tudorsync_order_attribution`**: `order_id`, `increment_id`, `store_id`, las 3 UTM,

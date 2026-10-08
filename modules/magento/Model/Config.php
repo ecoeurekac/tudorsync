@@ -8,6 +8,7 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Model\ScopeInterface;
 use Tudorsync\Core\Domain\ClientConfig;
 use Tudorsync\Core\Domain\Environment;
+use Tudorsync\EcommerceSync\Model\Config\Source\ConsentManager;
 use Tudorsync\EcommerceSync\Model\Config\Source\LocaleFormat;
 use Tudorsync\EcommerceSync\Model\Config\Source\ValueMode;
 
@@ -30,6 +31,8 @@ class Config
     private const XML_PATH_SKU_PATTERN = 'tudorsync/model_code/sku_pattern';
     private const XML_PATH_SKU_REPLACEMENT = 'tudorsync/model_code/sku_replacement';
     private const XML_PATH_REALTIME_ENABLED = 'tudorsync/general/realtime_enabled';
+    private const XML_PATH_CONSENT_MANAGER = 'tudorsync/attribution/consent_manager';
+    private const XML_PATH_CONSENT_CATEGORY = 'tudorsync/attribution/consent_category';
     private const XML_PATH_STORE_NAME = 'general/store_information/name';
     private const XML_PATH_LOCALE_CODE = 'general/locale/code';
 
@@ -100,6 +103,19 @@ class Config
     public function getCountry(?int $storeId = null): string
     {
         return strtoupper($this->getString(self::XML_PATH_COUNTRY, $storeId));
+    }
+
+    public function getConsentManager(?int $storeId = null): string
+    {
+        return $this->getString(self::XML_PATH_CONSENT_MANAGER, $storeId) ?: ConsentManager::NONE;
+    }
+
+    /**
+     * Consent category the attribution cookie is declared under in the consent manager.
+     */
+    public function getConsentCategory(?int $storeId = null): string
+    {
+        return $this->getString(self::XML_PATH_CONSENT_CATEGORY, $storeId) ?: 'performance';
     }
 
     public function getHomeDeliveryTimingHours(?int $storeId = null): ?int

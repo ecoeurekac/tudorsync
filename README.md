@@ -37,13 +37,14 @@ tudorsync/
     src/
       Domain/                 # StockAvailability, StorePickupAvailability, ClientConfig, Environment
       Contract/                # CatalogConnectorInterface — the seam every module implements
-      Rules/                   # AvailabilityFilter — enforces TUDOR's visibility rules
+      Rules/                   # AvailabilityFilter — enforces TUDOR's visibility rules; ValidModelList
       Url/                     # UtmUrlBuilder, LocaleUrlResolver
       Api/                     # TudorApiClient, NdjsonCodec, BatchSyncResult, StockImportResult, PointOfSale, HttpClientInterface
       Sync/                    # SyncEngine — orchestrates one run
       Reporting/               # MonthlyReportWriter, MonthlySalesReportRow
     resources/
       report-templates/       # TUDOR's real monthly-report .xlsx templates, one per language
+      valid-models/           # TUDOR's price list per country (prices_ES.xlsx): current models
     tests/
   modules/
     magento/                  # Magento 2 module (Pedro Luis Olivares, Quera)
@@ -171,6 +172,8 @@ installation — see "What's still open" below for what each still needs before 
 
 - Only products sellable **immediately online** are ever sent — never "on demand" /
   backorder-only items (`AvailabilityFilter`, gated on `onlinePurchaseEnabled && value > 0`).
+- Only models in TUDOR's current price list for the country are sent (`ValidModelList`, see
+  "Lista de modelos válidos de TUDOR" below).
 - An unavailable model must disappear from the feed entirely: always submit the *complete*
   current catalog to `POST /v1/stocks/batch`, never a delta — TUDOR zeroes out whatever's
   missing automatically.
@@ -181,6 +184,36 @@ installation — see "What's still open" below for what each still needs before 
   URL (`LocaleUrlResolver`).
 - Two environments, staging and production, each with their own TUDOR-issued OAuth client
   ID/secret (`Environment`, `ClientConfig`).
+
+## Lista de modelos válidos de TUDOR
+
+`AvailabilityFilter` quita además los relojes cuyo código de modelo (TMC) no está en la lista
+de precios vigente de TUDOR para su país: `core/resources/valid-models/prices_{PAÍS}.xlsx`
+(`prices_ES.xlsx` para España), el archivo tal cual lo publica TUDOR. De él solo se usa la
+columna titulada «TMC», esté donde esté; los códigos se comparan sin espacios y en
+mayúsculas. Un reloj fuera de la lista no se envía (TUDOR lo pone a 0 al no recibirlo). Se
+aplica a la sincronización completa y a la publicación en el minuto del módulo de Magento.
+
+**Si el archivo del país falta, no se puede leer, no tiene columna TMC o tiene menos de 100
+modelos**, o si dejaría sin ningún reloj disponible a ese país, el filtro no se aplica: la
+sincronización sigue como si no existiera y `AvailabilityFilter::getWarnings()` devuelve un
+aviso («Filtro de modelos vigentes DESACTIVADO: no se encuentra prices_ES.xlsx»).
+`getExcludedModelCodes()` da los TMC que ha quitado la lista. Los dos se refieren a la última
+llamada a `keepOnlyAvailable()`, para que los módulos los registren y los muestren.
+
+Actualización (sin tocar código ni editar el Excel):
+
+0. **Cuándo:** cada vez que TUDOR publique una lista de precios nueva, no solo una vez al año
+   (la actual tiene modelos con fechas de validez 01-04, 28-05 y 24-07-2026). Si TUDOR lanza un
+   modelo nuevo y la lista no está actualizada, ese modelo no se enviará.
+1. Descargar la lista de precios nueva de TUDOR.
+2. Guardarla como `core/resources/valid-models/prices_ES.xlsx` (mismo nombre, sustituyendo la
+   anterior; si TUDOR la llama distinto, renombrarla).
+3. `cd core && composer test`. Si falla `RealPriceListTest`, es que TUDOR ha cambiado el
+   formato del archivo.
+4. Commit, push y desplegar en las tiendas.
+
+Para otro mercado basta añadir `prices_XX.xlsx` con el código de país de `StockAvailability::$country`.
 
 ## What's still open
 

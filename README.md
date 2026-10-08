@@ -150,23 +150,29 @@ sync trigger — all following the same pattern, adapted to each platform's own 
 
 | | Magento (Pedro Luis Olivares, Quera) | PrestaShop (Grau) | WooCommerce (Gordillo, Saphir) |
 |---|---|---|---|
-| **Model code (`mc`) source** | New EAV attribute `tudor_model_code` (`Setup\Patch\Data\AddTudorModelCodeAttribute`) | New Feature "TUDOR Model Code" (created on install, id in config) | New post meta `_tudor_model_code` (product edit screen field) |
-| **Enrollment rule** | Attribute non-empty | Feature value non-empty | Meta non-empty |
-| **Exclusion rule** | Not enabled, out of stock, or backorders allowed | Available quantity ≤ 0 (covers both true out-of-stock and backorder/"on demand") | Not in stock, or backorders allowed |
-| **`value` sent** | Real stock qty (legacy single-source `StockRegistryInterface`) | Real available qty | Real qty if stock is managed, else `1` as a plain signal |
-| **Product URL** | Per store view via `ProductRepositoryInterface` reload | Per active language via `Link::getProductLink()` | Site permalink; per-locale needs a `tudorsync_localized_urls` filter hook (no multilingual plugin assumed) |
+| **Model code (`mc`) source** | EAV attribute `tudor_model_code` (`Setup\Patch\Data\AddTudorModelCodeAttribute`) or, if empty, derived from the SKU by a configurable rule; `tudorsync:model-code:fill` fills the attribute | New Feature "TUDOR Model Code" (created on install, id in config) | New post meta `_tudor_model_code` (product edit screen field) |
+| **Enrollment rule** | Has a model code (attribute or SKU rule) | Feature value non-empty | Meta non-empty |
+| **Exclusion rule** | Not enabled or not visible, no stock management, out of stock, backorders allowed, or no salable quantity (MSI reservations deducted) | Available quantity ≤ 0 (covers both true out-of-stock and backorder/"on demand") | Not in stock, or backorders allowed |
+| **`value` sent** | Salable qty (MSI, website of the default store), or always `1` (config "Value Sent to TUDOR"); several products of one model are summed | Real available qty | Real qty if stock is managed, else `1` as a plain signal |
+| **Product URL** | Default store view + one per active store view selling it, keys `es-ES`/`en-GB` (or `es`/`en`) | Per active language via `Link::getProductLink()` | Site permalink; per-locale needs a `tudorsync_localized_urls` filter hook (no multilingual plugin assumed) |
 | **Admin config** | Stores > Configuration > TUDOR E-commerce Sync (`etc/adminhtml/system.xml`) | Modules > TUDOR E-commerce Sync > Configure (`HelperForm`) | Settings > TUDOR Sync (Settings API) |
 | **Test Connection / Run Sync Now** | AJAX buttons on the config screen (`Block\...\StatusAndActions` → `Controller\Adminhtml\Sync\{Test,Run}`), result persisted via `Model\Status` | Two plain-HTML forms on the same config screen, handled inline in `getContent()`, result persisted in `Configuration` | Two forms posting to `admin-post.php` (`SettingsPage::handle{TestConnection,RunSync}`), result in `wp_options` + a flash notice |
-| **Sync trigger** | Native Magento cron (`etc/crontab.xml`, frequency configurable) | No native scheduler — a token-protected front controller (`controllers/front/cron.php`) that a real server cron must hit | WP-Cron, scheduled hourly on plugin activation |
-| **HTTP client** | `Model\Api\CurlHttpClient` (wraps `\Magento\Framework\HTTP\Client\Curl`) | `Api\CurlHttpClient` (plain cURL — no HTTP library assumed) | `Api\WordPressHttpClient` (wraps `wp_remote_post`/`wp_remote_get`) |
+| **Sync trigger** | Native Magento cron (`etc/crontab.xml`): full sync (frequency configurable, hourly by default) + changed TUDOR models published within a minute (`tudorsync_publish_pending`) | No native scheduler — a token-protected front controller (`controllers/front/cron.php`) that a real server cron must hit | WP-Cron, scheduled hourly on plugin activation |
+| **HTTP client** | `Model\Api\LoggingHttpClient` over `Model\Api\CurlHttpClient` (wraps `\Magento\Framework\HTTP\Client\Curl`); every call logged in `tudorsync_api_log` | `Api\CurlHttpClient` (plain cURL — no HTTP library assumed) | `Api\WordPressHttpClient` (wraps `wp_remote_post`/`wp_remote_get`) |
 
 "Test Connection" calls `GET /v1/point-of-sales` on all three — a real, auth-requiring TUDOR
 endpoint, so a success is a genuine end-to-end confirmation, not just a reachability ping.
 "Run Sync Now" builds the exact same `SyncEngine` the scheduled trigger uses, so a manual
 run and a scheduled run always behave identically.
 
-All three were only `php -l` linted, not run inside an actual Magento/PrestaShop/WordPress
-installation — see "What's still open" below for what each still needs before going live.
+**Magento** runs in Quera's store (Magento 2.4.8, PHP 8.3) since 2026-09-30 and has been tested
+end to end on Quera's staging against TUDOR's PREPROD (full sync, single-model and batch sends,
+withdrawals, the valid-model list failing). It also does more than the table shows — real-time
+publishing, attribution of orders coming from tudorwatch.com (`tudorsync_utm` cookie, with
+CookieScript consent), the monthly report in the admin (*Reports › TUDOR e-Stock*), an API test
+page and a log of every call to TUDOR: see [`modules/magento/README.md`](modules/magento/README.md).
+**PrestaShop and WooCommerce** have still only been `php -l` linted, not run inside an actual
+installation — see "What's still open" below.
 
 ## Business rules encoded in `core/`
 
@@ -239,32 +245,34 @@ For another market, just add `prices_XX.xlsx` with the country code from `StockA
 
 ## What's still open
 
+- **Going live in Spain (2026-10-19):** Quera's store is production since 2026-10-05, with TUDOR
+  not connected yet. Before the activation it needs its PROD credentials, the hourly full sync
+  (`0 * * * *`) and "Publish Changes Within a Minute" on. The automatic sends (cron) haven't been
+  tested on the staging yet: its crons are paused on purpose.
+- **Semantics of `value`**: still to be confirmed by TUDOR (see `StockAvailability`'s docblock).
 - **Modules still on `tudorApiKey`**: core authenticates with OAuth2 since 2026-10-02. Magento
   passes `clientId`/`clientSecret` since 2026-10-06; PrestaShop and WooCommerce don't yet (see
   `intercambio/2026-10-02-jorge-oauth-listo.md`). Remove `tudorApiKey` once all three have.
-- **Per-platform `CatalogConnector` implementations exist but are unverified against a real
-  store.** Each uses a *new* field (attribute/Feature/meta) for the TUDOR model code rather
-  than an existing SKU or attribute — confirm with each client whether they already have a
-  convention for this before relying on the new field in production. None have been tested
-  against a real catalog, and per-POS click & collect (`storesAvailabilityDetails`/RSWI) and
-  MSI multi-source stock (Magento) aren't wired up at all yet — only a flat, store-wide
-  click & collect toggle.
+- **PrestaShop and WooCommerce connectors are unverified against a real store**, including their
+  Test Connection / Run Sync Now actions. Each uses a *new* field (Feature/meta) for the TUDOR
+  model code: confirm with Grau, Gordillo and Saphir whether they already have a convention for it.
+- **Model codes to review with Quera**: the SKU rule's codes, and `M25707B/25-0001`, which isn't
+  in TUDOR's price list (only `M25707B/26-0001` is) and so isn't sent.
+- **Per-POS click & collect** (`storesAvailabilityDetails`/RSWI) isn't wired up on any platform
+  (only a flat, store-wide toggle), nor is **MSI with several sources** in Magento.
 - **WooCommerce multi-language** isn't implemented, only an extension point
   (`tudorsync_localized_urls` filter) — needs wiring to whatever plugin (if any) Gordillo/
   Saphir actually use.
 - **PrestaShop's cron** depends on the server operator adding a real crontab entry that hits
   the generated, token-protected URL — nothing in the module itself schedules that call.
-- **"Test Connection" / "Run Sync Now" admin actions** are new and, like the rest of the
-  connectors, unverified against a real installation — in particular Magento's AJAX
-  controllers (ACL, routing, `FORM_KEY` handling) are the most likely to need adjustment
-  once actually loaded in a Magento admin.
-- **Monthly report data sourcing**: nothing yet pulls sessions/visitors from analytics or
-  sales counts from each platform's orders into `MonthlySalesReportRow` — only the Excel
-  writer exists so far.
+- **Monthly report data**: Magento computes the order side (online and click & collect sales)
+  and writes the Excel from its admin; sessions and unique visitors are typed in by hand. Core
+  still has no interface for the report's data source and nothing reads them from GA4.
 - Package naming/versioning conventions for internal Composer registry distribution (how
   each store actually pulls `tudorsync/core` — private Packagist, Satis, a path repo baked
   into deployment, etc.) — currently each module's `composer.json` points at `core/` via a
   local path repository for development only.
+- No CI runs `composer test` automatically.
 
 ## Development
 
@@ -274,14 +282,21 @@ composer install
 composer test
 ```
 
-`core/` currently has 14 passing PHPUnit tests, including `MonthlyReportWriterTest`, which
-writes into a copy of the real ES report template and reads the cells back — that's how the
-row-5-has-example-content and row-20-is-a-footnote-not-data issues documented above were
-actually found, not just guessed from reading the XML.
+`core/` currently has 80 passing PHPUnit tests. Among them:
 
-The platform modules (`modules/*`) have real `CatalogConnector`/config/cron code (see
-"Platform connectors" above), and every file passes `php -l`, but none of it has run inside
-an actual Magento/PrestaShop/WordPress installation — no platform test framework (Magento's
-`bin/magento`, PrestaShop's module validator, WP-CLI/PHPUnit with the WP test suite) was
-available in the environment this was written in. Treat the connectors as needing a real
-smoke test against each client's staging store before going live.
+- `MonthlyReportWriterTest` writes into a copy of the real ES report template and reads the
+  cells back — that's how the row-5-has-example-content and row-20-is-a-footnote-not-data
+  issues documented above were actually found, not just guessed from reading the XML;
+- `RealPriceListTest` checks the real `prices_ES.xlsx` (TMC column, at least 100 models, every
+  code shaped like a TMC), so a format change by TUDOR shows up when the file is replaced;
+- `ConstructorDefaultsTest` fails if any constructor in `core/src` has an object as a default
+  value (`Foo $foo = new Foo()`), which breaks Magento's `setup:di:compile` in production mode.
+  Use `?Foo $foo = null` and `$this->foo = $foo ?? new Foo()` instead.
+
+The platform modules (`modules/*`) have no unit tests of their own. The Magento module is
+checked inside Quera's staging store against TUDOR's PREPROD: `bin/magento tudorsync:catalog:preview`
+(dry run, no call to TUDOR), `tudorsync:connection:test`, `tudorsync:sync:run` and the admin's
+API test page; before a change goes to production, `setup:di:compile` on the staging must leave
+no `__set_state` in `generated/metadata/global.php`. PrestaShop and WooCommerce only pass
+`php -l`: treat them as needing a real smoke test against each client's staging store before
+going live.

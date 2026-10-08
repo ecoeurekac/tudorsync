@@ -48,9 +48,13 @@ con la regla de SKU. Los nombres de fichero de las fotos no se usan (algunos son
 `M2542GXX7NU-0002`). No toca los valores ya puestos salvo con `--overwrite`. Se puede repetir
 (p. ej. tras una re-migración de datos).
 
-Regla de Quera (30-09): prefijo `1001TU`, patrón
-`/^1001TU(.+?)(?:\d{5}[A-Z]?|CUERO|TEJIDO|CROCO|CAUCHO)-(\d{4})$/`, sustitución `M$1-$2`
-(`1001TU79363NCUERO-0002` → `M79363N-0002`). Coincide con la etiqueta en 86 de 87 fichas.
+Regla de Quera (ampliada el 08-10): prefijo `1001TU`, patrón
+`/^1001TU(.+?)(?:\d{5}[A-Z]?|CUERO|TEJIDO|TEJI|CROCO|CAUCHO|CORREA)?-(\d{4})$/`, sustitución `M$1-$2`
+(`1001TU79363NCUERO-0002` → `M79363N-0002`, `1001TU91351-0002` → `M91351-0002`). La correa es
+opcional y admite `CORREA` y `TEJI`, para que ninguna ficha con variante se quede sin código; cambiarla
+no alteró ningún código existente. Las SKU con variante de 3 dígitos (`1001TU2860091060-003`) no
+encajan: llevan el código a mano en el atributo. Cruzado el 08-10 con los Excel de modelos activos y
+descatalogados de TUDOR (`doc/`): ninguna ficha con TMC o GTIN de TUDOR queda fuera.
 
 `preview` muestra lo que se enviaría y, para cada producto candidato, si se envía, se agrupa
 con otro o se excluye, y por qué.

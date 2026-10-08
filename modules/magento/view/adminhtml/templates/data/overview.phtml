@@ -36,7 +36,17 @@ $statusLabels = [
             <tr><th><?= $escaper->escapeHtml(__('Market')) ?></th><td><?= $escaper->escapeHtml($info['market'] ?: '—') ?></td></tr>
             <tr><th><?= $escaper->escapeHtml(__('Credentials for this environment')) ?></th><td><?= $escaper->escapeHtml($yesNo((bool) $info['has_credentials'])) ?></td></tr>
             <tr><th><?= $escaper->escapeHtml(__('Last connection test')) ?></th><td><?= $escaper->escapeHtml($info['last_test'] ?: '—') ?></td></tr>
-            <tr><th><?= $escaper->escapeHtml(__('Last full sync')) ?></th><td><?= $escaper->escapeHtml($info['last_sync'] ?: '—') ?></td></tr>
+            <tr><th><?= $escaper->escapeHtml(__('Last full sync')) ?></th><td><?= $escaper->escapeHtml($info['last_sync'] ?: '—') ?>
+                <?php foreach (['exclusions' => __('Left out by the review (not sent):'), 'warnings' => __('Review warnings:')] as $key => $title): ?>
+                    <?php if ($info['last_sync_review'][$key] !== []): ?>
+                        <br><strong><?= $escaper->escapeHtml($title) ?></strong>
+                        <ul>
+                            <?php foreach ($info['last_sync_review'][$key] as $line): ?>
+                                <li><?= $escaper->escapeHtml($line) ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php endif; ?>
+                <?php endforeach; ?></td></tr>
             <tr><th><?= $escaper->escapeHtml(__('Full sync schedule (cron)')) ?></th><td><code><?= $escaper->escapeHtml($info['cron_schedule'] ?: '—') ?></code></td></tr>
             <tr><th><?= $escaper->escapeHtml(__('Real-time publishing (every minute)')) ?></th><td><?= $escaper->escapeHtml($yesNo((bool) $info['realtime_enabled'])) ?>
                 <?php if ($info['paused_until']): ?> · <?= $escaper->escapeHtml(__('paused by TUDOR (HTTP 429) until %1', $info['paused_until'])) ?><?php endif; ?></td></tr>
@@ -51,8 +61,14 @@ $statusLabels = [
         <?php else: ?>
             <?php $counts = $snapshot->countByStatus(); ?>
             <p>
-                <?= $escaper->escapeHtml(__('%1 TUDOR model(s) available to send, from %2 product(s). %3 product(s) left out.', count($snapshot->items), $counts[CatalogSnapshot::STATUS_SENT], $counts[CatalogSnapshot::STATUS_EXCLUDED] + $counts[CatalogSnapshot::STATUS_MERGED])) ?>
+                <?= $escaper->escapeHtml(__('%1 TUDOR model(s) available to send, from %2 product(s). %3 product(s) left out.', count($snapshot->getItemsToSend()), $counts[CatalogSnapshot::STATUS_SENT], $counts[CatalogSnapshot::STATUS_EXCLUDED] + $counts[CatalogSnapshot::STATUS_MERGED])) ?>
+                <?php if ($snapshot->review !== null && $snapshot->review->exclusions !== []): ?>
+                    <?= $escaper->escapeHtml(__('Of the %1 model(s) built, the review before sending (tudorsync/core) leaves out %2: they are marked "TUDOR review" below.', count($snapshot->items), count($snapshot->review->exclusions))) ?>
+                <?php endif; ?>
             </p>
+            <?php if ($snapshot->review?->nothingPassed()): ?>
+                <div class="message message-error error"><div><?= $escaper->escapeHtml(__('No model passes the review: the sync would send nothing (an empty batch would set the whole catalog to 0).')) ?></div></div>
+            <?php endif; ?>
             <?php if ($block->getExclusionReasons() !== []): ?>
                 <ul>
                     <?php foreach ($block->getExclusionReasons() as $reason => $count): ?>
@@ -60,7 +76,7 @@ $statusLabels = [
                     <?php endforeach; ?>
                 </ul>
             <?php endif; ?>
-            <?php foreach ($snapshot->warnings as $warning): ?>
+            <?php foreach (array_merge($snapshot->warnings, $snapshot->review->warnings ?? []) as $warning): ?>
                 <div class="message message-warning warning"><div><?= $escaper->escapeHtml($warning) ?></div></div>
             <?php endforeach; ?>
             <p>

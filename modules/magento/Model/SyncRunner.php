@@ -14,6 +14,8 @@ use Tudorsync\Core\Api\Exception\TokenRequestException;
 use Tudorsync\Core\Api\TudorApiClient;
 use Tudorsync\Core\Domain\ClientConfig;
 use Tudorsync\Core\Rules\AvailabilityFilter;
+use Tudorsync\Core\Rules\ValidModelList;
+use Tudorsync\Core\Sync\NothingPassedReviewException;
 use Tudorsync\Core\Sync\SyncEngine;
 use Tudorsync\EcommerceSync\Model\Api\CallContext;
 use Tudorsync\EcommerceSync\Model\Api\LoggingHttpClient;
@@ -28,6 +30,10 @@ use Tudorsync\EcommerceSync\Model\Realtime\PublishPlan;
  * Two ways of publishing: runSync() sends the whole catalog (scheduled, hourly by default);
  * publishPending() sends only the model codes queued by the stock/order/product hooks
  * (Model\Realtime), every minute. A successful full sync also empties that queue.
+ *
+ * Before sending, core's AvailabilityFilter reviews every record (CatalogSnapshot::$review):
+ * what it drops, and why, goes to the log and to the last sync status, and the counts are of
+ * what really went out. If it drops everything, SyncEngine sends nothing at all.
  *
  * Every HTTP call goes through LoggingHttpClient, labelled by CallContext with who started it
  * (cron, admin, cli) and the operation, so real syncs leave a full trace in tudorsync_api_log.
@@ -82,16 +88,25 @@ class SyncRunner
             return new SyncOutcome(false, $problem, skipped: true);
         }
 
+        $snapshot = null;
+
         try {
             $queuedBefore = $this->pendingQueue->now();
             $snapshot = $this->catalogConnector->collect();
+            $this->logReview($snapshot, $trigger);
             $result = $this->sendBatch($snapshot, $clientConfig);
             // Everything queued before the catalog was read has just gone out with it.
             $this->pendingQueue->remove(null, $queuedBefore);
+        } catch (NothingPassedReviewException $e) {
+            $message = (string) __('Nothing sent: no watch passed the review (%1 received). Sending an empty batch would set the whole catalog to 0 at TUDOR.', $e->getReceived());
+            $this->logger->error('Tudorsync: ' . $message . ' ' . $e->getMessage());
+            $this->status->recordSyncResult(false, $message, $trigger, $snapshot?->review);
+
+            return new SyncOutcome(false, $message);
         } catch (Throwable $e) {
             $message = (string) __('Sync failed: %1', $e->getMessage());
             $this->logger->error('Tudorsync: ' . $message, ['exception' => $e]);
-            $this->status->recordSyncResult(false, $message, $trigger);
+            $this->status->recordSyncResult(false, $message, $trigger, $snapshot?->review);
 
             return new SyncOutcome(false, $message);
         }
@@ -100,13 +115,14 @@ class SyncRunner
         $this->logFailures($failures);
 
         $message = (string) __(
-            '%1 model(s) sent, %2 result(s), %3 failure(s).',
-            count($snapshot->items),
+            '%1 model(s) sent, %2 left out by the review, %3 result(s), %4 failure(s).',
+            count($snapshot->getItemsToSend()),
+            count($snapshot->review?->exclusions ?? []),
             count($result->results),
             count($failures),
         );
         $this->logger->info(sprintf('Tudorsync (%s, %s): %s', $trigger, $clientConfig->environment->value, $message));
-        $this->status->recordSyncResult($failures === [], $message, $trigger);
+        $this->status->recordSyncResult($failures === [], $message, $trigger, $snapshot->review);
 
         return new SyncOutcome($failures === [], $message);
     }
@@ -127,11 +143,15 @@ class SyncRunner
         $snapshot = $this->catalogConnector->collect();
         $available = [];
 
-        foreach ((new AvailabilityFilter())->keepOnlyAvailable($snapshot->items) as $item) {
+        // Core's review gives the codes normalized (upper case, no spaces): the queue is compared the same way.
+        foreach ($snapshot->getItemsToSend() as $item) {
             $available[$item->modelCode] = $item;
         }
 
-        $modelCodes = array_column($pending, 'model_code');
+        $modelCodes = array_values(array_unique(array_map(
+            static fn (array $row): string => ValidModelList::normalize((string) $row['model_code']),
+            $pending,
+        )));
         $items = array_values(array_intersect_key($available, array_flip($modelCodes)));
         $unavailable = array_values(array_diff($modelCodes, array_keys($available)));
 
@@ -197,12 +217,14 @@ class SyncRunner
             }
 
             if ($plan->fullBatch) {
+                $this->logReview($plan->snapshot, $trigger);
                 $result = $this->sendBatch($plan->snapshot, $clientConfig);
                 $this->pendingQueue->remove(null, $plan->queuedBefore);
                 $message = (string) __(
-                    'Real-time (%1): full batch, %2 model(s) sent, %3 failure(s).',
+                    'Real-time (%1): full batch, %2 model(s) sent, %3 left out by the review, %4 failure(s).',
                     $plan->why,
-                    count($plan->snapshot->items),
+                    count($plan->snapshot->getItemsToSend()),
+                    count($plan->snapshot->review?->exclusions ?? []),
                     count($result->failures()),
                 );
                 $this->logFailures($result->failures());
@@ -229,7 +251,7 @@ class SyncRunner
                     }
                 }
 
-                $this->pendingQueue->remove($sent, $plan->queuedBefore);
+                $this->pendingQueue->remove($this->queuedCodes($plan, $sent), $plan->queuedBefore);
                 $message = (string) __(
                     'Real-time: %1 model(s) published (%2), %3 failed, %4 kept queued.',
                     count($sent),
@@ -333,6 +355,41 @@ class SyncRunner
         );
 
         return $engine->run();
+    }
+
+    /**
+     * What core's review drops and its warnings, as warnings in var/log/tudorsync.log: once per
+     * batch that goes out (full sync, or real-time when it falls back to a full batch).
+     */
+    private function logReview(CatalogSnapshot $snapshot, string $trigger): void
+    {
+        $review = $snapshot->review;
+
+        if ($review === null) {
+            return;
+        }
+
+        foreach ($review->getExclusionLines() as $line) {
+            $this->logger->warning(sprintf('Tudorsync (%s): left out by the review: %s', $trigger, $line));
+        }
+
+        foreach ($review->warnings as $warning) {
+            $this->logger->warning(sprintf('Tudorsync (%s): review: %s', $trigger, $warning));
+        }
+    }
+
+    /**
+     * The queue rows to remove for the published model codes (normalized), as they are stored in the queue.
+     *
+     * @param list<string> $sent
+     * @return list<string>
+     */
+    private function queuedCodes(PublishPlan $plan, array $sent): array
+    {
+        return array_values(array_filter(
+            $plan->getModelCodes(),
+            static fn (string $code): bool => in_array(ValidModelList::normalize($code), $sent, true),
+        ));
     }
 
     /**

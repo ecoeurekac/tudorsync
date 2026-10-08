@@ -12,7 +12,8 @@ use Magento\Framework\Controller\Result\JsonFactory;
 use Tudorsync\EcommerceSync\Model\Api\ApiTester;
 
 /**
- * AJAX: the JSON that POST /v1/stocks would send for the chosen product (and value). Sends nothing.
+ * AJAX: the JSON that POST /v1/stocks would send for the chosen product (and value), and what
+ * core's review says of it. Sends nothing.
  */
 class Preview extends Action implements HttpGetActionInterface
 {
@@ -29,13 +30,13 @@ class Preview extends Action implements HttpGetActionInterface
     public function execute(): Json
     {
         $value = (string) $this->getRequest()->getParam('value');
-        $payload = $this->apiTester->previewPayload(
+        $preview = $this->apiTester->previewPayload(
             (int) $this->getRequest()->getParam('product_id'),
             $value !== '' && ctype_digit($value) ? (int) $value : null
         );
 
-        return $this->resultJsonFactory->create()->setData($payload === null
+        return $this->resultJsonFactory->create()->setData($preview === null
             ? ['success' => false, 'message' => (string) __('This product has no TUDOR model code or no URL in the default store view.')]
-            : ['success' => true, 'payload' => $payload]);
+            : ['success' => true] + $preview);
     }
 }

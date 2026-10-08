@@ -146,6 +146,12 @@ define([
                     return;
                 }
 
+                (data.review || []).forEach(function (line) {
+                    $target.append($('<p class="tudorsync-warning"></p>').text($t('Would not be sent (left out by the review):') + ' ' + line));
+                });
+                (data.warnings || []).forEach(function (line) {
+                    $target.append($('<p class="note"></p>').text($t('Review warning:') + ' ' + line));
+                });
                 $target.append($('<p class="note"></p>').text($t('JSON that POST /v1/stocks would send (nothing has been sent):')));
                 $target.append(pre(pretty(data.payload)));
             });
@@ -186,6 +192,34 @@ define([
 
         /* ---------- running tests ---------- */
 
+        /**
+         * What core's review left out before sending, and its warnings, above the raw result.
+         */
+        function renderReview($run, review) {
+            var $list;
+
+            $run.append($('<p class="note"></p>').text(
+                $t('Review before sending (tudorsync/core): %1 received, %2 pass.')
+                    .replace('%1', review.received).replace('%2', review.passed)
+            ));
+
+            if (review.exclusions.length) {
+                $list = $('<ul class="tudorsync-warning"></ul>');
+                review.exclusions.forEach(function (exclusion) {
+                    $list.append($('<li></li>').text((exclusion.mc || '—') + ' (' + exclusion.country + '): ' + exclusion.message));
+                });
+                $run.append($('<strong></strong>').text($t('Left out by the review (not sent):')), $list);
+            }
+
+            if (review.warnings.length) {
+                $list = $('<ul></ul>');
+                review.warnings.forEach(function (warning) {
+                    $list.append($('<li></li>').text(warning));
+                });
+                $run.append($('<strong></strong>').text($t('Review warnings:')), $list);
+            }
+        }
+
         function renderRun(label, data) {
             var $run = $('<div class="tudorsync-run"></div>').toggleClass('is-error', !data.success),
                 time = new Date().toLocaleTimeString();
@@ -196,6 +230,10 @@ define([
                     .text(data.success ? $t('OK') : $t('Error')),
                 document.createTextNode(' · ' + (data.summary || ''))
             ));
+
+            if (data.result && data.result.review) {
+                renderReview($run, data.result.review);
+            }
 
             if (data.result !== null && data.result !== undefined) {
                 $run.append($('<details></details>').append(

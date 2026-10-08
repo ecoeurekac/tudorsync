@@ -9,6 +9,15 @@ Lee el catálogo, decide qué relojes TUDOR se pueden comprar **ya** y entrega a
 `tudorsync/core` un `StockAvailability` por código de modelo. El core se encarga del resto
 (filtro final, llamada a `POST /v1/stocks/batch`).
 
+**Revisión de core antes de enviar** (`AvailabilityFilter`): normaliza `mc` y país, quita lo que no
+se puede publicar (sin código, URL no `https://`, sin stock…), agrupa repetidos y quita los modelos
+que no están en la lista de modelos vigentes de TUDOR (`core/resources/valid-models/prices_ES.xlsx`).
+El módulo la ejecuta también por su cuenta (`Model\CatalogReview`, guardada en `CatalogSnapshot::$review`)
+para que el preview, las páginas del admin, las pruebas de API y el log enseñen lo mismo que se envía:
+cada reloj descartado con su motivo («TUDOR review: …») y los avisos. Las cuentas de «N model(s) sent»
+son de lo que pasa la revisión. Si no pasa nada, `SyncEngine` no envía nada
+(`NothingPassedReviewException`) y el estado dice «No se ha enviado nada».
+
 | Paso | Regla |
 |---|---|
 | Participa | Tiene código de modelo: atributo `tudor_model_code` o, si está vacío, el derivado del SKU (regla opcional en config) |
@@ -56,8 +65,10 @@ no alteró ningún código existente. Las SKU con variante de 3 dígitos (`1001T
 encajan: llevan el código a mano en el atributo. Cruzado el 08-10 con los Excel de modelos activos y
 descatalogados de TUDOR (`doc/`): ninguna ficha con TMC o GTIN de TUDOR queda fuera.
 
-`preview` muestra lo que se enviaría y, para cada producto candidato, si se envía, se agrupa
-con otro o se excluye, y por qué.
+`preview` muestra lo que se enviaría (ya pasado por la revisión de core) y, para cada producto
+candidato, si se envía, se agrupa con otro o se excluye, y por qué; debajo, lo que descarta la
+revisión y sus avisos. En `--json`, `records` son los que pasan y `review` trae `received`, `passed`,
+`exclusions` (`mc`, `country`, `reason`, `message`) y `warnings`.
 
 ## Cron y registro
 
@@ -66,7 +77,9 @@ con otro o se excluye, y por qué.
 - Tarea `tudorsync_publish_pending`, **cada minuto**: publica solo los modelos TUDOR que han
   cambiado (ver «Publicación en el minuto»). Con la cola vacía no hace nada.
 - Log propio: `var/log/tudorsync.log`. El último test y el último sync (cron, admin o CLI) se
-  guardan en la tabla `flag` y se ven en la pantalla de configuración.
+  guardan en la tabla `flag` y se ven en la pantalla de configuración y en «Datos del programa»,
+  con la lista de descartes de la revisión y sus avisos. En el log, cada descarte y cada aviso van
+  como `warning` en cada batch completo; «no se ha enviado nada», como `error`.
 
 ## Publicación en el minuto (solo TUDOR)
 
@@ -181,9 +194,12 @@ Menú **Informes › TUDOR e-Stock** (permiso `Tudorsync_EcommerceSync::reports`
   y `POST /v1/stocks/batch` — y la petición y la respuesta completas en pantalla. Para los POST se buscan
   productos TUDOR (SKU o nombre), se ve el JSON antes de enviar y se puede forzar el valor (0 = retirar). El
   batch puede ser el catálogo completo o solo los elegidos (pide confirmar: pone a 0 lo que no va). Todo pasa
-  por `TudorApiClient` de core salvo `/health`, que core no tiene (`Model\Api\ApiTester` copia sus URL base;
-  petición en `intercambio/2026-10-06-juanjo-peticion-health.md`). **Los POST se niegan en el entorno de
-  producción** (en pantalla y en el servidor).
+  por `TudorApiClient` de core. **Los POST se niegan en el entorno de producción** (en pantalla y en el servidor).
+  Los POST pasan antes por la revisión de core, como la sync: lo descartado no se envía y sale con su motivo en
+  el buscador, en «Ver JSON» y en la respuesta; si no pasa nada, no se envía nada. El batch del catálogo
+  completo va por `SyncEngine`, igual que la sync. Con productos elegidos, la lista de modelos vigentes se
+  aplica a cada uno (core la desactiva si dejara al país sin relojes, que con uno o dos elegidos es lo normal).
+  Única excepción: `POST /v1/stocks` con valor 0 se envía (es como se prueba una retirada; la sync nunca manda 0).
 - **Registro de API** (`tudorsync/apilog/index`): cada llamada HTTP a TUDOR —token, API y health— con fecha,
   origen (`cron`, `admin`, `cli`, `test`), operación (`full_sync`, `realtime`, `test_connection`,
   `api_test:…`), usuario del admin, entorno, endpoint, cabeceras, cuerpo enviado y recibido y duración.
@@ -197,7 +213,9 @@ Despliegue de esta parte en modo producción: `setup:upgrade` (tabla del registr
 `setup:static-content:deploy -f --area adminhtml es_ES en_US` (el JS y el CSS nuevos). Ojo: el despliegue **no
 sobrescribe** ficheros que ya existen en `pub/static`; para que entren textos nuevos del JS hay que borrar antes
 `pub/static/adminhtml/Magento/backend/<locale>/js-translation.json` (y el `.js`/`.css` del módulo si cambian).
-Al cambiar un constructor o la firma de un método público, `generated/code/Tudorsync` queda desfasado y
+En el staging, además, la caché de Cloudways (Varnish) guarda los estáticos **sin tener en cuenta la versión de
+la URL**: tras desplegar, purgar Varnish en el panel de Cloudways o el admin seguirá con el `js-translation.json`
+anterior. Al cambiar un constructor o la firma de un método público, `generated/code/Tudorsync` queda desfasado y
 `bin/magento` falla hasta borrarlo y recompilar.
 
 Las tablas nuevas requieren `setup:upgrade` (en Quera, con el guion de intercambio de

@@ -19,7 +19,8 @@ use Tudorsync\EcommerceSync\Model\CatalogSnapshot;
 /**
  * Dry run: reads the catalog exactly as a real sync would and shows what would be sent to
  * TUDOR, without calling TUDOR at all. Also lists every candidate product left out or merged,
- * with the reason. `--json=<file>` writes the full result (records + diagnostics) to a file.
+ * with the reason, and what tudorsync/core's review (AvailabilityFilter) drops before sending
+ * and its warnings. `--json=<file>` writes the full result (records + diagnostics) to a file.
  */
 class CatalogPreviewCommand extends Command
 {
@@ -57,11 +58,14 @@ class CatalogPreviewCommand extends Command
 
         $this->renderItems($snapshot, $output);
         $this->renderProducts($snapshot, $output, (bool) $input->getOption(self::OPTION_ALL));
+        $this->renderReview($snapshot, $output);
 
         $counts = $snapshot->countByStatus();
         $output->writeln(sprintf(
-            '<info>%d record(s) to send · products: %d sent, %d merged into another, %d excluded.</info>',
+            '<info>%d record(s) to send (%d built, %d left out by the review) · products: %d sent, %d merged into another, %d excluded.</info>',
+            count($snapshot->getItemsToSend()),
             count($snapshot->items),
+            count($snapshot->review?->exclusions ?? []),
             $counts[CatalogSnapshot::STATUS_SENT],
             $counts[CatalogSnapshot::STATUS_MERGED],
             $counts[CatalogSnapshot::STATUS_EXCLUDED],
@@ -73,7 +77,8 @@ class CatalogPreviewCommand extends Command
             $json = json_encode([
                 'generated_at' => date('c'),
                 'warnings' => $snapshot->warnings,
-                'records' => array_map([$this, 'toArray'], $snapshot->items),
+                'review' => $snapshot->review?->toArray(),
+                'records' => array_map([$this, 'toArray'], $snapshot->getItemsToSend()),
                 'products' => array_values($snapshot->products),
             ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
 
@@ -95,7 +100,7 @@ class CatalogPreviewCommand extends Command
         $table = new Table($output);
         $table->setHeaders(['mc', 'country', 'value', 'default URL', 'locales']);
 
-        foreach ($snapshot->items as $item) {
+        foreach ($snapshot->getItemsToSend() as $item) {
             $table->addRow([
                 $item->modelCode,
                 $item->country,
@@ -135,6 +140,27 @@ class CatalogPreviewCommand extends Command
 
         foreach ($excludedByReason as $reason => $count) {
             $output->writeln(sprintf('  excluded: %d × %s', $count, $reason));
+        }
+    }
+
+    private function renderReview(CatalogSnapshot $snapshot, OutputInterface $output): void
+    {
+        $review = $snapshot->review;
+
+        if ($review === null) {
+            return;
+        }
+
+        foreach ($review->getExclusionLines() as $line) {
+            $output->writeln('  left out by the review: ' . $line);
+        }
+
+        foreach ($review->warnings as $warning) {
+            $output->writeln('<comment>Review warning: ' . $warning . '</comment>');
+        }
+
+        if ($review->nothingPassed()) {
+            $output->writeln('<error>No record passes the review: the sync would send nothing (an empty batch would set the whole catalog to 0).</error>');
         }
     }
 

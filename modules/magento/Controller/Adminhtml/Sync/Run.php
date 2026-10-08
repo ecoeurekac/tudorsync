@@ -9,12 +9,13 @@ use Magento\Backend\App\Action\Context;
 use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
+use Tudorsync\EcommerceSync\Model\Status;
 use Tudorsync\EcommerceSync\Model\SyncRunner;
 
 /**
  * AJAX endpoint behind the "Run Sync Now" button (StatusAndActions block) — runs exactly
  * the same code as the scheduled cron job (Model\SyncRunner), so a manual run and a
- * scheduled run behave identically.
+ * scheduled run behave identically. Also returns what core's review left out of it.
  */
 class Run extends Action implements HttpPostActionInterface
 {
@@ -24,6 +25,7 @@ class Run extends Action implements HttpPostActionInterface
         Context $context,
         private readonly JsonFactory $resultJsonFactory,
         private readonly SyncRunner $syncRunner,
+        private readonly Status $status,
     ) {
         parent::__construct($context);
     }
@@ -35,6 +37,7 @@ class Run extends Action implements HttpPostActionInterface
         return $this->resultJsonFactory->create()->setData([
             'success' => $outcome->success,
             'message' => $outcome->message,
+            'review' => $this->status->getLastSyncReview(),
         ]);
     }
 }

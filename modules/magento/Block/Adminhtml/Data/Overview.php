@@ -44,7 +44,7 @@ class Overview extends Template
     }
 
     /**
-     * @return array<string, string|bool>
+     * @return array<string, mixed>
      */
     public function getConnectionInfo(): array
     {
@@ -60,6 +60,7 @@ class Overview extends Template
             'paused_until' => $pausedUntil > time() ? gmdate('Y-m-d H:i:s', $pausedUntil) . ' UTC' : '',
             'last_test' => $this->status->getLastTestSummary(),
             'last_sync' => $this->status->getLastSyncSummary(),
+            'last_sync_review' => $this->status->getLastSyncReview(),
         ];
     }
 
@@ -137,7 +138,7 @@ class Overview extends Template
     {
         $urls = [];
 
-        foreach ($this->getSnapshot()?->items ?? [] as $item) {
+        foreach ($this->getSnapshot()?->getItemsToSend() ?? [] as $item) {
             $urls[$item->modelCode] = $item->defaultUrl;
         }
 

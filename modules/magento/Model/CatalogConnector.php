@@ -14,6 +14,7 @@ use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Tudorsync\Core\Contract\CatalogConnectorInterface;
 use Tudorsync\Core\Domain\StockAvailability;
+use Tudorsync\Core\Rules\ValidModelList;
 use Tudorsync\Core\Url\UtmUrlBuilder;
 use Tudorsync\EcommerceSync\Model\Config\Source\ValueMode;
 use Tudorsync\EcommerceSync\Model\Stock\SalableQtyProvider;
@@ -168,12 +169,24 @@ class CatalogConnector implements CatalogConnectorInterface
             $products[$mainProductId]['merged_count'] = count($productIds);
         }
 
-        return new CatalogSnapshot($items, $products, $warnings);
+        $review = CatalogReview::of($items);
+
+        foreach ($products as $productId => $row) {
+            $exclusion = $row['status'] === CatalogSnapshot::STATUS_SENT ? $review->getExclusionFor((string) $row['model_code']) : null;
+
+            if ($exclusion !== null) {
+                $products[$productId]['status'] = CatalogSnapshot::STATUS_EXCLUDED;
+                $products[$productId]['reason'] = 'TUDOR review: ' . $exclusion->message;
+            }
+        }
+
+        return new CatalogSnapshot($items, $products, $warnings, $review);
     }
 
     /**
      * TUDOR products (same candidates as the sync) whose SKU or name contains $query, for the API
-     * test page. Includes the ones the sync would leave out, with the reason.
+     * test page. Includes the ones the sync would leave out, with the reason (of core's review,
+     * only the list of current models is checked here; the page's JSON preview runs all of it).
      *
      * @return list<array{product_id: int, sku: string, name: string, model_code: ?string,
      *     salable_qty: ?int, excluded_reason: ?string}>
@@ -188,6 +201,8 @@ class CatalogConnector implements CatalogConnectorInterface
             ->setOrder('sku', 'ASC')
             ->setPageSize($limit);
         $rows = [];
+        $country = $this->config->getCountry((int) $defaultStore->getId());
+        $validModels = new ValidModelList();
 
         /** @var Product $product */
         foreach ($collection as $product) {
@@ -196,6 +211,11 @@ class CatalogConnector implements CatalogConnectorInterface
             $modelCode = $this->modelCodeResolver->resolve((string) $product->getData(ModelCodeResolver::ATTRIBUTE_CODE), $sku);
             $reason = $modelCode === null ? 'no model code' : $this->getProductExclusionReason($product);
             $stock = $this->salableQtyProvider->getStockData($productId, $sku, $websiteCode);
+            $reason ??= $this->getStockExclusionReason($stock);
+
+            if ($reason === null && $validModels->isLoaded($country) && !$validModels->contains($country, (string) $modelCode)) {
+                $reason = 'TUDOR review: ' . sprintf('No está en la lista de modelos vigentes de TUDOR (%s)', $validModels->fileName($country));
+            }
 
             $rows[] = [
                 'product_id' => $productId,
@@ -203,7 +223,7 @@ class CatalogConnector implements CatalogConnectorInterface
                 'name' => (string) $product->getName(),
                 'model_code' => $modelCode,
                 'salable_qty' => $stock['salable_qty'],
-                'excluded_reason' => $reason ?? $this->getStockExclusionReason($stock),
+                'excluded_reason' => $reason,
             ];
         }
 

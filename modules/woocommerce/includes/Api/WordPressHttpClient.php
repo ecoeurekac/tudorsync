@@ -9,41 +9,48 @@ use Tudorsync\Core\Api\HttpClientInterface;
 use Tudorsync\Core\Api\HttpResponse;
 
 /**
- * Adapts WordPress's own HTTP API (wp_remote_post/wp_remote_get) to tudorsync/core's
- * HttpClientInterface, so core never needs to know WordPress exists. Preferred over raw
- * cURL here since it's the idiomatic way to make outbound HTTP calls in a WordPress plugin
- * (respects site-level proxy/SSL configuration, filters, etc.).
+ * tudorsync/core's HttpClientInterface over WordPress's own HTTP API (wp_remote_request), which
+ * respects the site's proxy and SSL settings. A transport error (DNS, timeout...) is thrown as
+ * a RuntimeException; any HTTP status, including errors, is returned for core to interpret.
  */
 final class WordPressHttpClient implements HttpClientInterface
 {
+    private const TIMEOUT_SECONDS = 60;
+
     public function post(string $url, string $body, array $headers): HttpResponse
     {
-        $response = wp_remote_post($url, [
-            'headers' => $headers,
-            'body' => $body,
-            'timeout' => 30,
-        ]);
-
-        return $this->toHttpResponse($response, $url);
+        return $this->request('POST', $url, $headers, $body);
     }
 
     public function get(string $url, array $headers): HttpResponse
     {
-        $response = wp_remote_get($url, [
-            'headers' => $headers,
-            'timeout' => 30,
-        ]);
-
-        return $this->toHttpResponse($response, $url);
+        return $this->request('GET', $url, $headers, null);
     }
 
     /**
-     * @param array<string, mixed>|\WP_Error $response
+     * @param array<string, string> $headers
      */
-    private function toHttpResponse($response, string $url): HttpResponse
+    private function request(string $method, string $url, array $headers, ?string $body): HttpResponse
     {
+        $args = [
+            'method' => $method,
+            'headers' => $headers + ['Accept' => 'application/json, application/x-ndjson'],
+            'timeout' => self::TIMEOUT_SECONDS,
+            'redirection' => 0,
+        ];
+
+        if ($body !== null) {
+            $args['body'] = $body;
+        }
+
+        $response = wp_remote_request($url, $args);
+
         if (is_wp_error($response)) {
-            throw new RuntimeException('HTTP request to ' . $url . ' failed: ' . $response->get_error_message());
+            throw new RuntimeException(sprintf(
+                'HTTP request to %s failed: %s',
+                (string) strtok($url, '?'),
+                $response->get_error_message(),
+            ));
         }
 
         return new HttpResponse(

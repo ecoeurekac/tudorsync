@@ -7,6 +7,7 @@ namespace Tudorsync\Core\Sync;
 use Tudorsync\Core\Api\BatchSyncResult;
 use Tudorsync\Core\Api\TudorApiClient;
 use Tudorsync\Core\Contract\CatalogConnectorInterface;
+use Tudorsync\Core\Domain\StockAvailability;
 use Tudorsync\Core\Rules\AvailabilityFilter;
 
 /**
@@ -23,6 +24,12 @@ use Tudorsync\Core\Rules\AvailabilityFilter;
  * the connector returned watches and none passed the filter, nothing is sent and
  * NothingPassedReviewException is thrown. A connector that really returns nothing (everything
  * sold out) still sends the empty batch, as before.
+ *
+ * The review is AvailabilityFilter::keepOnlyAvailableForBatch(): TUDOR's list of current models
+ * is not applied to a country where it would drop every watch (see AvailabilityFilter). plan()
+ * runs exactly what run() does up to the API call and returns what would be sent, without any
+ * call to TUDOR, so a module's preview and the real batch can't differ. The filter passed in
+ * keeps the warnings, exclusions and countries sent unfiltered of the last plan()/run().
  */
 final class SyncEngine
 {
@@ -35,13 +42,24 @@ final class SyncEngine
 
     public function run(): BatchSyncResult
     {
-        $catalog = $this->connector->getAvailableCatalog();
-        $availableOnly = $this->filter->keepOnlyAvailable($catalog);
+        return $this->tudorApiClient->batchUpsertStocks($this->plan());
+    }
 
-        if ($catalog !== [] && $availableOnly === []) {
+    /**
+     * What run() would send right now, without calling TUDOR (not even for a token).
+     *
+     * @return list<StockAvailability>
+     * @throws NothingPassedReviewException The connector returned watches and none passed the review.
+     */
+    public function plan(): array
+    {
+        $catalog = $this->connector->getAvailableCatalog();
+        $toSend = $this->filter->keepOnlyAvailableForBatch($catalog);
+
+        if ($catalog !== [] && $toSend === []) {
             throw new NothingPassedReviewException(count($catalog), $this->filter->getExclusions());
         }
 
-        return $this->tudorApiClient->batchUpsertStocks($availableOnly);
+        return array_values($toSend);
     }
 }

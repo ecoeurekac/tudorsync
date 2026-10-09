@@ -95,7 +95,7 @@ La documentación oficial de TUDOR que originó el proyecto está en `doc/`:
 
 - `core/`: modelo de dominio, revisión de cada ficha antes de enviar, cliente de la API con
   OAuth2 (batch NDJSON, envío de un modelo, `getStocks`, health), y el generador del informe
-  mensual sobre las plantillas Excel reales. **80 tests de PHPUnit pasan**
+  mensual sobre las plantillas Excel reales. **90 tests de PHPUnit pasan**
   (`cd core && composer install && composer test`).
 - **Magento**: instalado en la tienda de Quera (producción desde el 05-10, aún sin conectar a
   TUDOR) y probado de punta a punta en su staging contra PREPROD: sincronización completa,

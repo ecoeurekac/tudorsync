@@ -28,12 +28,20 @@ use Tudorsync\Core\Domain\StockAvailability;
  *     line it rejects zeroes that watch: values are added up, the other fields come from the
  *     record with the highest value (the first one on a tie), in order of first appearance;
  *  4. drop models not in TUDOR's list of current models for their country (ValidModelList).
- *     If that list can't be used, or would drop every watch of a country, it is skipped for
- *     that country — the catalog goes out unfiltered — with a warning.
+ *     If the list can't be used (missing, unreadable, no TMC column, too few models), it is
+ *     skipped for that country with a warning. Otherwise it is always applied, even if it
+ *     leaves the country without any watch: a single watch outside the list is dropped.
+ *
+ * keepOnlyAvailableForBatch() is the same review for the full-catalog batch (SyncEngine), the
+ * only source of what a batch sends: where steps 1–3 leave watches of a country but step 4
+ * would leave none, the list is not applied to that country (more likely a wrong list than a
+ * dead catalog, and a batch without them would set them to 0 at TUDOR), with a warning and
+ * the country in getCountriesSentUnfiltered().
  *
  * For the last call: getExclusions() gives every dropped watch with its reason,
- * getWarnings() what was fixed or skipped without dropping a watch, and
- * getExcludedModelCodes() the codes dropped by step 4 only.
+ * getWarnings() what was fixed or skipped without dropping a watch,
+ * getExcludedModelCodes() the codes dropped by step 4 only, and getCountriesSentUnfiltered()
+ * the countries sent without the list (batch only).
  */
 final class AvailabilityFilter
 {
@@ -54,6 +62,9 @@ final class AvailabilityFilter
     /** @var list<string> */
     private array $excludedModelCodes = [];
 
+    /** @var list<CountrySentUnfiltered> */
+    private array $countriesSentUnfiltered = [];
+
     public function __construct(?ValidModelList $validModels = null)
     {
         $this->validModels = $validModels ?? new ValidModelList();
@@ -68,9 +79,31 @@ final class AvailabilityFilter
      */
     public function keepOnlyAvailable(array $items): array
     {
+        return $this->review($items, false);
+    }
+
+    /**
+     * keepOnlyAvailable() for the full-catalog batch: the list of current models is not applied
+     * to a country where it would drop every watch that passed steps 1–3 (see the class comment).
+     *
+     * @param StockAvailability[] $items
+     * @return StockAvailability[]
+     */
+    public function keepOnlyAvailableForBatch(array $items): array
+    {
+        return $this->review($items, true);
+    }
+
+    /**
+     * @param StockAvailability[] $items
+     * @return StockAvailability[]
+     */
+    private function review(array $items, bool $forBatch): array
+    {
         $this->warnings = [];
         $this->exclusions = [];
         $this->excludedModelCodes = [];
+        $this->countriesSentUnfiltered = [];
 
         $publishable = [];
         foreach ($items as $item) {
@@ -80,11 +113,12 @@ final class AvailabilityFilter
             }
         }
 
-        return $this->keepOnlyValidModels($this->mergeRepeated($publishable));
+        return $this->keepOnlyValidModels($this->mergeRepeated($publishable), $forBatch);
     }
 
     /**
-     * Watches dropped by the last keepOnlyAvailable() call, each with its reason.
+     * Watches dropped by the last keepOnlyAvailable() or keepOnlyAvailableForBatch() call, each
+     * with its reason.
      *
      * @return list<Exclusion>
      */
@@ -94,9 +128,11 @@ final class AvailabilityFilter
     }
 
     /**
-     * Warnings from the last keepOnlyAvailable() call: localized URLs removed, repeated models
-     * merged, or the valid-model list skipped ("Filtro de modelos vigentes DESACTIVADO: no se
-     * encuentra prices_ES.xlsx"). Empty when there was nothing to report.
+     * Warnings from the last keepOnlyAvailable() or keepOnlyAvailableForBatch() call: localized
+     * URLs removed, repeated models merged, the valid-model list unusable ("Filtro de modelos
+     * vigentes DESACTIVADO: no se encuentra prices_ES.xlsx") or, in a batch, not applied to a
+     * country ("Lista de modelos vigentes NO aplicada en ES: …"). Empty when there was nothing
+     * to report.
      *
      * @return list<string>
      */
@@ -106,14 +142,27 @@ final class AvailabilityFilter
     }
 
     /**
-     * Model codes (normalized, sorted) dropped by the last keepOnlyAvailable() call because
-     * they aren't in TUDOR's list of current models; available otherwise.
+     * Model codes (normalized, sorted) dropped by the last keepOnlyAvailable() or
+     * keepOnlyAvailableForBatch() call because they aren't in TUDOR's list of current models;
+     * available otherwise.
      *
      * @return list<string>
      */
     public function getExcludedModelCodes(): array
     {
         return $this->excludedModelCodes;
+    }
+
+    /**
+     * Countries the last keepOnlyAvailableForBatch() call sends without the list of current
+     * models, with why and what the list would have dropped (sent anyway). Always empty after
+     * keepOnlyAvailable().
+     *
+     * @return list<CountrySentUnfiltered>
+     */
+    public function getCountriesSentUnfiltered(): array
+    {
+        return $this->countriesSentUnfiltered;
     }
 
     private function normalize(StockAvailability $item): StockAvailability
@@ -255,7 +304,7 @@ final class AvailabilityFilter
      * @param list<StockAvailability> $available
      * @return list<StockAvailability>
      */
-    private function keepOnlyValidModels(array $available): array
+    private function keepOnlyValidModels(array $available, bool $forBatch): array
     {
         $byCountry = [];
         foreach ($available as $item) {
@@ -274,27 +323,35 @@ final class AvailabilityFilter
                 $countryItems,
                 fn (StockAvailability $item): bool => !$this->validModels->contains($country, $item->modelCode),
             );
-
-            if (count($outside) === count($countryItems)) {
-                // Never send an empty catalog because of the list: more likely a wrong list than a dead catalog.
-                $this->warnings[] = sprintf(
-                    'Filtro de modelos vigentes DESACTIVADO: ningún reloj disponible de %s está en %s',
+            $outsideExclusions = array_map(
+                fn (StockAvailability $item): Exclusion => new Exclusion(
+                    $item->modelCode,
                     $country,
+                    Exclusion::NOT_IN_VALID_LIST,
+                    sprintf('No está en la lista de modelos vigentes de TUDOR (%s)', $this->validModels->fileName($country)),
+                ),
+                array_values($outside),
+            );
+
+            if ($forBatch && count($outside) === count($countryItems)) {
+                // Never send an empty catalog because of the list: more likely a wrong list than a dead catalog.
+                $message = sprintf(
+                    'Lista de modelos vigentes NO aplicada en %s: ningún reloj (%d) la supera, lo que suele indicar '
+                    . 'una lista errónea. Para no dejar el catálogo vacío en TUDOR, se envían sin este filtro. Revisa %s.',
+                    $country,
+                    count($countryItems),
                     $this->validModels->fileName($country),
                 );
+                $this->warnings[] = $message;
+                $this->countriesSentUnfiltered[] = new CountrySentUnfiltered($country, $message, $outsideExclusions);
                 continue;
             }
 
             foreach ($outside as $item) {
                 $dropped[spl_object_id($item)] = true;
                 $this->excludedModelCodes[] = $item->modelCode;
-                $this->exclusions[] = new Exclusion(
-                    $item->modelCode,
-                    $country,
-                    Exclusion::NOT_IN_VALID_LIST,
-                    sprintf('No está en la lista de modelos vigentes de TUDOR (%s)', $this->validModels->fileName($country)),
-                );
             }
+            array_push($this->exclusions, ...$outsideExclusions);
         }
 
         $this->excludedModelCodes = array_values(array_unique($this->excludedModelCodes));

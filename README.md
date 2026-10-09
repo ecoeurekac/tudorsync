@@ -192,12 +192,21 @@ installation — see "What's still open" below.
      come from the record with the highest value (the first one on a tie), in order of first
      appearance.
   4. **Only models in TUDOR's current price list** for the country (`ValidModelList`, see
-     "TUDOR's valid model list" below).
+     "TUDOR's valid model list" below). Always applied, except in the full-catalog batch for a
+     country where it would leave no watch.
 
   `getExclusions()` lists each dropped watch with a reason code (`missing_model_code`,
   `invalid_country`, `not_available`, `invalid_url`, `not_in_valid_list`) and a Spanish text
   to display; `getWarnings()` what was fixed or skipped without dropping a watch (localized
   URLs removed, repeated models merged, price list skipped).
+- **Two entry points:** `keepOnlyAvailable()` for single sends and the modules' real-time
+  queue, and `keepOnlyAvailableForBatch()` for the full-catalog batch. The batch one is the
+  only source of what a batch sends: `SyncEngine` uses it, and so must anything that shows or
+  counts the full catalog. `SyncEngine::plan()` runs exactly what `run()` does up to the API
+  call and returns the records it would send, without calling TUDOR (not even for a token), so
+  a module's preview and the real batch can't differ; it throws the same
+  `NothingPassedReviewException`. The `AvailabilityFilter` passed to `SyncEngine` keeps the
+  warnings, exclusions and countries sent unfiltered of the last `plan()`/`run()`.
 - **Never an empty batch by mistake:** if the connector returns watches but none passes the
   review, `SyncEngine` sends nothing and throws `NothingPassedReviewException` with a summary
   of the reasons — an empty batch would zero the retailer's whole catalog at TUDOR. A
@@ -220,14 +229,27 @@ list for their country: `core/resources/valid-models/prices_{COUNTRY}.xlsx`
 (`prices_ES.xlsx` for Spain), the file exactly as TUDOR publishes it. Only the column titled
 "TMC" is used, wherever it is; codes are compared without spaces and in upper case. A watch
 not in the list isn't sent (TUDOR sets it to 0 when it doesn't receive it). It applies to the
-full sync and to the Magento module's real-time (every-minute) publishing.
+full sync, to single sends and to the Magento module's real-time (every-minute) publishing.
 
 **If the country's file is missing, can't be read, has no TMC column or has fewer than 100
-models**, or if it would leave that country without any available watch, the filter isn't
-applied: the sync goes on as if it didn't exist and `AvailabilityFilter::getWarnings()`
-returns a warning ("Filtro de modelos vigentes DESACTIVADO: no se encuentra prices_ES.xlsx").
-`getExcludedModelCodes()` gives the TMCs the list removed. Both refer to the last call to
-`keepOnlyAvailable()`, so the modules can log and display them.
+models**, the filter isn't applied anywhere: the sync goes on as if it didn't exist and
+`AvailabilityFilter::getWarnings()` returns a warning ("Filtro de modelos vigentes
+DESACTIVADO: no se encuentra prices_ES.xlsx").
+
+**Otherwise the list is always applied** by `keepOnlyAvailable()`, even if it drops every
+watch: a single watch outside the list is never sent on its own. The one exception is the
+full-catalog batch (`keepOnlyAvailableForBatch()`, used by `SyncEngine`): for a country where
+the watches that pass steps 1–3 exist but none is in the list, the list is not applied to that
+country, since a wrong list is likelier than a dead catalog and a batch without them would set
+them all to 0 at TUDOR. They are sent, with a warning ("Lista de modelos vigentes NO aplicada
+en ES: ningún reloj (76) la supera… Revisa prices_ES.xlsx."), and
+`getCountriesSentUnfiltered()` gives each such country with that text and the watches the list
+would have dropped (`CountrySentUnfiltered::$wouldExclude`, reason `not_in_valid_list`). Those
+are not in `getExclusions()` nor `getExcludedModelCodes()`, because they are sent.
+
+`getExcludedModelCodes()` gives the TMCs the list removed. All of these refer to the last call
+to `keepOnlyAvailable()` or `keepOnlyAvailableForBatch()`, so the modules can log and display
+them.
 
 Updating (without touching code or editing the Excel file):
 
@@ -282,7 +304,7 @@ composer install
 composer test
 ```
 
-`core/` currently has 80 passing PHPUnit tests. Among them:
+`core/` currently has 90 passing PHPUnit tests. Among them:
 
 - `MonthlyReportWriterTest` writes into a copy of the real ES report template and reads the
   cells back — that's how the row-5-has-example-content and row-20-is-a-footnote-not-data

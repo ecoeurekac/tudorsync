@@ -87,7 +87,7 @@ final class AvailabilityFilterTest extends TestCase
         self::assertSame([], $filter->getExcludedModelCodes());
     }
 
-    public function testNeverEmptiesACountryBecauseOfTheList(): void
+    public function testOutsideTheBatchTheListIsAppliedEvenIfItEmptiesACountry(): void
     {
         $files = new PriceListFiles();
         $files->writeTudorShaped('prices_ES.xlsx', []);
@@ -100,8 +100,10 @@ final class AvailabilityFilterTest extends TestCase
         $result = $filter->keepOnlyAvailable($items);
         $files->remove();
 
-        self::assertSame($items, $result);
-        self::assertSame(['Filtro de modelos vigentes DESACTIVADO: ningún reloj disponible de ES está en prices_ES.xlsx'], $filter->getWarnings());
+        // The batch keeps them (keepOnlyAvailableForBatch(), see AvailabilityFilterBatchTest).
+        self::assertSame([], $result);
+        self::assertSame(['M25807KN-0001', 'M79030N-0002'], $filter->getExcludedModelCodes());
+        self::assertSame([], $filter->getWarnings());
     }
 
     private function stock(string $modelCode, bool $onlinePurchaseEnabled, int $value, string $country = 'CH'): StockAvailability

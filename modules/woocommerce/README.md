@@ -150,7 +150,23 @@ la base de datos (`{prefijo}tudorsync_report_file`), no en `uploads/`.
 
 ## Admin
 
-*WooCommerce › TUDOR e-Stock*:
+*WooCommerce › TUDOR e-Stock* (capacidad `manage_woocommerce`). Opcionalmente, con usuario y
+contraseña propios del plugin, para que no entre cualquier administrador de la tienda: se definen en
+`wp-config.php` (no se pueden cambiar desde el admin) y, si no están las dos, no hay bloqueo.
+
+```php
+define('TUDORSYNC_ADMIN_USER', 'nombre');
+define('TUDORSYNC_ADMIN_PASSWORD_HASH', '$2y$...'); // php -r 'echo password_hash("contraseña", PASSWORD_DEFAULT);'
+```
+
+Desbloquear deja una cookie firmada con las sales de WordPress, ligada al usuario de WordPress y a la
+contraseña (cambiarla cierra todas las sesiones), durante 8 horas; el botón *Lock* la borra. Cinco
+fallos desde una IP la bloquean 15 minutos. Afecta a la página y a todos sus formularios; no al
+campo «TUDOR model code» de las fichas ni a WP-CLI. Un administrador puede seguir desactivando o
+borrando el plugin (o editarlo si `DISALLOW_FILE_EDIT` no está puesto): es una barrera contra
+cambios por error, no contra quien administra el sitio.
+
+Pestañas:
 
 - **Settings**: ajustes, estado (último test, última sincronización con su revisión, último envío en
   el minuto, pausa por 429, próxima ejecución) y los botones.

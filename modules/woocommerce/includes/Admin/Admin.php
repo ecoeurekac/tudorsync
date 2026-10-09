@@ -9,7 +9,8 @@ use Tudorsync\Woocommerce\Plugin;
 /**
  * WooCommerce › TUDOR e-Stock: one admin page with tabs (Settings, Programme data, API tests,
  * API log, Monthly report). Forms post to admin-post.php; every handler checks the
- * capability and its nonce, then redirects back with a notice (kept per user for one view).
+ * capability, its nonce and the plugin's own lock (AdminLock, when configured), then redirects
+ * back with a notice (kept per user for one view).
  */
 final class Admin
 {
@@ -32,6 +33,15 @@ final class Admin
         $data = new DataTab($this->plugin);
         $apiTest = new ApiTestTab($this->plugin);
         $report = new ReportTab($this->plugin);
+
+        $lock = new AdminLock();
+
+        foreach ([AdminLock::UNLOCK_ACTION => [$lock, 'handleUnlock'], AdminLock::LOCK_ACTION => [$lock, 'handleLock']] as $action => $handler) {
+            add_action('admin_post_' . $action, function () use ($action, $handler): void {
+                self::guard($action, false);
+                $handler();
+            });
+        }
 
         foreach ([
             'tudorsync_save_settings' => [$settings, 'handleSave'],
@@ -100,6 +110,20 @@ final class Admin
         View::styles();
         echo '<div class="wrap"><h1>' . esc_html__('TUDOR e-Stock', 'tudorsync') . '</h1>';
 
+        $lock = new AdminLock();
+
+        if (!$lock->isUnlocked()) {
+            self::renderNotice();
+            $lock->renderForm();
+            echo '</div>';
+
+            return;
+        }
+
+        if ($lock->isEnabled()) {
+            $lock->renderLockButton();
+        }
+
         $this->renderEnvironmentBanner();
         self::renderNotice();
 
@@ -140,15 +164,20 @@ final class Admin
     }
 
     /**
-     * Stops unless the current user may manage the store and the nonce of $action is valid.
+     * Stops unless the current user may manage the store, the nonce of $action is valid and,
+     * when the plugin's own lock is on (AdminLock), the page has been unlocked.
      */
-    public static function guard(string $action): void
+    public static function guard(string $action, bool $requireUnlocked = true): void
     {
         if (!current_user_can(self::CAPABILITY)) {
             wp_die(esc_html__('You are not allowed to do this.', 'tudorsync'), 403);
         }
 
         check_admin_referer($action);
+
+        if ($requireUnlocked && !(new AdminLock())->isUnlocked()) {
+            wp_die(esc_html__('This page is locked: unlock it with its user name and password.', 'tudorsync'), 403);
+        }
     }
 
     /**

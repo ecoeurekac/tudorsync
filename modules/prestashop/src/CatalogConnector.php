@@ -87,6 +87,30 @@ final class CatalogConnector implements CatalogConnectorInterface
     }
 
     /**
+     * Products in this shop with a model code, whatever their stock or status. 0 means the
+     * program isn't set up (no code filled in), as opposed to every enrolled watch being
+     * sold out, where an empty batch is the right thing to send.
+     */
+    public function countEnrolledProducts(): int
+    {
+        $featureId = $this->config->getModelCodeFeatureId();
+
+        if ($featureId <= 0) {
+            return 0;
+        }
+
+        $sql = new DbQuery();
+        $sql->select('COUNT(DISTINCT fp.id_product)')
+            ->from('feature_product', 'fp')
+            ->innerJoin('feature_value_lang', 'fvl', 'fvl.id_feature_value = fp.id_feature_value')
+            ->innerJoin('product_shop', 'ps', 'ps.id_product = fp.id_product AND ps.id_shop = ' . (int) Context::getContext()->shop->id)
+            ->where('fp.id_feature = ' . $featureId)
+            ->where("TRIM(fvl.value) <> ''");
+
+        return (int) Db::getInstance()->getValue($sql);
+    }
+
+    /**
      * Model code per sellable product. Feature values are per language: the shop's default
      * language wins, otherwise the first non-empty value in any language (a custom value may
      * have been typed in only one of them).

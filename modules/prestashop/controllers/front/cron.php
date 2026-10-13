@@ -38,13 +38,21 @@ class TudorsyncCronModuleFrontController extends ModuleFrontController
             exit;
         }
 
+        $connector = new CatalogConnector($config);
         $engine = new SyncEngine(
-            new CatalogConnector($config),
+            $connector,
             new AvailabilityFilter(),
             new TudorApiClient($clientConfig, new CurlHttpClient()),
         );
 
         try {
+            // An empty batch makes TUDOR set every model of this retailer to 0. That's right when
+            // every enrolled watch is sold out, but not when no product has a model code at all
+            // (program not set up yet): then TUDOR isn't called.
+            if ($engine->plan() === [] && $connector->countEnrolledProducts() === 0) {
+                $this->recordAndExit('Tudorsync: sync skipped: no product has a TUDOR model code yet, nothing was sent to TUDOR.', 200);
+            }
+
             $result = $engine->run();
         } catch (NothingPassedReviewException $e) {
             // Nothing was sent, on purpose: an empty batch would zero the whole catalog at TUDOR.

@@ -32,3 +32,20 @@ devolvía sus tiendas desde el primer día, así que no parece cosa del módulo 
    este entorno» en vez de un error interno.
 
 Mientras tanto sigo con el módulo en el staging de Grau (lectura del código de modelo, preview en seco).
+
+## Actualización 13-10, 10:50 UTC: solo le pasa a Grau
+
+Repetido varias veces (09:05, 10:39, 10:49–10:50 UTC, token nuevo cada vez): siempre igual. Y la misma prueba
+de solo lectura con las apps **PREPROD** de los demás:
+
+| Retailer | Token | `GET /v1/point-of-sales` | `GET /v1/stocks` |
+|---|---|---|---|
+| **Grau** | 200 | **500 `PARTNER_NOT_FOUND`** | **500 `PARTNER_NOT_FOUND`** |
+| Quera | 200 | 200 (4 PdV) | 200 (5) |
+| Gordillo | 200 | 200 (1 PdV) | 200 (vacío) |
+| PLO | 200 | 200 (2 PdV) | 200 (vacío) |
+| Saphir | 200 | 200 (2 PdV) | 200 (vacío) |
+
+Control: secret falso → Okta 401 `invalid_client`; token falso o sin token → 401 del gateway. Conclusión: falta
+asociar la app PREPROD de Grau a su ficha de retailer en TUDOR. Captura (no versionada):
+`doc/distribuidores/grau/20261013_grau_preprod_partner_not_found.png`.

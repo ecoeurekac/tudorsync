@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Tudorsync\Core\Api\TudorApiClient;
 use Tudorsync\Core\Rules\AvailabilityFilter;
+use Tudorsync\Core\Sync\NothingPassedReviewException;
 use Tudorsync\Core\Sync\SyncEngine;
 use Tudorsync\Prestashop\Api\CurlHttpClient;
 use Tudorsync\Prestashop\CatalogConnector;
@@ -32,8 +33,8 @@ class TudorsyncCronModuleFrontController extends ModuleFrontController
 
         header('Content-Type: text/plain');
 
-        if ($clientConfig->tudorApiKey === '') {
-            echo "Tudorsync: no TUDOR API key configured, skipping sync.\n";
+        if (!$config->hasCredentials()) {
+            echo "Tudorsync: no TUDOR client credentials configured for this environment, skipping sync.\n";
             exit;
         }
 
@@ -43,8 +44,23 @@ class TudorsyncCronModuleFrontController extends ModuleFrontController
             new TudorApiClient($clientConfig, new CurlHttpClient()),
         );
 
-        $result = $engine->run();
+        try {
+            $result = $engine->run();
+        } catch (NothingPassedReviewException $e) {
+            // Nothing was sent, on purpose: an empty batch would zero the whole catalog at TUDOR.
+            $this->recordAndExit('Tudorsync: sync skipped: ' . $e->getMessage(), 200);
+        } catch (Throwable $e) {
+            $this->recordAndExit('Tudorsync: sync failed: ' . $e->getMessage(), 500);
+        }
+
         $failures = $result->failures();
+
+        $summary = sprintf(
+            'Tudorsync: batch sync completed, %d result(s), %d failure(s).',
+            count($result->results),
+            count($failures),
+        );
+        Configuration::updateValue(Config::KEY_LAST_SYNC_RESULT, sprintf('[%s] %s', date('Y-m-d H:i:s'), $summary));
 
         echo sprintf(
             "Tudorsync: batch sync completed, %d result(s), %d failure(s).\n",
@@ -61,6 +77,16 @@ class TudorsyncCronModuleFrontController extends ModuleFrontController
             );
         }
 
+        exit;
+    }
+
+    private function recordAndExit(string $message, int $statusCode): never
+    {
+        Configuration::updateValue(Config::KEY_LAST_SYNC_RESULT, sprintf('[%s] %s', date('Y-m-d H:i:s'), $message));
+        PrestaShopLogger::addLog($message, $statusCode >= 500 ? 3 : 2, null, 'Tudorsync');
+
+        http_response_code($statusCode);
+        echo $message . "\n";
         exit;
     }
 }

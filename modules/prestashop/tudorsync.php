@@ -6,17 +6,24 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-require_once __DIR__ . '/vendor/autoload.php';
+// tudorsync/core needs PHP 8.1+. On an older PHP, loading Composer's autoloader would
+// fatal in its platform check and take the whole Modules page down with it, so the module
+// just reports itself as unusable instead (see __construct() and install()).
+if (PHP_VERSION_ID >= 80100) {
+    require_once __DIR__ . '/vendor/autoload.php';
+}
 
 use Tudorsync\Core\Api\TudorApiClient;
+use Tudorsync\Core\Domain\Environment;
 use Tudorsync\Core\Rules\AvailabilityFilter;
+use Tudorsync\Core\Sync\NothingPassedReviewException;
 use Tudorsync\Core\Sync\SyncEngine;
 use Tudorsync\Prestashop\Api\CurlHttpClient;
 use Tudorsync\Prestashop\CatalogConnector;
 use Tudorsync\Prestashop\Config;
 
 /**
- * TUDOR e-commerce inventory API sync module for PrestaShop (client: Grau).
+ * TUDOR e-commerce inventory API sync module for PrestaShop.
  *
  * PrestaShop has no built-in job scheduler equivalent to Magento cron or WP-Cron, so the
  * actual sync trigger is controllers/front/cron.php: a token-protected front controller
@@ -32,21 +39,32 @@ class Tudorsync extends Module
         $this->version = '0.1.0';
         $this->author = 'Tudorsync';
         $this->need_instance = 0;
-        $this->ps_versions_compliancy = ['min' => '1.7', 'max' => _PS_VERSION_];
+        // tudorsync/core needs PHP 8.1+, which PrestaShop 1.7 doesn't support.
+        $this->ps_versions_compliancy = ['min' => '8.0', 'max' => _PS_VERSION_];
 
         parent::__construct();
 
         $this->displayName = $this->l('TUDOR E-commerce Sync');
         $this->description = $this->l('Syncs product availability to the TUDOR e-commerce inventory API.');
+
+        if (PHP_VERSION_ID < 80100) {
+            $this->warning = sprintf($this->l('Requires PHP 8.1 or later (this server runs %s).'), PHP_VERSION);
+        }
     }
 
     public function install(): bool
     {
+        if (PHP_VERSION_ID < 80100) {
+            $this->_errors[] = sprintf($this->l('Requires PHP 8.1 or later (this server runs %s).'), PHP_VERSION);
+
+            return false;
+        }
+
         if (!parent::install()) {
             return false;
         }
 
-        Configuration::updateValue(Config::KEY_ENVIRONMENT, 'staging');
+        Configuration::updateValue(Config::KEY_ENVIRONMENT, Environment::Staging->value);
         Configuration::updateValue(Config::KEY_CLICK_AND_COLLECT_ENABLED, false);
         Configuration::updateValue(Config::KEY_CRON_TOKEN, bin2hex(random_bytes(16)));
 
@@ -57,8 +75,13 @@ class Tudorsync extends Module
     {
         Configuration::deleteByName(Config::KEY_COUNTRY);
         Configuration::deleteByName(Config::KEY_ENVIRONMENT);
-        Configuration::deleteByName(Config::KEY_API_KEY_STAGING);
-        Configuration::deleteByName(Config::KEY_API_KEY_PRODUCTION);
+        foreach (Environment::cases() as $environment) {
+            Configuration::deleteByName(Config::clientIdKey($environment));
+            Configuration::deleteByName(Config::clientSecretKey($environment));
+        }
+        foreach (Config::LEGACY_KEYS as $legacyKey) {
+            Configuration::deleteByName($legacyKey);
+        }
         Configuration::deleteByName(Config::KEY_CLICK_AND_COLLECT_ENABLED);
         Configuration::deleteByName(Config::KEY_MODEL_CODE_FEATURE_ID);
         Configuration::deleteByName(Config::KEY_CRON_TOKEN);
@@ -108,10 +131,28 @@ class Tudorsync extends Module
         $output = '';
 
         if (Tools::isSubmit('submit_tudorsync')) {
-            Configuration::updateValue(Config::KEY_COUNTRY, Tools::getValue('TUDORSYNC_COUNTRY'));
-            Configuration::updateValue(Config::KEY_ENVIRONMENT, Tools::getValue('TUDORSYNC_ENVIRONMENT'));
-            Configuration::updateValue(Config::KEY_API_KEY_STAGING, Tools::getValue('TUDORSYNC_API_KEY_STAGING'));
-            Configuration::updateValue(Config::KEY_API_KEY_PRODUCTION, Tools::getValue('TUDORSYNC_API_KEY_PRODUCTION'));
+            Configuration::updateValue(Config::KEY_COUNTRY, strtoupper(trim((string) Tools::getValue('TUDORSYNC_COUNTRY'))));
+            Configuration::updateValue(
+                Config::KEY_ENVIRONMENT,
+                (Environment::tryFrom((string) Tools::getValue('TUDORSYNC_ENVIRONMENT')) ?? Environment::Staging)->value,
+            );
+
+            foreach (Environment::cases() as $environment) {
+                Configuration::updateValue(
+                    Config::clientIdKey($environment),
+                    trim((string) Tools::getValue(Config::clientIdKey($environment))),
+                );
+
+                // The secret is never sent back to the page, so an empty field means "keep the
+                // stored one"; the "clear" checkbox is the only way to remove it.
+                $secret = trim((string) Tools::getValue(Config::clientSecretKey($environment)));
+                if ($secret !== '') {
+                    Configuration::updateValue(Config::clientSecretKey($environment), $secret);
+                } elseif (Tools::getValue(Config::clientSecretKey($environment) . '_CLEAR_on')) {
+                    Configuration::updateValue(Config::clientSecretKey($environment), '');
+                }
+            }
+
             Configuration::updateValue(
                 Config::KEY_CLICK_AND_COLLECT_ENABLED,
                 (bool) Tools::getValue('TUDORSYNC_CLICK_AND_COLLECT_ENABLED'),
@@ -141,8 +182,8 @@ class Tudorsync extends Module
         $config = new Config();
         $clientConfig = $config->getClientConfig();
 
-        if ($clientConfig->tudorApiKey === '') {
-            return $this->displayError($this->l('No TUDOR API key configured for this environment.'));
+        if (!$config->hasCredentials()) {
+            return $this->displayError($this->l('Set the Client ID and Client Secret for this environment.'));
         }
 
         try {
@@ -171,8 +212,8 @@ class Tudorsync extends Module
         $config = new Config();
         $clientConfig = $config->getClientConfig();
 
-        if ($clientConfig->tudorApiKey === '') {
-            return $this->displayError($this->l('No TUDOR API key configured for this environment.'));
+        if (!$config->hasCredentials()) {
+            return $this->displayError($this->l('Set the Client ID and Client Secret for this environment.'));
         }
 
         try {
@@ -192,6 +233,12 @@ class Tudorsync extends Module
             Configuration::updateValue(Config::KEY_LAST_SYNC_RESULT, $this->timestampedMessage($message));
 
             return $failures === [] ? $this->displayConfirmation($message) : $this->displayWarning($message);
+        } catch (NothingPassedReviewException $e) {
+            // Nothing was sent, on purpose: an empty batch would zero the whole catalog at TUDOR.
+            $message = sprintf($this->l('Sync skipped: %s'), $e->getMessage());
+            Configuration::updateValue(Config::KEY_LAST_SYNC_RESULT, $this->timestampedMessage($message));
+
+            return $this->displayWarning($message);
         } catch (Throwable $e) {
             $message = sprintf($this->l('Sync failed: %s'), $e->getMessage());
             Configuration::updateValue(Config::KEY_LAST_SYNC_RESULT, $this->timestampedMessage($message));
@@ -260,16 +307,7 @@ class Tudorsync extends Module
                             'name' => 'name',
                         ],
                     ],
-                    [
-                        'type' => 'password',
-                        'label' => $this->l('TUDOR API Key (Staging)'),
-                        'name' => 'TUDORSYNC_API_KEY_STAGING',
-                    ],
-                    [
-                        'type' => 'password',
-                        'label' => $this->l('TUDOR API Key (Production)'),
-                        'name' => 'TUDORSYNC_API_KEY_PRODUCTION',
-                    ],
+                    ...$this->credentialInputs(),
                     [
                         'type' => 'switch',
                         'label' => $this->l('Offer Click & Collect'),
@@ -303,11 +341,74 @@ class Tudorsync extends Module
         $helper->fields_value = [
             'TUDORSYNC_COUNTRY' => Configuration::get(Config::KEY_COUNTRY),
             'TUDORSYNC_ENVIRONMENT' => Configuration::get(Config::KEY_ENVIRONMENT),
-            'TUDORSYNC_API_KEY_STAGING' => Configuration::get(Config::KEY_API_KEY_STAGING),
-            'TUDORSYNC_API_KEY_PRODUCTION' => Configuration::get(Config::KEY_API_KEY_PRODUCTION),
+            ...$this->credentialValues(),
             'TUDORSYNC_CLICK_AND_COLLECT_ENABLED' => Configuration::get(Config::KEY_CLICK_AND_COLLECT_ENABLED),
         ];
 
         return $helper->generateForm([$fieldsForm]);
+    }
+
+    /**
+     * Client ID / Client Secret of the retailer's TUDOR (Okta) application, one pair per
+     * environment (PREPROD credentials for Staging, PROD for Production).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function credentialInputs(): array
+    {
+        $config = new Config();
+        $labels = [
+            Environment::Staging->value => $this->l('Staging (PREPROD)'),
+            Environment::Production->value => $this->l('Production (PROD)'),
+        ];
+        $inputs = [];
+
+        foreach (Environment::cases() as $environment) {
+            $hasSecret = $config->getClientSecret($environment) !== '';
+            $inputs[] = [
+                'type' => 'text',
+                'label' => sprintf($this->l('Client ID — %s'), $labels[$environment->value]),
+                'name' => Config::clientIdKey($environment),
+            ];
+            $inputs[] = [
+                'type' => 'password',
+                'label' => sprintf($this->l('Client Secret — %s'), $labels[$environment->value]),
+                'name' => Config::clientSecretKey($environment),
+                'desc' => $hasSecret
+                    ? $this->l('A secret is saved. Leave empty to keep it.')
+                    : $this->l('No secret saved.'),
+            ];
+
+            if ($hasSecret) {
+                $inputs[] = [
+                    'type' => 'checkbox',
+                    'name' => Config::clientSecretKey($environment) . '_CLEAR',
+                    'values' => [
+                        'query' => [['id' => 'on', 'name' => $this->l('Remove the saved secret')]],
+                        'id' => 'id',
+                        'name' => 'name',
+                    ],
+                ];
+            }
+        }
+
+        return $inputs;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function credentialValues(): array
+    {
+        $config = new Config();
+        $values = [];
+
+        foreach (Environment::cases() as $environment) {
+            $values[Config::clientIdKey($environment)] = $config->getClientId($environment);
+            $values[Config::clientSecretKey($environment)] = ''; // never echo the secret back
+            $values[Config::clientSecretKey($environment) . '_CLEAR_on'] = '';
+        }
+
+        return $values;
     }
 }

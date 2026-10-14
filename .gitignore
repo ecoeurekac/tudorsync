@@ -14,3 +14,6 @@ core/.phpunit.result.cache
 
 # Registro local de sesiones (no versionado)
 CLAUDE.local.md
+
+# Datos de cada distribuidor (no versionados)
+doc/distribuidores/

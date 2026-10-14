@@ -143,6 +143,11 @@ sales come from the store's own orders, and the template itself notes boutique
 sales/appointments are based on in-store staff conversations "whenever possible" — likely
 manual input, not something to automate.
 
+Each platform module provides the order side through `Contract\ProgrammeSalesSourceInterface::getProgrammeSales($from, $to)`
+(period `[$from, $to)`), which returns a `Domain\ProgrammeSales` (`watchesSoldOnline`, `?clickAndCollectSales`,
+null today): units of TUDOR watches, not orders; cancelled orders left out, returns not subtracted; period limits in the
+time zone of the retailer's GA4 property; attribution method (GA4 or the module's own, consent-based) not fixed by the interface.
+
 ## Platform connectors
 
 Each module has a real (not stub) `CatalogConnector`, admin config screen, and scheduled
@@ -289,7 +294,9 @@ For another market, just add `prices_XX.xlsx` with the country code from `StockA
   the generated, token-protected URL — nothing in the module itself schedules that call.
 - **Monthly report data**: Magento computes the order side (online and click & collect sales)
   and writes the Excel from its admin; sessions and unique visitors are typed in by hand. Core
-  still has no interface for the report's data source and nothing reads them from GA4.
+  defines the interface for the order side (`ProgrammeSalesSourceInterface`, 2026-10-14), but no
+  module implements it yet (Magento, PrestaShop and WooCommerce each still have to); nothing reads
+  sessions or unique visitors from GA4.
 - Package naming/versioning conventions for internal Composer registry distribution (how
   each store actually pulls `tudorsync/core` — private Packagist, Satis, a path repo baked
   into deployment, etc.) — currently each module's `composer.json` points at `core/` via a

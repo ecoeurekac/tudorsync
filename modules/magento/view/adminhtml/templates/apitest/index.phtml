@@ -48,7 +48,7 @@ $postDisabled = $block->isProduction() ? ' disabled' : '';
         <div class="admin__field">
             <label class="admin__field-label" for="tudorsync-product-search"><span><?= $escaper->escapeHtml(__('Find a TUDOR product (SKU or name)')) ?></span></label>
             <div class="admin__field-control">
-                <input id="tudorsync-product-search" type="text" class="admin__control-text" placeholder="1001TU79360 / Black Bay"<?= $postDisabled ?>/>
+                <input id="tudorsync-product-search" type="text" class="admin__control-text" placeholder="SKU / Black Bay"<?= $postDisabled ?>/>
             </div>
         </div>
         <div class="tudorsync-results-list" id="tudorsync-product-results"></div>

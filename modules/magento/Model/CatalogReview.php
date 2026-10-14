@@ -11,9 +11,11 @@ use Tudorsync\Core\Rules\ValidModelList;
 
 /**
  * What tudorsync/core's AvailabilityFilter does with a list of records before they are sent:
- * the records that pass, each watch it drops with the reason, and its warnings. The sync
- * itself still goes through SyncEngine (which runs the filter again); this is only so the
- * preview, the admin pages, the API tests and the log show the same result.
+ * the records that pass, each watch it drops with the reason, and its warnings.
+ *
+ * Two reviews, as in core: ofBatch() is the whole-catalog one (keepOnlyAvailableForBatch(), what
+ * SyncEngine::plan()/run() send: preview, admin pages, full sync and its log); of() is the strict
+ * one (keepOnlyAvailable(), for records sent one by one: the per-minute POSTs and the API tests).
  */
 class CatalogReview
 {
@@ -36,9 +38,40 @@ class CatalogReview
     public static function of(array $records, ?AvailabilityFilter $filter = null): self
     {
         $filter ??= new AvailabilityFilter();
-        $items = $filter->keepOnlyAvailable($records);
 
-        return new self(count($records), $items, $filter->getExclusions(), $filter->getWarnings());
+        return self::fromFilter($records, $filter->keepOnlyAvailable($records), $filter);
+    }
+
+    /**
+     * Same review as SyncEngine::plan() on the whole catalog. A country where TUDOR's list of
+     * current models would drop every watch is sent without the list; core's warning says so.
+     *
+     * @param StockAvailability[] $records
+     */
+    public static function ofBatch(array $records, ?AvailabilityFilter $filter = null): self
+    {
+        $filter ??= new AvailabilityFilter();
+
+        return self::fromFilter($records, $filter->keepOnlyAvailableForBatch($records), $filter);
+    }
+
+    /**
+     * The review a filter has just made of $records (e.g. the one SyncEngine::plan() used).
+     *
+     * @param StockAvailability[] $records
+     * @param StockAvailability[] $passed
+     */
+    public static function fromFilter(array $records, array $passed, AvailabilityFilter $filter): self
+    {
+        return new self(count($records), array_values($passed), $filter->getExclusions(), $filter->getWarnings());
+    }
+
+    /**
+     * No record at all: SyncEngine sends nothing (EmptyCatalogException).
+     */
+    public function isEmptyCatalog(): bool
+    {
+        return $this->received === 0;
     }
 
     /**

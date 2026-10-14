@@ -9,7 +9,7 @@ namespace Tudorsync\EcommerceSync\Model;
  *   1. the `tudor_model_code` attribute, when filled in — always wins;
  *   2. otherwise, if a SKU rule is configured (regex + replacement in admin config), the code
  *      derived from the SKU. This exists because some retailers already embed the TUDOR
- *      reference in their SKU (Quera: `1001TU…`), which avoids re-typing it product by
+ *      reference in their SKU, which avoids re-typing it product by
  *      product and survives a data re-migration that would wipe a hand-filled attribute.
  */
 class ModelCodeResolver

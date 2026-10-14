@@ -66,11 +66,11 @@
                 <comment><![CDATA[A product takes part when its "TUDOR Model Code" attribute is filled in. Optionally, when the attribute is empty, the code can be derived from the SKU with the rule below. Check the result with <code>bin/magento tudorsync:catalog:preview</code> before syncing.]]></comment>
                 <field id="sku_prefix" translate="label comment" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>SKU Prefix</label>
-                    <comment>Only SKUs starting with this are checked against the pattern, e.g. 1001TU. Required for the SKU rule to apply.</comment>
+                    <comment>Only SKUs starting with this are checked against the pattern, e.g. TU. Required for the SKU rule to apply.</comment>
                 </field>
                 <field id="sku_pattern" translate="label comment" type="text" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>SKU Pattern (PHP regular expression)</label>
-                    <comment>With delimiters, e.g. /^1001TU(\w+)-(\d{4})$/</comment>
+                    <comment>With delimiters, e.g. /^TU(\w+)-(\d{4})$/</comment>
                 </field>
                 <field id="sku_replacement" translate="label comment" type="text" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Model Code Built From the SKU</label>
@@ -100,6 +100,13 @@
                     <depends>
                         <field id="consent_manager">cookiescript</field>
                     </depends>
+                </field>
+            </group>
+            <group id="report" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Monthly Report</label>
+                <field id="pickup_shipping_method_prefixes" translate="label comment" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Store Pickup Shipping Methods</label>
+                    <comment>Shipping method codes that mean "picked up in store" (click &amp; collect), comma-separated; a code counts if it starts with one of them, e.g. instore_ or storepickup_. Empty = the store can't tell, and the report leaves the field blank.</comment>
                 </field>
             </group>
         </section>

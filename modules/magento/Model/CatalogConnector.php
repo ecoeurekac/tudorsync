@@ -31,7 +31,7 @@ use Tudorsync\EcommerceSync\Model\Stock\SalableQtyProvider;
  * backorders, or has no salable quantity left (MSI reservations already discounted).
  *
  * One record per model code: TUDOR's batch is keyed by model/country, but a store can have
- * several products for the same model (Quera does). Those are merged — quantities summed, URLs
+ * several products for the same model. Those are merged — quantities summed, URLs
  * taken from the product with the most salable stock — instead of sending duplicate records.
  *
  * Multi-language: one localized URL per active store view where the product is enabled and
@@ -169,7 +169,7 @@ class CatalogConnector implements CatalogConnectorInterface
             $products[$mainProductId]['merged_count'] = count($productIds);
         }
 
-        $review = CatalogReview::of($items);
+        $review = CatalogReview::ofBatch($items);
 
         foreach ($products as $productId => $row) {
             $exclusion = $row['status'] === CatalogSnapshot::STATUS_SENT ? $review->getExclusionFor((string) $row['model_code']) : null;

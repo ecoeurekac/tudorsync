@@ -9,7 +9,6 @@ use Tudorsync\Core\Api\TudorApiClient;
 use Tudorsync\Core\Domain\Environment;
 use Tudorsync\Core\Domain\StockAvailability;
 use Tudorsync\Core\Rules\AvailabilityFilter;
-use Tudorsync\Core\Rules\Exclusion;
 use Tudorsync\Core\Rules\ValidModelList;
 use Tudorsync\Core\Sync\SyncEngine;
 use Tudorsync\EcommerceSync\Model\CatalogConnector;
@@ -76,7 +75,7 @@ class ApiTester
         $catalog = $action === self::ACTION_BATCH && ($params['scope'] ?? '') === 'catalog';
         $snapshot = $catalog ? $this->catalogConnector->collect() : null;
         $review = match (true) {
-            $snapshot !== null => $snapshot->review ?? CatalogReview::of($snapshot->items),
+            $snapshot !== null => $snapshot->review ?? CatalogReview::ofBatch($snapshot->items),
             $isPost => $this->review($action, $this->buildItems($action, $params)),
             default => null,
         };
@@ -203,12 +202,9 @@ class ApiTester
     }
 
     /**
-     * Core's review of the chosen records. For POST /v1/stocks a 0 is reviewed as 1, so that only
-     * the value check is skipped (see the class comment), and sent as 0.
-     *
-     * Core skips the list of current models when it would drop every watch of a country (a wrong
-     * list is likelier than a dead catalog). With a few chosen products that is the normal case,
-     * so here the list is applied to each one whenever it could be read.
+     * Core's strict review of the chosen records (keepOnlyAvailable(): TUDOR's list of current
+     * models is always applied, as for any record sent on its own). For POST /v1/stocks a 0 is
+     * reviewed as 1, so that only the value check is skipped (see the class comment), and sent as 0.
      *
      * @param list<StockAvailability> $items
      */
@@ -225,40 +221,13 @@ class ApiTester
             }
         }
 
-        $validModels = new ValidModelList();
-        $review = CatalogReview::of($items, new AvailabilityFilter($validModels));
-        $passed = [];
-        $exclusions = $review->exclusions;
-        $warnings = $review->warnings;
-        $checked = [];
+        $review = CatalogReview::of($items);
+        $passed = array_map(
+            static fn (StockAvailability $item): StockAvailability => isset($withdraw[$item->modelCode]) ? self::withValue($item, 0) : $item,
+            $review->items,
+        );
 
-        foreach ($review->items as $item) {
-            if ($validModels->isLoaded($item->country) && !$validModels->contains($item->country, $item->modelCode)) {
-                $checked[$item->country] = true;
-                $exclusions[] = new Exclusion(
-                    $item->modelCode,
-                    $item->country,
-                    Exclusion::NOT_IN_VALID_LIST,
-                    sprintf('No está en la lista de modelos vigentes de TUDOR (%s)', $validModels->fileName($item->country)),
-                );
-                continue;
-            }
-
-            $passed[] = isset($withdraw[$item->modelCode]) ? self::withValue($item, 0) : $item;
-        }
-
-        // The "list skipped: no watch of ES is in it" warning no longer applies: the list was applied above.
-        $warnings = array_values(array_filter($warnings, static function (string $warning) use ($checked, $validModels): bool {
-            foreach (array_keys($checked) as $country) {
-                if (str_contains($warning, $validModels->fileName((string) $country)) && str_contains($warning, 'DESACTIVADO')) {
-                    return false;
-                }
-            }
-
-            return true;
-        }));
-
-        return new CatalogReview($review->received, $passed, $exclusions, $warnings);
+        return new CatalogReview($review->received, $passed, $review->exclusions, $review->warnings);
     }
 
     private static function withValue(StockAvailability $item, int $value): StockAvailability

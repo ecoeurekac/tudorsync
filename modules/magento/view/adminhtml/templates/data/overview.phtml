@@ -66,6 +66,9 @@ $statusLabels = [
                     <?= $escaper->escapeHtml(__('Of the %1 model(s) built, the review before sending (tudorsync/core) leaves out %2: they are marked "TUDOR review" below.', count($snapshot->items), count($snapshot->review->exclusions))) ?>
                 <?php endif; ?>
             </p>
+            <?php if ($snapshot->review?->isEmptyCatalog()): ?>
+                <div class="message message-warning warning"><div><?= $escaper->escapeHtml(__('No TUDOR model to send (empty catalog): the sync sends nothing. Check that the TUDOR products have a model code (attribute or SKU rule) and are in stock.')) ?></div></div>
+            <?php endif; ?>
             <?php if ($snapshot->review?->nothingPassed()): ?>
                 <div class="message message-error error"><div><?= $escaper->escapeHtml(__('No model passes the review: the sync would send nothing (an empty batch would set the whole catalog to 0).')) ?></div></div>
             <?php endif; ?>

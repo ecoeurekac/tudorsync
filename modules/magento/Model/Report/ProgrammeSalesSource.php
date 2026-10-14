@@ -6,6 +6,7 @@ namespace Tudorsync\EcommerceSync\Model\Report;
 
 use Magento\Framework\App\ResourceConnection;
 use Magento\Sales\Model\Order;
+use Tudorsync\EcommerceSync\Model\Config;
 use Tudorsync\EcommerceSync\Model\ModelCodeResolver;
 
 /**
@@ -19,8 +20,8 @@ use Tudorsync\EcommerceSync\Model\ModelCodeResolver;
  *   - cancelled orders are left out; refunds are not subtracted (a return may land after the
  *     month has been reported);
  *   - click & collect = orders whose shipping method starts with one of the configured prefixes
- *     (DI argument; Quera: Amasty Store Pickup, `amstorepick_*`). With no prefixes configured
- *     the store cannot tell, and clickAndCollectSales is null.
+ *     (admin: TUDOR e-Stock > Monthly Report, plus any given as DI argument by a store's own
+ *     module). With no prefixes configured the store cannot tell, and clickAndCollectSales is null.
  *
  * `$attributedOnly = false` ignores the attribution and counts every order: only for checking
  * the counting against real orders while tudorsync_order_attribution is still empty.
@@ -35,6 +36,7 @@ class ProgrammeSalesSource
     public function __construct(
         private readonly ResourceConnection $resource,
         private readonly ModelCodeResolver $modelCodeResolver,
+        private readonly Config $config,
         private readonly array $pickupShippingMethodPrefixes = [],
     ) {
     }
@@ -116,7 +118,7 @@ class ProgrammeSalesSource
 
         return new ProgrammeSales(
             $units,
-            $this->pickupShippingMethodPrefixes === [] ? null : $pickupUnits,
+            $this->getPickupPrefixes() === [] ? null : $pickupUnits,
             $lines
         );
     }
@@ -162,13 +164,24 @@ class ProgrammeSalesSource
 
     private function isPickup(string $shippingMethod): bool
     {
-        foreach ($this->pickupShippingMethodPrefixes as $prefix) {
-            if ($prefix !== '' && str_starts_with($shippingMethod, $prefix)) {
+        foreach ($this->getPickupPrefixes() as $prefix) {
+            if (str_starts_with($shippingMethod, $prefix)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function getPickupPrefixes(): array
+    {
+        return array_values(array_unique(array_filter(
+            array_merge(array_map('trim', array_values($this->pickupShippingMethodPrefixes)), $this->config->getPickupShippingMethodPrefixes()),
+            static fn (string $prefix): bool => $prefix !== '',
+        )));
     }
 
     /**

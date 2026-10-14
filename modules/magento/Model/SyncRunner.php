@@ -15,6 +15,7 @@ use Tudorsync\Core\Api\TudorApiClient;
 use Tudorsync\Core\Domain\ClientConfig;
 use Tudorsync\Core\Rules\AvailabilityFilter;
 use Tudorsync\Core\Rules\ValidModelList;
+use Tudorsync\Core\Sync\EmptyCatalogException;
 use Tudorsync\Core\Sync\NothingPassedReviewException;
 use Tudorsync\Core\Sync\SyncEngine;
 use Tudorsync\EcommerceSync\Model\Api\CallContext;
@@ -31,9 +32,10 @@ use Tudorsync\EcommerceSync\Model\Realtime\PublishPlan;
  * publishPending() sends only the model codes queued by the stock/order/product hooks
  * (Model\Realtime), every minute. A successful full sync also empties that queue.
  *
- * Before sending, core's AvailabilityFilter reviews every record (CatalogSnapshot::$review):
- * what it drops, and why, goes to the log and to the last sync status, and the counts are of
- * what really went out. If it drops everything, SyncEngine sends nothing at all.
+ * Before sending, core's AvailabilityFilter reviews every record: a full batch is planned with
+ * SyncEngine::plan() and that same filter's review is what goes to the log, the last sync status
+ * and the counts, so they are of what really went out. The per-minute POSTs use the strict
+ * review (CatalogReview::of()). If the catalog is empty or nothing passes, nothing is sent.
  *
  * Every HTTP call goes through LoggingHttpClient, labelled by CallContext with who started it
  * (cron, admin, cli) and the operation, so real syncs leave a full trace in tudorsync_api_log.
@@ -93,11 +95,21 @@ class SyncRunner
         try {
             $queuedBefore = $this->pendingQueue->now();
             $snapshot = $this->catalogConnector->collect();
-            $this->logReview($snapshot, $trigger);
-            $result = $this->sendBatch($snapshot, $clientConfig);
+            [$result, $review] = $this->sendBatch($snapshot, $clientConfig);
+            $this->logReview($review, $trigger);
             // Everything queued before the catalog was read has just gone out with it.
             $this->pendingQueue->remove(null, $queuedBefore);
+        } catch (EmptyCatalogException $e) {
+            $message = (string) __('Nothing sent: %1', $e->getMessage());
+            $this->logger->error('Tudorsync: ' . $message);
+            $this->status->recordSyncResult(false, $message, $trigger, $snapshot?->review);
+
+            return new SyncOutcome(false, $message);
         } catch (NothingPassedReviewException $e) {
+            if ($snapshot?->review !== null) {
+                $this->logReview($snapshot->review, $trigger);
+            }
+
             $message = (string) __('Nothing sent: no watch passed the review (%1 received). Sending an empty batch would set the whole catalog to 0 at TUDOR.', $e->getReceived());
             $this->logger->error('Tudorsync: ' . $message . ' ' . $e->getMessage());
             $this->status->recordSyncResult(false, $message, $trigger, $snapshot?->review);
@@ -116,13 +128,13 @@ class SyncRunner
 
         $message = (string) __(
             '%1 model(s) sent, %2 left out by the review, %3 result(s), %4 failure(s).',
-            count($snapshot->getItemsToSend()),
-            count($snapshot->review?->exclusions ?? []),
+            count($review->items),
+            count($review->exclusions),
             count($result->results),
             count($failures),
         );
         $this->logger->info(sprintf('Tudorsync (%s, %s): %s', $trigger, $clientConfig->environment->value, $message));
-        $this->status->recordSyncResult($failures === [], $message, $trigger, $snapshot->review);
+        $this->status->recordSyncResult($failures === [], $message, $trigger, $review);
 
         return new SyncOutcome($failures === [], $message);
     }
@@ -143,8 +155,11 @@ class SyncRunner
         $snapshot = $this->catalogConnector->collect();
         $available = [];
 
-        // Core's review gives the codes normalized (upper case, no spaces): the queue is compared the same way.
-        foreach ($snapshot->getItemsToSend() as $item) {
+        // Sent one by one, so the strict review (TUDOR's list always applied), not the batch one.
+        // Core gives the codes normalized (upper case, no spaces): the queue is compared the same way.
+        $review = CatalogReview::of($snapshot->items);
+
+        foreach ($review->items as $item) {
             $available[$item->modelCode] = $item;
         }
 
@@ -155,7 +170,16 @@ class SyncRunner
         $items = array_values(array_intersect_key($available, array_flip($modelCodes)));
         $unavailable = array_values(array_diff($modelCodes, array_keys($available)));
 
+        // Dropped by core's review (e.g. not in TUDOR's list) vs. no longer in the catalog (sold out, disabled...).
+        $leftOut = array_values(array_filter($unavailable, static fn (string $code): bool => $review->getExclusionFor($code) !== null));
+
         $why = match (true) {
+            $leftOut !== [] => sprintf(
+                '%d model(s) no longer available (%d left out by the review: %s): a full batch withdraws them',
+                count($unavailable),
+                count($leftOut),
+                implode(', ', $leftOut),
+            ),
             $unavailable !== [] => sprintf('%d model(s) no longer available: a full batch withdraws them', count($unavailable)),
             count($modelCodes) > self::MAX_SINGLE_CALLS => sprintf('%d models queued (more than %d): one full batch', count($modelCodes), self::MAX_SINGLE_CALLS),
             default => sprintf('%d model(s) still available: one POST /v1/stocks each', count($items)),
@@ -217,14 +241,14 @@ class SyncRunner
             }
 
             if ($plan->fullBatch) {
-                $this->logReview($plan->snapshot, $trigger);
-                $result = $this->sendBatch($plan->snapshot, $clientConfig);
+                [$result, $review] = $this->sendBatch($plan->snapshot, $clientConfig);
+                $this->logReview($review, $trigger);
                 $this->pendingQueue->remove(null, $plan->queuedBefore);
                 $message = (string) __(
                     'Real-time (%1): full batch, %2 model(s) sent, %3 left out by the review, %4 failure(s).',
                     $plan->why,
-                    count($plan->snapshot->getItemsToSend()),
-                    count($plan->snapshot->review?->exclusions ?? []),
+                    count($review->items),
+                    count($review->exclusions),
                     count($result->failures()),
                 );
                 $this->logFailures($result->failures());
@@ -346,29 +370,28 @@ class SyncRunner
         };
     }
 
-    private function sendBatch(CatalogSnapshot $snapshot, ClientConfig $clientConfig): \Tudorsync\Core\Api\BatchSyncResult
+    /**
+     * SyncEngine::run() in two steps (plan(), then the batch call), so the review returned is the
+     * one of the very filter that decided what was sent.
+     *
+     * @return array{0: \Tudorsync\Core\Api\BatchSyncResult, 1: CatalogReview}
+     * @throws EmptyCatalogException|NothingPassedReviewException nothing is sent
+     */
+    private function sendBatch(CatalogSnapshot $snapshot, ClientConfig $clientConfig): array
     {
-        $engine = new SyncEngine(
-            new SnapshotConnector($snapshot),
-            new AvailabilityFilter(),
-            new TudorApiClient($clientConfig, $this->httpClient),
-        );
+        $filter = new AvailabilityFilter();
+        $client = new TudorApiClient($clientConfig, $this->httpClient);
+        $toSend = (new SyncEngine(new SnapshotConnector($snapshot), $filter, $client))->plan();
 
-        return $engine->run();
+        return [$client->batchUpsertStocks($toSend), CatalogReview::fromFilter($snapshot->items, $toSend, $filter)];
     }
 
     /**
      * What core's review drops and its warnings, as warnings in var/log/tudorsync.log: once per
      * batch that goes out (full sync, or real-time when it falls back to a full batch).
      */
-    private function logReview(CatalogSnapshot $snapshot, string $trigger): void
+    private function logReview(CatalogReview $review, string $trigger): void
     {
-        $review = $snapshot->review;
-
-        if ($review === null) {
-            return;
-        }
-
         foreach ($review->getExclusionLines() as $line) {
             $this->logger->warning(sprintf('Tudorsync (%s): left out by the review: %s', $trigger, $line));
         }

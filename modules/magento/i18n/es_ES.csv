@@ -171,3 +171,8 @@
 "Review before sending (tudorsync/core): %1 received, %2 pass.","Revisión antes de enviar (tudorsync/core): %1 recibidos, %2 pasan."
 "Of the %1 model(s) built, the review before sending (tudorsync/core) leaves out %2: they are marked ""TUDOR review"" below.","De los %1 modelo(s) preparados, la revisión antes de enviar (tudorsync/core) descarta %2: aparecen abajo marcados como «TUDOR review»."
 "No model passes the review: the sync would send nothing (an empty batch would set the whole catalog to 0).","Ningún modelo supera la revisión: la sincronización no enviaría nada (un batch vacío pondría a 0 todo el catálogo)."
+"No TUDOR model to send (empty catalog): the sync sends nothing. Check that the TUDOR products have a model code (attribute or SKU rule) and are in stock.","No hay ningún modelo TUDOR que enviar (catálogo vacío): la sincronización no envía nada. Comprueba que los productos TUDOR tienen código de modelo (atributo o regla de SKU) y stock."
+"Nothing sent: %1","No se ha enviado nada: %1"
+"Monthly Report","Informe mensual"
+"Store Pickup Shipping Methods","Métodos de envío de recogida en tienda"
+"Shipping method codes that mean ""picked up in store"" (click & collect), comma-separated; a code counts if it starts with one of them, e.g. instore_ or storepickup_. Empty = the store can't tell, and the report leaves the field blank.","Códigos de método de envío que significan «recogida en tienda» (click & collect), separados por comas; cuenta todo código que empiece por uno de ellos, p. ej. instore_ o storepickup_. Vacío = la tienda no lo distingue y el informe deja el campo en blanco."

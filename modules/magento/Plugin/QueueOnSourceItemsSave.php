@@ -10,7 +10,7 @@ use Tudorsync\EcommerceSync\Model\Realtime\ChangeRecorder;
 
 /**
  * Physical stock saved through MSI: product save in the admin, stock imports that use the
- * service contract (Quera's ERP import, Comertis_AdvImport, does), REST/CSV imports.
+ * service contract (e.g. an ERP import module), REST/CSV imports.
  * Writes straight to the stock tables with SQL do not pass here; the full sync covers them.
  */
 class QueueOnSourceItemsSave

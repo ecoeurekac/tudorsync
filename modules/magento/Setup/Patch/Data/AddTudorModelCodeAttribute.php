@@ -19,7 +19,7 @@ use Magento\Framework\Setup\Patch\DataPatchInterface;
  *
  * TODO: if a client already has an existing attribute/field carrying the TUDOR model code,
  * reuse that instead of asking them to double-enter data — confirm with each Magento client
- * (Pedro Luis Olivares, Quera) before relying on this attribute in production.
+ * before relying on this attribute in production.
  */
 class AddTudorModelCodeAttribute implements DataPatchInterface
 {

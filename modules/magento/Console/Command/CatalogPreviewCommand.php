@@ -159,6 +159,10 @@ class CatalogPreviewCommand extends Command
             $output->writeln('<comment>Review warning: ' . $warning . '</comment>');
         }
 
+        if ($review->isEmptyCatalog()) {
+            $output->writeln('<error>No TUDOR model to send (empty catalog): the sync sends nothing. Check that the TUDOR products have a model code (attribute or SKU rule) and are in stock.</error>');
+        }
+
         if ($review->nothingPassed()) {
             $output->writeln('<error>No record passes the review: the sync would send nothing (an empty batch would set the whole catalog to 0).</error>');
         }

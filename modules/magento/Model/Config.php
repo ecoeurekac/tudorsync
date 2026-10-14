@@ -33,6 +33,7 @@ class Config
     private const XML_PATH_REALTIME_ENABLED = 'tudorsync/general/realtime_enabled';
     private const XML_PATH_CONSENT_MANAGER = 'tudorsync/attribution/consent_manager';
     private const XML_PATH_CONSENT_CATEGORY = 'tudorsync/attribution/consent_category';
+    private const XML_PATH_PICKUP_PREFIXES = 'tudorsync/report/pickup_shipping_method_prefixes';
     private const XML_PATH_STORE_NAME = 'general/store_information/name';
     private const XML_PATH_LOCALE_CODE = 'general/locale/code';
 
@@ -116,6 +117,16 @@ class Config
     public function getConsentCategory(?int $storeId = null): string
     {
         return $this->getString(self::XML_PATH_CONSENT_CATEGORY, $storeId) ?: 'performance';
+    }
+
+    /**
+     * Shipping method codes (prefixes) that mean "picked up in store", for the monthly report.
+     *
+     * @return list<string>
+     */
+    public function getPickupShippingMethodPrefixes(): array
+    {
+        return array_values(array_filter(array_map('trim', explode(',', $this->getString(self::XML_PATH_PICKUP_PREFIXES)))));
     }
 
     public function getHomeDeliveryTimingHours(?int $storeId = null): ?int

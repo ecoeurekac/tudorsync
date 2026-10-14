@@ -1,7 +1,8 @@
 # Tudorsync_EcommerceSync (Magento 2)
 
-Conector Magento de tudorsync. Probado en Quera (Magento 2.4.8, PHP 8.3, MSI con una fuente)
-el 30-09-2026; la misma base se replicará en Pedro Luis Olivares.
+Conector Magento de tudorsync. Probado en Magento 2.4.8 con PHP 8.3 y MSI con una fuente. Lo propio
+de cada tienda (regla de SKU, métodos de recogida, gestor de cookies…) va en su configuración del
+admin, nunca en el código; un comportamiento distinto, con un `di.xml` en un módulo propio de la tienda.
 
 ## Qué hace
 
@@ -12,11 +13,19 @@ Lee el catálogo, decide qué relojes TUDOR se pueden comprar **ya** y entrega a
 **Revisión de core antes de enviar** (`AvailabilityFilter`): normaliza `mc` y país, quita lo que no
 se puede publicar (sin código, URL no `https://`, sin stock…), agrupa repetidos y quita los modelos
 que no están en la lista de modelos vigentes de TUDOR (`core/resources/valid-models/prices_ES.xlsx`).
-El módulo la ejecuta también por su cuenta (`Model\CatalogReview`, guardada en `CatalogSnapshot::$review`)
-para que el preview, las páginas del admin, las pruebas de API y el log enseñen lo mismo que se envía:
-cada reloj descartado con su motivo («TUDOR review: …») y los avisos. Las cuentas de «N model(s) sent»
-son de lo que pasa la revisión. Si no pasa nada, `SyncEngine` no envía nada
-(`NothingPassedReviewException`) y el estado dice «No se ha enviado nada».
+El módulo la enseña con `Model\CatalogReview`, en sus dos variantes de core:
+
+- **De batch** (`CatalogReview::ofBatch()` = `keepOnlyAvailableForBatch()`, guardada en `CatalogSnapshot::$review`):
+  la del catálogo completo, la misma que `SyncEngine::plan()`. Si la lista de modelos vigentes dejaría a un país
+  sin relojes, ese país se envía sin la lista y sale el aviso de core. Es la que ven el preview, «Datos del
+  programa» y el batch del catálogo en las pruebas de API. En el sync, `SyncRunner::sendBatch()` hace `plan()` y
+  luego el batch con **el mismo filtro**, y de ese filtro salen el log, el estado y las cuentas («N model(s) sent»).
+- **Estricta** (`CatalogReview::of()` = `keepOnlyAvailable()`, la lista se aplica siempre): la de lo que se envía
+  suelto, es decir, los `POST /v1/stocks` de la publicación en el minuto y los productos elegidos en las pruebas de API.
+
+Cada reloj descartado sale con su motivo («TUDOR review: …»). Si el catálogo está vacío
+(`EmptyCatalogException`) o no pasa nada (`NothingPassedReviewException`), `SyncEngine` no envía nada y
+el estado dice «No se ha enviado nada»: un batch vacío pondría a 0 todo el catálogo en TUDOR.
 
 | Paso | Regla |
 |---|---|
@@ -34,9 +43,12 @@ son de lo que pasa la revisión. Si no pasa nada, `SyncEngine` no envía nada
   Secret** de staging y producción (OAuth2 de TUDOR; el secret se guarda cifrado), «value», click & collect (todo o nada), plazo de entrega
   a domicilio (opcional), frecuencia del cron y los botones Test Connection / Run Sync Now.
 - **TUDOR Model Code**: regla opcional para sacar el código del SKU: prefijo (filtro SQL) +
-  expresión regular + sustitución. Ejemplo: prefijo `1001TU`, patrón `/^1001TU(.+)-\d{4}$/`,
-  sustitución `$1`. **El atributo, si está relleno, siempre gana.**
+  expresión regular + sustitución. Ejemplo: prefijo `TU`, patrón `/^TU(.+)-(\d{4})$/`,
+  sustitución `M$1-$2`. **El atributo, si está relleno, siempre gana.**
 - **Product URLs**: formato de las claves de idioma.
+- **Order Attribution**: gestor de consentimiento de cookies (Ninguno o CookieScript) y categoría.
+- **Monthly Report**: códigos de los métodos de envío de recogida en tienda (prefijos separados por comas),
+  para el click & collect del informe. Vacío = el campo queda en blanco.
 
 Los botones usan los valores **guardados**: primero hay que guardar y después probar.
 
@@ -57,13 +69,8 @@ con la regla de SKU. Los nombres de fichero de las fotos no se usan (algunos son
 `M2542GXX7NU-0002`). No toca los valores ya puestos salvo con `--overwrite`. Se puede repetir
 (p. ej. tras una re-migración de datos).
 
-Regla de Quera (ampliada el 08-10): prefijo `1001TU`, patrón
-`/^1001TU(.+?)(?:\d{5}[A-Z]?|CUERO|TEJIDO|TEJI|CROCO|CAUCHO|CORREA)?-(\d{4})$/`, sustitución `M$1-$2`
-(`1001TU79363NCUERO-0002` → `M79363N-0002`, `1001TU91351-0002` → `M91351-0002`). La correa es
-opcional y admite `CORREA` y `TEJI`, para que ninguna ficha con variante se quede sin código; cambiarla
-no alteró ningún código existente. Las SKU con variante de 3 dígitos (`1001TU2860091060-003`) no
-encajan: llevan el código a mano en el atributo. Cruzado el 08-10 con los Excel de modelos activos y
-descatalogados de TUDOR (`doc/`): ninguna ficha con TMC o GTIN de TUDOR queda fuera.
+La regla de cada tienda (y los casos que no encajan, que llevan el código a mano en el atributo) se
+documenta fuera del paquete, con los datos de esa tienda.
 
 `preview` muestra lo que se enviaría (ya pasado por la revisión de core) y, para cada producto
 candidato, si se envía, se agrupa con otro o se excluye, y por qué; debajo, lo que descarta la
@@ -90,20 +97,21 @@ el minuto siguiente. Interruptor: *Publish Changes Within a Minute* (`tudorsync/
 
 1. **Qué se vigila** (`Model\Realtime\ChangeRecorder`; nunca lanza excepción, va dentro del checkout):
    - reservas MSI (`AppendReservationsInterface`, plugin): pedido hecho, cancelado, enviado, abonado;
-   - stock guardado por MSI (`SourceItemsSaveInterface`, plugin): admin, import del ERP de Quera;
+   - stock guardado por MSI (`SourceItemsSaveInterface`, plugin): admin, imports que usan el contrato de servicio;
    - ficha guardada o borrada (`catalog_product_save_after` / `_delete_after`): se encolan el
      código de antes y el de después;
    - stock antiguo sin MSI (`cataloginventory_stock_item_save_after`), para tiendas sin MSI.
 
-   Lo que se escribe con SQL directo (parte del import del ERP de Quera) no pasa por aquí: lo
-   recoge el sync completo.
+   Lo que se escribe con SQL directo (algunos imports de ERP) no pasa por aquí: lo recoge el sync completo.
 2. **Cola:** tabla `tudorsync_pending_stock`, una fila por código de modelo (no por producto). Solo
    se llama a TUDOR desde el cron, nunca durante la compra.
 3. **Cron cada minuto** (`SyncRunner::publishPending()`):
    - todos los modelos de la cola siguen disponibles → un `POST /v1/stocks` por modelo (registro
      completo, cantidad sumada de todas sus fichas, igual que en el batch);
-   - alguno ya no está disponible (agotado, desactivado, borrado), o hay más de 20 → **un batch
-     completo**: TUDOR pone a 0 lo que falta, que es la forma documentada de retirar un modelo;
+   - alguno ya no está disponible (agotado, desactivado, borrado, o fuera de la revisión estricta de
+     core, p. ej. por la lista de modelos vigentes), o hay más de 20 → **un batch completo**: TUDOR pone
+     a 0 lo que falta, que es la forma documentada de retirar un modelo. El log dice cuántos son y cuáles
+     ha dejado fuera la revisión (el resto, sin stock o fuera del catálogo);
    - un modelo que falla sigue en la cola y se reintenta al minuto siguiente;
    - **429 (demasiadas peticiones)**: se para en ese mismo modelo (el resto sigue en la cola) y la
      publicación en el minuto se pausa 5 min (flag `tudorsync_realtime_paused_until`); el sync de
@@ -154,8 +162,9 @@ que Jorge lo confirme** para que los 3 conectores cuenten igual:
   no existe, vale la regla de SKU sobre el SKU guardado en el pedido).
 - **Se excluyen los pedidos cancelados; las devoluciones no se restan** (pueden llegar después de
   enviado el informe del mes).
-- **Click & collect** = método de envío que empieza por uno de los prefijos del argumento DI
-  `pickupShippingMethodPrefixes` (Quera: `amstorepick_`, Amasty Store Pickup). Lista vacía = la
+- **Click & collect** = método de envío que empieza por uno de los prefijos de *Monthly Report ›
+  Store Pickup Shipping Methods* (`tudorsync/report/pickup_shipping_method_prefixes`; un módulo propio de
+  la tienda puede añadir más con el argumento DI `pickupShippingMethodPrefixes`). Vacío = la
   tienda no lo distingue y el campo queda en blanco (`null`).
 - **Mes** en la zona horaria de la tienda (`general/locale/timezone`); las fechas de Magento
   están en UTC y se convierten.
@@ -197,8 +206,8 @@ Menú **Informes › TUDOR e-Stock** (permiso `Tudorsync_EcommerceSync::reports`
   por `TudorApiClient` de core. **Los POST se niegan en el entorno de producción** (en pantalla y en el servidor).
   Los POST pasan antes por la revisión de core, como la sync: lo descartado no se envía y sale con su motivo en
   el buscador, en «Ver JSON» y en la respuesta; si no pasa nada, no se envía nada. El batch del catálogo
-  completo va por `SyncEngine`, igual que la sync. Con productos elegidos, la lista de modelos vigentes se
-  aplica a cada uno (core la desactiva si dejara al país sin relojes, que con uno o dos elegidos es lo normal).
+  completo va por `SyncEngine`, igual que la sync. Con productos elegidos se usa la revisión estricta de core
+  (la lista de modelos vigentes se aplica siempre), como en los envíos sueltos.
   Única excepción: `POST /v1/stocks` con valor 0 se envía (es como se prueba una retirada; la sync nunca manda 0).
 - **Registro de API** (`tudorsync/apilog/index`): cada llamada HTTP a TUDOR —token, API y health— con fecha,
   origen (`cron`, `admin`, `cli`, `test`), operación (`full_sync`, `realtime`, `test_connection`,
@@ -218,24 +227,32 @@ la URL**: tras desplegar, purgar Varnish en el panel de Cloudways o el admin seg
 anterior. Al cambiar un constructor o la firma de un método público, `generated/code/Tudorsync` queda desfasado y
 `bin/magento` falla hasta borrarlo y recompilar.
 
-Las tablas nuevas requieren `setup:upgrade` (en Quera, con el guion de intercambio de
-`sales_sequence_meta`). Textos en inglés con traducción en `i18n/es_ES.csv` (solo frases propias:
+Las tablas nuevas requieren `setup:upgrade`. Textos en inglés con traducción en `i18n/es_ES.csv` (solo frases propias:
 las palabras genéricas las traducen los paquetes de idioma instalados).
 
-## Instalación en otra tienda (PLO)
+## Instalación en una tienda nueva
 
 1. Path repos o paquete de `tudorsync/core` + `tudorsync/module-magento` en el `composer.json`
    de la tienda y `composer require`.
-2. `bin/magento module:enable Tudorsync_EcommerceSync && bin/magento setup:upgrade` (el patch
-   crea el atributo `tudor_model_code` y la tabla `tudorsync_order_attribution`). En producción: `setup:di:compile` y
-   `setup:static-content:deploy`.
-3. Configurar y ejecutar `tudorsync:catalog:preview` antes de poner la clave.
+2. `bin/magento module:enable Tudorsync_EcommerceSync && bin/magento setup:upgrade` (el patch crea el
+   atributo `tudor_model_code` y las tablas `tudorsync_*`). En modo producción, además
+   `setup:di:compile` (comprobar que `generated/metadata/global.php` no tiene `__set_state`),
+   `setup:static-content:deploy` y `cache:flush`.
+3. Configurar **sin credenciales todavía**: país, regla de SKU (o rellenar el atributo), formato de
+   URLs, gestor de cookies y métodos de recogida. Rellenar códigos con `tudorsync:model-code:fill`
+   (en seco y luego `--apply`) y revisar `tudorsync:catalog:preview` hasta que salga lo esperado. Con el
+   catálogo vacío no se envía nada (lo dice el preview).
+4. Credenciales **PREPROD** en el entorno `staging`, `tudorsync:connection:test` y un primer
+   `tudorsync:sync:run`. Las **PROD** solo en la instalación de producción, nunca en las dos a la vez
+   (cada batch pone a 0 lo que no lleva).
+5. Si la tienda tiene staging copiado de producción: aislarlo antes (correo, pagos, ERP) y no repetir
+   credenciales entre los dos.
 
 Sin MSI el módulo también funciona: usa la cantidad física (el preview lo avisa).
 
 **Si cambias constructores** de clases del módulo en modo developer, borra
 `generated/code/Tudorsync`: los interceptores generados copian el constructor antiguo y dan
-un error fatal. **En modo producción** (Quera desde el 02-10) hay que `setup:di:compile`; antes de
+un error fatal. **En modo producción** hay que `setup:di:compile`; antes de
 subir un cambio, compilar en staging y comprobar que `generated/metadata/global.php` no tiene
 `__set_state`.
 
@@ -248,5 +265,5 @@ deja de arrancar en modo producción. Usar `?Clase $x = null` y crearlo dentro d
 
 - Click & collect por punto de venta (`storesAvailabilityDetails`, RSWI): depende de TUDOR.
 - MSI con **varias** fuentes o stocks por website: hoy se usa el stock del website de la
-  tienda por defecto (en Quera solo hay uno).
+  tienda por defecto.
 - Una tienda con varios mercados (un país por website) necesitaría un batch por país.

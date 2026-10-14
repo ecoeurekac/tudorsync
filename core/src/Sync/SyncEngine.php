@@ -20,10 +20,11 @@ use Tudorsync\Core\Rules\AvailabilityFilter;
  * anything that was published before but is missing from the latest call (see
  * AvailabilityFilter's docblock).
  *
- * That same behavior makes an empty batch dangerous: it would zero the whole catalog. So if
- * the connector returned watches and none passed the filter, nothing is sent and
- * NothingPassedReviewException is thrown. A connector that really returns nothing (everything
- * sold out) still sends the empty batch, as before.
+ * That same behavior makes an empty batch dangerous: it would zero the whole catalog. So an
+ * empty batch is never sent: if the connector returns nothing at all, EmptyCatalogException is
+ * thrown before the review (almost always a fault, not "everything sold out"; a person has to
+ * check it); if it returned watches and none passed the filter, NothingPassedReviewException.
+ * Either way, no call is made to TUDOR.
  *
  * The review is AvailabilityFilter::keepOnlyAvailableForBatch(): TUDOR's list of current models
  * is not applied to a country where it would drop every watch (see AvailabilityFilter). plan()
@@ -49,11 +50,17 @@ final class SyncEngine
      * What run() would send right now, without calling TUDOR (not even for a token).
      *
      * @return list<StockAvailability>
+     * @throws EmptyCatalogException The connector returned no watch at all.
      * @throws NothingPassedReviewException The connector returned watches and none passed the review.
      */
     public function plan(): array
     {
         $catalog = $this->connector->getAvailableCatalog();
+
+        if ($catalog === []) {
+            throw new EmptyCatalogException();
+        }
+
         $toSend = $this->filter->keepOnlyAvailableForBatch($catalog);
 
         if ($catalog !== [] && $toSend === []) {

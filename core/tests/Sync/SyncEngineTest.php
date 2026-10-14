@@ -57,16 +57,6 @@ final class SyncEngineTest extends TestCase
         self::assertSame([], $this->http->requests, 'no call at all to TUDOR, not even for a token');
     }
 
-    public function testAnEmptyCatalogFromTheConnectorIsStillSentAsAnEmptyBatch(): void
-    {
-        $this->http->queue($this->tokenResponse(), new HttpResponse(200, ''));
-
-        $result = $this->engine([])->run();
-
-        self::assertSame([], $result->results);
-        self::assertCount(1, $this->http->requestsTo('/v1/stocks/batch'));
-    }
-
     public function testSendsWhatPassesTheReview(): void
     {
         $this->http->queue(

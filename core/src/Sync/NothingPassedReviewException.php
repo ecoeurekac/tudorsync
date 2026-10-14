@@ -11,7 +11,7 @@ use Tudorsync\Core\Rules\Exclusion;
  * The connector returned watches but none passed AvailabilityFilter. Nothing was sent: an
  * empty batch would set the retailer's whole catalog to 0 at TUDOR.
  */
-final class NothingPassedReviewException extends RuntimeException
+class NothingPassedReviewException extends RuntimeException
 {
     /**
      * @param list<Exclusion> $exclusions

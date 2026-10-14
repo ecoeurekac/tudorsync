@@ -212,10 +212,16 @@ installation — see "What's still open" below.
   a module's preview and the real batch can't differ; it throws the same
   `NothingPassedReviewException`. The `AvailabilityFilter` passed to `SyncEngine` keeps the
   warnings, exclusions and countries sent unfiltered of the last `plan()`/`run()`.
-- **Never an empty batch by mistake:** if the connector returns watches but none passes the
-  review, `SyncEngine` sends nothing and throws `NothingPassedReviewException` with a summary
-  of the reasons — an empty batch would zero the retailer's whole catalog at TUDOR. A
-  connector that really returns nothing (everything sold out) still sends the empty batch.
+- **Never an empty batch:** a batch zeroes everything it doesn't carry, so an empty one would
+  take the retailer's whole catalog off TUDOR. If the connector returns no watch at all,
+  `SyncEngine::plan()` (and so `run()`) throws `EmptyCatalogException` before the review and
+  before any call to TUDOR (not even a token): an empty catalog is almost always a fault
+  (products without a model code, a store read that fails, a broken import), not "everything
+  sold out", and a person has to check it. There is no "allow empty" option until TUDOR says how
+  it wants that case. If the connector returns watches but none passes the review, it throws
+  `NothingPassedReviewException` with a summary of the reasons. `EmptyCatalogException`
+  extends it, so catching the general one covers both; catch the empty one first to show its
+  own message. Single sends (`createStock`, the real-time queue) don't go through `plan()`.
 - An unavailable model must disappear from the feed entirely: always submit the *complete*
   current catalog to `POST /v1/stocks/batch`, never a delta — TUDOR zeroes out whatever's
   missing automatically.

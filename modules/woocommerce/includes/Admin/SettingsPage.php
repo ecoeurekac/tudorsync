@@ -72,6 +72,7 @@ final class SettingsPage
         register_setting(self::OPTION_GROUP, Config::OPTION_COUNTRY, ['sanitize_callback' => 'sanitize_text_field']);
         register_setting(self::OPTION_GROUP, Config::OPTION_ENVIRONMENT, ['sanitize_callback' => 'sanitize_text_field']);
         register_setting(self::OPTION_GROUP, Config::OPTION_CLICK_AND_COLLECT_ENABLED, ['sanitize_callback' => 'rest_sanitize_boolean']);
+        register_setting(self::OPTION_GROUP, Config::OPTION_ATTRIBUTION_CONSENT_CATEGORY, ['sanitize_callback' => 'sanitize_text_field']);
 
         foreach ([Environment::Staging, Environment::Production] as $environment) {
             register_setting(self::OPTION_GROUP, Config::clientIdOption($environment), ['sanitize_callback' => 'sanitize_text_field']);
@@ -87,11 +88,29 @@ final class SettingsPage
         $this->addField(Config::clientIdOption(Environment::Production), __('Client ID (Production)', 'tudorsync'), fn () => $this->renderTextField(Config::clientIdOption(Environment::Production)));
         $this->addField(Config::clientSecretOption(Environment::Production), __('Client Secret (Production)', 'tudorsync'), fn () => $this->renderSecretField(Config::clientSecretOption(Environment::Production)));
         $this->addField(Config::OPTION_CLICK_AND_COLLECT_ENABLED, __('Offer Click & Collect', 'tudorsync'), fn () => $this->renderCheckboxField(Config::OPTION_CLICK_AND_COLLECT_ENABLED));
+        $this->addField(
+            Config::OPTION_ATTRIBUTION_CONSENT_CATEGORY,
+            __('Attribution cookie consent category', 'tudorsync'),
+            fn () => $this->renderTextField(Config::OPTION_ATTRIBUTION_CONSENT_CATEGORY),
+            __('Cookie-manager category the tudorsync_utm attribution cookie waits for (e.g. a WebToffee category slug like "advertisement"). Leave empty to write it without asking.', 'tudorsync'),
+        );
     }
 
-    private function addField(string $id, string $label, callable $render): void
+    private function addField(string $id, string $label, callable $render, string $description = ''): void
     {
-        add_settings_field($id, $label, $render, self::PAGE_SLUG, 'tudorsync_main');
+        add_settings_field(
+            $id,
+            $label,
+            static function () use ($render, $description): void {
+                $render();
+
+                if ($description !== '') {
+                    printf('<p class="description">%s</p>', esc_html($description));
+                }
+            },
+            self::PAGE_SLUG,
+            'tudorsync_main',
+        );
     }
 
     public function renderPage(): void

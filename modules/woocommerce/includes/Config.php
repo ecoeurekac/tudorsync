@@ -22,6 +22,11 @@ final class Config
     public const OPTION_CLIENT_ID = 'tudorsync_client_id_%s';
     public const OPTION_CLIENT_SECRET = 'tudorsync_client_secret_%s';
     public const OPTION_CLICK_AND_COLLECT_ENABLED = 'tudorsync_click_and_collect_enabled';
+    /**
+     * Consent category the order-attribution cookie waits for, checked against the store's cookie
+     * manager (WebToffee's cookielawinfo-checkbox-<category>). Empty = write without asking.
+     */
+    public const OPTION_ATTRIBUTION_CONSENT_CATEGORY = 'tudorsync_attribution_consent_category';
 
     /** Pre-OAuth2 options, kept only so a future uninstall can clean them up. */
     public const LEGACY_OPTIONS = ['tudorsync_api_key_staging', 'tudorsync_api_key_production'];
@@ -95,5 +100,14 @@ final class Config
     public function getCountry(): string
     {
         return strtoupper(trim((string) get_option(self::OPTION_COUNTRY, '')));
+    }
+
+    /**
+     * Consent category the attribution cookie waits for (e.g. a WebToffee category slug like
+     * "advertisement"). Empty string means write the cookie without asking.
+     */
+    public function getAttributionConsentCategory(): string
+    {
+        return trim((string) get_option(self::OPTION_ATTRIBUTION_CONSENT_CATEGORY, ''));
     }
 }

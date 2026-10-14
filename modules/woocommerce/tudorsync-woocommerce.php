@@ -20,7 +20,9 @@ if (!defined('ABSPATH')) {
 require_once __DIR__ . '/vendor/autoload.php';
 
 use Tudorsync\Woocommerce\Admin\SettingsPage;
+use Tudorsync\Woocommerce\Config;
 use Tudorsync\Woocommerce\Cron;
+use Tudorsync\Woocommerce\OrderAttribution;
 use Tudorsync\Woocommerce\ProductField;
 
 register_activation_hook(__FILE__, static function (): void {
@@ -45,4 +47,5 @@ add_action('plugins_loaded', static function (): void {
     (new ProductField())->register();
     (new SettingsPage())->register();
     (new Cron())->register();
+    (new OrderAttribution(new Config()))->register();
 });

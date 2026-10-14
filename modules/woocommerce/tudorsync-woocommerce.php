@@ -48,4 +48,8 @@ add_action('plugins_loaded', static function (): void {
     (new SettingsPage())->register();
     (new Cron())->register();
     (new OrderAttribution(new Config()))->register();
+
+    if (defined('WP_CLI') && WP_CLI) {
+        \WP_CLI::add_command('tudorsync model-code', \Tudorsync\Woocommerce\Cli\ModelCodeCommand::class);
+    }
 });

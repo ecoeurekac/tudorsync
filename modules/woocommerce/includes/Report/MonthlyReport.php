@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tudorsync\Woocommerce\Report;
 
+use Tudorsync\Core\Domain\ProgrammeSales;
 use Tudorsync\Core\Reporting\MonthlyReportWriter;
 use Tudorsync\Core\Reporting\MonthlySalesReportRow;
 use Tudorsync\Woocommerce\Config;

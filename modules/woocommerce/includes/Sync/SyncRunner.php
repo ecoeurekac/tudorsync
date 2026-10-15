@@ -32,8 +32,9 @@ use Tudorsync\Woocommerce\Realtime\PublishPlan;
  *
  * - runSync(): full batch of the whole catalog (TUDOR sets to 0 whatever isn't in it).
  * - testConnection(): GET /v1/point-of-sales, a real call that needs valid credentials.
- * - publishPending(): the queued models, within a minute (see PublishPlan). A 429 from TUDOR
- *   pauses real-time publishing for REALTIME_PAUSE_SECONDS; the full sync is never paused.
+ * - publishPending(): the queued models, within a minute (see PublishPlan). A 429 from TUDOR or
+ *   rejected credentials pause real-time publishing for REALTIME_PAUSE_SECONDS; the full sync is
+ *   never paused.
  */
 final class SyncRunner
 {
@@ -206,7 +207,7 @@ final class SyncRunner
         if ($pausedUntil > time()) {
             $message = sprintf(
                 /* translators: %s: time (UTC) */
-                __('Paused until %s UTC after TUDOR answered 429 (too many requests); the queue is kept.', 'tudorsync'),
+                __('Paused until %s UTC after TUDOR answered 429 (too many requests) or rejected the credentials; the queue is kept.', 'tudorsync'),
                 gmdate('H:i:s', $pausedUntil),
             );
 
@@ -232,7 +233,7 @@ final class SyncRunner
                 ? $this->publishFullBatch($plan, $clientConfig, $trigger)
                 : $this->publishOneByOne($plan, $clientConfig);
         } catch (Throwable $e) {
-            $this->pauseOn429($e);
+            $this->pauseIfNeeded($e);
             /* translators: %s: error message */
             $outcome = new SyncOutcome(false, sprintf(__('Real-time publish failed: %s', 'tudorsync'), $this->describeError($e)));
         } finally {
@@ -361,26 +362,39 @@ final class SyncRunner
      */
     private function getStopReason(Throwable $e): ?string
     {
-        if ($this->pauseOn429($e)) {
-            /* translators: %d: seconds */
-            return sprintf(__('TUDOR answered 429 (too many requests), real-time publishing paused for %d s', 'tudorsync'), self::REALTIME_PAUSE_SECONDS);
-        }
-
-        return match (true) {
+        $reason = match (true) {
+            $e instanceof ApiResponseException && $e->statusCode === 429 => __('TUDOR answered 429 (too many requests)', 'tudorsync'),
             $e instanceof CredentialsRejectedException, $e instanceof MissingCredentialsException => __('credentials problem', 'tudorsync'),
             $e instanceof TokenRequestException => __('TUDOR\'s token service failed', 'tudorsync'),
             default => null,
         };
+
+        if ($reason !== null && $this->pauseIfNeeded($e)) {
+            /* translators: 1: reason, 2: seconds */
+            return sprintf(__('%1$s, real-time publishing paused for %2$d s', 'tudorsync'), $reason, self::REALTIME_PAUSE_SECONDS);
+        }
+
+        return $reason;
     }
 
-    private function pauseOn429(Throwable $e): bool
+    /**
+     * Pauses real-time publishing after a 429 (TUDOR asked to slow down) or rejected credentials
+     * (retrying every minute would only hammer the token service). The full sync is not paused.
+     */
+    private function pauseIfNeeded(Throwable $e): bool
     {
-        if (!$e instanceof ApiResponseException || $e->statusCode !== 429) {
+        $why = match (true) {
+            $e instanceof ApiResponseException && $e->statusCode === 429 => 'TUDOR answered 429',
+            $e instanceof CredentialsRejectedException => 'credentials rejected',
+            default => null,
+        };
+
+        if ($why === null) {
             return false;
         }
 
         $this->status->pauseRealtimeUntil(time() + self::REALTIME_PAUSE_SECONDS);
-        $this->logger->warning(sprintf('TUDOR answered 429: real-time publishing paused for %d s', self::REALTIME_PAUSE_SECONDS));
+        $this->logger->warning(sprintf('%s: real-time publishing paused for %d s', $why, self::REALTIME_PAUSE_SECONDS));
 
         return true;
     }

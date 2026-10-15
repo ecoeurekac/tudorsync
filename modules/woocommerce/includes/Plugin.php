@@ -32,7 +32,7 @@ use Tudorsync\Woocommerce\Sync\SyncRunner;
  */
 final class Plugin
 {
-    public const VERSION = '0.2.0';
+    public const VERSION = '0.3.0';
 
     private static ?self $instance = null;
 

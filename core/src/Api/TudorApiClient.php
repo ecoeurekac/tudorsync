@@ -233,7 +233,13 @@ final class TudorApiClient
     }
 
     /**
-     * @return array{country: string, value: int, defaultUrl: string, localizedUrls: array<string, string>,
+     * `localizedUrls` goes out as an object (stdClass) so that json_encode() always writes a
+     * JSON object: an empty PHP array would be written as `[]`, which TUDOR rejects with
+     * 400 "Failed to read HTTP message" (and one such record fails the whole batch). With no
+     * per-language URLs it is sent as `{}` rather than left out, which says explicitly that
+     * the watch has none instead of leaving TUDOR to keep whatever an earlier call sent.
+     *
+     * @return array{country: string, value: int, defaultUrl: string, localizedUrls: \stdClass,
      *               mc: string, storePickupAvailable: bool, onlinePurchaseEnabled: bool,
      *               homeDeliveryTiming?: int, storesAvailabilityDetails?: array<string, array{storePickupAvailable: bool, storePickupTiming?: int}>}
      */
@@ -243,7 +249,7 @@ final class TudorApiClient
             'country' => $item->country,
             'value' => $item->value,
             'defaultUrl' => $item->defaultUrl,
-            'localizedUrls' => $item->localizedUrls,
+            'localizedUrls' => (object) $item->localizedUrls,
             'mc' => $item->modelCode,
             'storePickupAvailable' => $item->storePickupAvailable,
             'onlinePurchaseEnabled' => $item->onlinePurchaseEnabled,

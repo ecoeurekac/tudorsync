@@ -83,6 +83,11 @@ optional `homeDeliveryTiming`, and optional `storesAvailabilityDetails` (per-poi
 click & collect detail keyed by the point of sale's TUDOR "RSWI" id, which is the `stoId`
 returned by `/v1/point-of-sales`, e.g. `RSWI_185580`).
 
+`TudorApiClient` always sends `localizedUrls` as a JSON object, `{}` when there are no
+per-language URLs: an empty PHP array would be encoded as `[]`, which TUDOR rejects with
+400 "Failed to read HTTP message" (one such record fails the whole batch). It is sent as `{}`
+rather than left out so TUDOR doesn't keep URLs from an earlier call.
+
 Neither OAS nor RAML declares base URLs or an auth scheme; both come from TUDOR's "API
 Spotlight" page (`doc/Community Asset_ stock-retail-publish-public-rest-api*.zip`) and the
 official Postman collection (`doc/eStock collections/`), and were verified against PREPROD on

@@ -16,6 +16,7 @@ if (PHP_VERSION_ID >= 80100) {
 use Tudorsync\Core\Api\TudorApiClient;
 use Tudorsync\Core\Domain\Environment;
 use Tudorsync\Core\Rules\AvailabilityFilter;
+use Tudorsync\Core\Sync\EmptyCatalogException;
 use Tudorsync\Core\Sync\NothingPassedReviewException;
 use Tudorsync\Core\Sync\SyncEngine;
 use Tudorsync\Prestashop\Api\CurlHttpClient;
@@ -224,16 +225,6 @@ class Tudorsync extends Module
                 new TudorApiClient($clientConfig, new CurlHttpClient()),
             );
 
-            // An empty batch makes TUDOR set every model of this retailer to 0. That's right when
-            // every enrolled watch is sold out, but not when no product has a model code at all
-            // (program not set up yet): then TUDOR isn't called.
-            if ($engine->plan() === [] && $connector->countEnrolledProducts() === 0) {
-                $message = $this->l('Sync skipped: no product has a TUDOR model code yet, nothing was sent to TUDOR.');
-                Configuration::updateValue(Config::KEY_LAST_SYNC_RESULT, $this->timestampedMessage($message));
-
-                return $this->displayWarning($message);
-            }
-
             $result = $engine->run();
             $failures = $result->failures();
             $message = sprintf(
@@ -244,6 +235,15 @@ class Tudorsync extends Module
             Configuration::updateValue(Config::KEY_LAST_SYNC_RESULT, $this->timestampedMessage($message));
 
             return $failures === [] ? $this->displayConfirmation($message) : $this->displayWarning($message);
+        } catch (EmptyCatalogException $e) {
+            // Core never sends an empty batch (it would zero the whole catalog at TUDOR). Most often
+            // the program isn't set up yet: no product has a model code.
+            $message = $connector->countEnrolledProducts() === 0
+                ? $this->l('Sync skipped: no product has a TUDOR model code yet, nothing was sent to TUDOR.')
+                : sprintf($this->l('Sync skipped: %s'), $e->getMessage());
+            Configuration::updateValue(Config::KEY_LAST_SYNC_RESULT, $this->timestampedMessage($message));
+
+            return $this->displayWarning($message);
         } catch (NothingPassedReviewException $e) {
             // Nothing was sent, on purpose: an empty batch would zero the whole catalog at TUDOR.
             $message = sprintf($this->l('Sync skipped: %s'), $e->getMessage());

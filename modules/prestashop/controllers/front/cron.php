@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Tudorsync\Core\Api\TudorApiClient;
 use Tudorsync\Core\Rules\AvailabilityFilter;
+use Tudorsync\Core\Sync\EmptyCatalogException;
 use Tudorsync\Core\Sync\NothingPassedReviewException;
 use Tudorsync\Core\Sync\SyncEngine;
 use Tudorsync\Prestashop\Api\CurlHttpClient;
@@ -46,14 +47,13 @@ class TudorsyncCronModuleFrontController extends ModuleFrontController
         );
 
         try {
-            // An empty batch makes TUDOR set every model of this retailer to 0. That's right when
-            // every enrolled watch is sold out, but not when no product has a model code at all
-            // (program not set up yet): then TUDOR isn't called.
-            if ($engine->plan() === [] && $connector->countEnrolledProducts() === 0) {
-                $this->recordAndExit('Tudorsync: sync skipped: no product has a TUDOR model code yet, nothing was sent to TUDOR.', 200);
-            }
-
             $result = $engine->run();
+        } catch (EmptyCatalogException $e) {
+            // Core never sends an empty batch (it would zero the whole catalog at TUDOR). Most often
+            // the program isn't set up yet: no product has a model code.
+            $this->recordAndExit($connector->countEnrolledProducts() === 0
+                ? 'Tudorsync: sync skipped: no product has a TUDOR model code yet, nothing was sent to TUDOR.'
+                : 'Tudorsync: sync skipped: ' . $e->getMessage(), 200);
         } catch (NothingPassedReviewException $e) {
             // Nothing was sent, on purpose: an empty batch would zero the whole catalog at TUDOR.
             $this->recordAndExit('Tudorsync: sync skipped: ' . $e->getMessage(), 200);

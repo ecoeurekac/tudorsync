@@ -362,8 +362,9 @@ class Tudorsync extends Module
                         'name' => Config::KEY_REFERENCE_PATTERN,
                         'desc' => $this->l(
                             'Optional. PHP regular expression matched against the product reference, e.g. '
-                            . '/^M?(\d[0-9A-Z]*)-0*(\d{3})$/i. Used by bin/console tudorsync:model-code:fill to fill '
-                            . 'the "TUDOR Model Code" feature; a code typed on the product is kept.',
+                            . '/^M?(\d[0-9A-Z]*)-0*(\d{3})$/i. The sync uses it for the brand\'s products whose '
+                            . '"TUDOR Model Code" feature is empty; a code typed on the product always wins. '
+                            . 'bin/console tudorsync:model-code:fill writes the codes into the feature.',
                         ),
                     ],
                     [

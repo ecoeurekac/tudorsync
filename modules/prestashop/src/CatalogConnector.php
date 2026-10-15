@@ -18,10 +18,14 @@ use Tudorsync\Core\Url\UtmUrlBuilder;
  * Reads PrestaShop's own catalog/stock data and maps it into tudorsync/core's
  * Tudorsync\Core\Domain\StockAvailability shape.
  *
- * A product is enrolled in the TUDOR program by having a value set for the "TUDOR Model
- * Code" Feature (created once by Tudorsync::install(), its id stored via
- * Config::KEY_MODEL_CODE_FEATURE_ID) — chosen over a database schema migration so no new
- * column is needed.
+ * A product is enrolled in the TUDOR program by its model code, taken from:
+ *   1. the "TUDOR Model Code" Feature (created once by Tudorsync::install(), its id stored via
+ *      Config::KEY_MODEL_CODE_FEATURE_ID — chosen over a database schema migration so no new
+ *      column is needed), when filled in: always wins, so a code typed on the product page
+ *      corrects the rule;
+ *   2. otherwise, for products of the configured TUDOR brand, the reference rule of the module
+ *      config (ModelCodeResolver), so a TUDOR product created later is enrolled without
+ *      anyone having to fill the Feature first.
  *
  * Only products a customer can actually buy in this shop are returned: present in the shop
  * (product_shop), active, visible somewhere (visibility other than "none") and available for
@@ -39,12 +43,15 @@ use Tudorsync\Core\Url\UtmUrlBuilder;
 final class CatalogConnector implements CatalogConnectorInterface
 {
     private readonly UtmUrlBuilder $utmUrlBuilder;
+    private readonly ModelCodeResolver $modelCodeResolver;
 
     public function __construct(
         private readonly Config $config,
         ?UtmUrlBuilder $utmUrlBuilder = null,
+        ?ModelCodeResolver $modelCodeResolver = null,
     ) {
         $this->utmUrlBuilder = $utmUrlBuilder ?? new UtmUrlBuilder();
+        $this->modelCodeResolver = $modelCodeResolver ?? new ModelCodeResolver($config);
     }
 
     public function getAvailableCatalog(): array
@@ -87,9 +94,9 @@ final class CatalogConnector implements CatalogConnectorInterface
     }
 
     /**
-     * Products in this shop with a model code, whatever their stock or status. 0 means the
-     * program isn't set up (no code filled in), as opposed to every enrolled watch being
-     * sold out, where an empty batch is the right thing to send.
+     * Products in this shop with a model code (Feature or reference rule), whatever their stock
+     * or status. 0 means the program isn't set up (no code filled in and no rule matching), as
+     * opposed to every enrolled watch being sold out.
      */
     public function countEnrolledProducts(): int
     {
@@ -99,48 +106,70 @@ final class CatalogConnector implements CatalogConnectorInterface
             return 0;
         }
 
-        $sql = new DbQuery();
-        $sql->select('COUNT(DISTINCT fp.id_product)')
-            ->from('feature_product', 'fp')
-            ->innerJoin('feature_value_lang', 'fvl', 'fvl.id_feature_value = fp.id_feature_value')
-            ->innerJoin('product_shop', 'ps', 'ps.id_product = fp.id_product AND ps.id_shop = ' . (int) Context::getContext()->shop->id)
-            ->where('fp.id_feature = ' . $featureId)
-            ->where("TRIM(fvl.value) <> ''");
+        $shopId = (int) Context::getContext()->shop->id;
+        $defaultLangId = $this->config->getDefaultLanguageId() ?: (int) Context::getContext()->language->id;
 
-        return (int) Db::getInstance()->getValue($sql);
+        return count($this->getProductsWithModelCode($featureId, $shopId, $defaultLangId, false));
     }
 
     /**
-     * Model code per sellable product. Feature values are per language: the shop's default
-     * language wins, otherwise the first non-empty value in any language (a custom value may
-     * have been typed in only one of them).
+     * Model code per product: the Feature value when filled in, otherwise the reference rule
+     * for products of the configured TUDOR brand. Feature values are per language: the shop's
+     * default language wins, otherwise the first non-empty value in any language (a custom
+     * value may have been typed in only one of them).
      *
+     * @param bool $sellableOnly Only products a customer can buy (active, visible, available for order).
      * @return array<int, string> id_product => model code
      */
-    private function getProductsWithModelCode(int $featureId, int $shopId, int $defaultLangId): array
+    private function getProductsWithModelCode(int $featureId, int $shopId, int $defaultLangId, bool $sellableOnly = true): array
     {
+        $manufacturerId = $this->modelCodeResolver->isRuleConfigured() ? $this->config->getManufacturerId() : 0;
+
         $sql = new DbQuery();
-        $sql->select('fp.id_product, fvl.id_lang, fvl.value AS feature_value')
-            ->from('feature_product', 'fp')
-            ->innerJoin('feature_value_lang', 'fvl', 'fvl.id_feature_value = fp.id_feature_value')
-            ->innerJoin('product_shop', 'ps', 'ps.id_product = fp.id_product AND ps.id_shop = ' . $shopId)
-            ->where('fp.id_feature = ' . $featureId)
-            ->where('ps.active = 1')
-            ->where("ps.visibility <> 'none'")
-            ->where('ps.available_for_order = 1')
-            ->orderBy('fp.id_product, (fvl.id_lang = ' . $defaultLangId . ') DESC, fvl.id_lang');
+        $sql->select('p.id_product, p.reference, p.id_manufacturer, fvl.id_lang, fvl.value AS feature_value')
+            ->from('product', 'p')
+            ->innerJoin('product_shop', 'ps', 'ps.id_product = p.id_product AND ps.id_shop = ' . $shopId)
+            ->leftJoin('feature_product', 'fp', 'fp.id_product = p.id_product AND fp.id_feature = ' . $featureId)
+            ->leftJoin('feature_value_lang', 'fvl', 'fvl.id_feature_value = fp.id_feature_value')
+            ->where($manufacturerId > 0
+                ? '(fp.id_feature_value IS NOT NULL OR p.id_manufacturer = ' . $manufacturerId . ')'
+                : 'fp.id_feature_value IS NOT NULL')
+            ->orderBy('p.id_product, (fvl.id_lang = ' . $defaultLangId . ') DESC, fvl.id_lang');
+
+        if ($sellableOnly) {
+            $sql->where('ps.active = 1')
+                ->where("ps.visibility <> 'none'")
+                ->where('ps.available_for_order = 1');
+        }
 
         $rows = Db::getInstance()->executeS($sql);
-        $codes = [];
+        $fromFeature = [];
+        $references = [];
 
         foreach ($rows !== false ? $rows : [] as $row) {
             $productId = (int) $row['id_product'];
             $modelCode = trim((string) $row['feature_value']);
 
-            if ($modelCode !== '' && !isset($codes[$productId])) {
+            if ($modelCode !== '' && !isset($fromFeature[$productId])) {
+                $fromFeature[$productId] = $modelCode;
+            }
+
+            if ($manufacturerId > 0 && (int) $row['id_manufacturer'] === $manufacturerId) {
+                $references[$productId] = (string) $row['reference'];
+            }
+        }
+
+        $codes = $fromFeature;
+
+        foreach (array_diff_key($references, $fromFeature) as $productId => $reference) {
+            $modelCode = $this->modelCodeResolver->fromReference($reference);
+
+            if ($modelCode !== null) {
                 $codes[$productId] = $modelCode;
             }
         }
+
+        ksort($codes);
 
         return $codes;
     }

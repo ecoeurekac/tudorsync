@@ -10,8 +10,9 @@ namespace Tudorsync\Prestashop;
  * TUDOR reference there, in their own shape (e.g. `79470-0004` or `7943A1A0NU-002` for
  * `M79470-0004` / `M7943A1A0NU-0002`); the rule turns it into TUDOR's.
  *
- * Only used by ModelCodeFiller to fill the "TUDOR Model Code" Feature, which stays the single
- * source the connector reads: every code can be seen and corrected on the product page.
+ * Used by the CatalogConnector for products of the TUDOR brand whose "TUDOR Model Code" Feature
+ * is empty (so new products are enrolled without anyone filling it), and by ModelCodeFiller to
+ * write the codes into the Feature, where they can be seen and corrected on the product page.
  */
 final class ModelCodeResolver
 {

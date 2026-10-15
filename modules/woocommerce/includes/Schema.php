@@ -19,7 +19,7 @@ namespace Tudorsync\Woocommerce;
  */
 final class Schema
 {
-    public const VERSION = '2';
+    public const VERSION = '3';
     private const OPTION = 'tudorsync_schema_version';
 
     public static function table(string $name): string
@@ -102,6 +102,9 @@ final class Schema
      *   <category>=yes` cookie of the CookieYes / WebToffee banner) → "cookie" consent with that
      *   same cookie, unless consent was already set up here.
      * - `tudorsync_api_key_*`: API keys from before OAuth2, no longer used.
+     * - `tudorsync_last_*` / `tudorsync_last_review`: the old settings screen's "last result"
+     *   boxes, shown differently now (per-call in the API log). The old flash notice was the
+     *   transient `tudorsync_admin_notice`.
      */
     private function migrateLegacyOptions(): void
     {
@@ -113,8 +116,19 @@ final class Schema
             update_option(Config::optionName(Config::CONSENT_COOKIE), 'cookielawinfo-checkbox-' . $category . '=yes');
         }
 
-        foreach (['tudorsync_attribution_consent_category', 'tudorsync_api_key_staging', 'tudorsync_api_key_production'] as $legacy) {
+        foreach ([
+            'tudorsync_attribution_consent_category',
+            'tudorsync_api_key_staging',
+            'tudorsync_api_key_production',
+            'tudorsync_last_test_result',
+            'tudorsync_last_preview_result',
+            'tudorsync_last_health_result',
+            'tudorsync_last_sync_result',
+            'tudorsync_last_review',
+        ] as $legacy) {
             delete_option($legacy);
         }
+
+        delete_transient('tudorsync_admin_notice');
     }
 }

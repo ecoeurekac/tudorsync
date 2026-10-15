@@ -59,6 +59,41 @@ final class Admin
                 $handler();
             });
         }
+
+        // The plugin's first version lived at Settings › TUDOR Sync and its buttons posted these
+        // actions. They no longer exist, so a page still open from before an update would post to
+        // admin-post.php and get a blank 400. Send it to the new page with a notice instead. No
+        // nonce check (the old nonce is for a now-unregistered action) and nothing is sent to TUDOR.
+        foreach (['tudorsync_preview' => 'data', 'tudorsync_health' => 'api-test', 'tudorsync_run_sync_now' => 'settings'] as $action => $tab) {
+            add_action('admin_post_' . $action, static function () use ($tab): void {
+                if (!current_user_can(self::CAPABILITY)) {
+                    wp_die(esc_html__('You are not allowed to do this.', 'tudorsync'), 403);
+                }
+
+                self::redirect($tab, true, __('This screen moved to WooCommerce › TUDOR e-Stock.', 'tudorsync'));
+            });
+        }
+
+        add_action('admin_init', [$this, 'redirectLegacyPage']);
+    }
+
+    /**
+     * The plugin's first version lived at Settings › TUDOR Sync (options-general.php?page=
+     * tudorsync-settings), which no longer registers. Send a bookmark or stale tab there to the
+     * new page instead of WordPress's "you are not allowed" screen.
+     */
+    public function redirectLegacyPage(): void
+    {
+        global $pagenow;
+
+        if (
+            $pagenow === 'options-general.php'
+            && isset($_GET['page']) && $_GET['page'] === 'tudorsync-settings' // phpcs:ignore WordPress.Security.NonceVerification
+            && current_user_can(self::CAPABILITY)
+        ) {
+            wp_safe_redirect(View::url('settings'));
+            exit;
+        }
     }
 
     public function addMenu(): void

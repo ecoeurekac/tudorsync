@@ -22,6 +22,11 @@ final class Config
     public const KEY_CLIENT_SECRET = 'TUDORSYNC_CLIENT_SECRET_%s';
     public const KEY_CLICK_AND_COLLECT_ENABLED = 'TUDORSYNC_CLICK_AND_COLLECT_ENABLED';
     public const KEY_MODEL_CODE_FEATURE_ID = 'TUDORSYNC_MODEL_CODE_FEATURE_ID';
+    /** Brand whose products the reference rule applies to (other brands' references may look alike). */
+    public const KEY_MANUFACTURER_ID = 'TUDORSYNC_MANUFACTURER_ID';
+    /** Reference rule (regex + replacement) that derives the model code; empty = no rule. */
+    public const KEY_REFERENCE_PATTERN = 'TUDORSYNC_REFERENCE_PATTERN';
+    public const KEY_REFERENCE_REPLACEMENT = 'TUDORSYNC_REFERENCE_REPLACEMENT';
     public const KEY_CRON_TOKEN = 'TUDORSYNC_CRON_TOKEN';
     public const KEY_LAST_TEST_RESULT = 'TUDORSYNC_LAST_TEST_RESULT';
     public const KEY_LAST_SYNC_RESULT = 'TUDORSYNC_LAST_SYNC_RESULT';
@@ -150,5 +155,20 @@ final class Config
     public function getLastSyncResult(): string
     {
         return (string) Configuration::get(self::KEY_LAST_SYNC_RESULT, null, null, null, '');
+    }
+
+    public function getManufacturerId(): int
+    {
+        return (int) Configuration::get(self::KEY_MANUFACTURER_ID, null, null, null, 0);
+    }
+
+    public function getReferencePattern(): string
+    {
+        return trim((string) Configuration::get(self::KEY_REFERENCE_PATTERN, null, null, null, ''));
+    }
+
+    public function getReferenceReplacement(): string
+    {
+        return trim((string) Configuration::get(self::KEY_REFERENCE_REPLACEMENT, null, null, null, ''));
     }
 }

@@ -22,6 +22,7 @@ use Tudorsync\Core\Sync\SyncEngine;
 use Tudorsync\Prestashop\Api\CurlHttpClient;
 use Tudorsync\Prestashop\CatalogConnector;
 use Tudorsync\Prestashop\Config;
+use Tudorsync\Prestashop\ModelCodeResolver;
 
 /**
  * TUDOR e-commerce inventory API sync module for PrestaShop.
@@ -68,6 +69,7 @@ class Tudorsync extends Module
         Configuration::updateValue(Config::KEY_ENVIRONMENT, Environment::Staging->value);
         Configuration::updateValue(Config::KEY_CLICK_AND_COLLECT_ENABLED, false);
         Configuration::updateValue(Config::KEY_CRON_TOKEN, bin2hex(random_bytes(16)));
+        Configuration::updateValue(Config::KEY_MANUFACTURER_ID, (int) Manufacturer::getIdByName('Tudor'));
 
         return $this->installModelCodeFeature();
     }
@@ -85,6 +87,9 @@ class Tudorsync extends Module
         }
         Configuration::deleteByName(Config::KEY_CLICK_AND_COLLECT_ENABLED);
         Configuration::deleteByName(Config::KEY_MODEL_CODE_FEATURE_ID);
+        Configuration::deleteByName(Config::KEY_MANUFACTURER_ID);
+        Configuration::deleteByName(Config::KEY_REFERENCE_PATTERN);
+        Configuration::deleteByName(Config::KEY_REFERENCE_REPLACEMENT);
         Configuration::deleteByName(Config::KEY_CRON_TOKEN);
         Configuration::deleteByName(Config::KEY_LAST_TEST_RESULT);
         Configuration::deleteByName(Config::KEY_LAST_SYNC_RESULT);
@@ -158,6 +163,15 @@ class Tudorsync extends Module
                 Config::KEY_CLICK_AND_COLLECT_ENABLED,
                 (bool) Tools::getValue('TUDORSYNC_CLICK_AND_COLLECT_ENABLED'),
             );
+            Configuration::updateValue(Config::KEY_MANUFACTURER_ID, (int) Tools::getValue(Config::KEY_MANUFACTURER_ID));
+            Configuration::updateValue(Config::KEY_REFERENCE_REPLACEMENT, trim((string) Tools::getValue(Config::KEY_REFERENCE_REPLACEMENT)));
+
+            $pattern = trim((string) Tools::getValue(Config::KEY_REFERENCE_PATTERN));
+            if ($pattern !== '' && !ModelCodeResolver::isValidPattern($pattern)) {
+                $output .= $this->displayError($this->l('The reference rule is not a valid regular expression: it was not saved.'));
+            } else {
+                Configuration::updateValue(Config::KEY_REFERENCE_PATTERN, $pattern);
+            }
             $output .= $this->displayConfirmation($this->l('Settings saved.'));
         }
 
@@ -329,6 +343,36 @@ class Tudorsync extends Module
                         ],
                     ],
                     [
+                        'type' => 'select',
+                        'label' => $this->l('TUDOR brand'),
+                        'name' => Config::KEY_MANUFACTURER_ID,
+                        'desc' => $this->l('The reference rule only applies to this brand\'s products.'),
+                        'options' => [
+                            'query' => [
+                                ['id_manufacturer' => 0, 'name' => '—'],
+                                ...Manufacturer::getManufacturers(false, 0, false),
+                            ],
+                            'id' => 'id_manufacturer',
+                            'name' => 'name',
+                        ],
+                    ],
+                    [
+                        'type' => 'text',
+                        'label' => $this->l('Reference rule: pattern'),
+                        'name' => Config::KEY_REFERENCE_PATTERN,
+                        'desc' => $this->l(
+                            'Optional. PHP regular expression matched against the product reference, e.g. '
+                            . '/^M?(\d[0-9A-Z]*)-0*(\d{3})$/i. Used by bin/console tudorsync:model-code:fill to fill '
+                            . 'the "TUDOR Model Code" feature; a code typed on the product is kept.',
+                        ),
+                    ],
+                    [
+                        'type' => 'text',
+                        'label' => $this->l('Reference rule: replacement'),
+                        'name' => Config::KEY_REFERENCE_REPLACEMENT,
+                        'desc' => $this->l('The TUDOR model code built from the pattern\'s groups, e.g. M$1-0$2.'),
+                    ],
+                    [
                         'type' => 'html',
                         'name' => 'tudorsync_cron_url',
                         'label' => $this->l('Sync trigger URL'),
@@ -354,6 +398,9 @@ class Tudorsync extends Module
             'TUDORSYNC_ENVIRONMENT' => Configuration::get(Config::KEY_ENVIRONMENT),
             ...$this->credentialValues(),
             'TUDORSYNC_CLICK_AND_COLLECT_ENABLED' => Configuration::get(Config::KEY_CLICK_AND_COLLECT_ENABLED),
+            Config::KEY_MANUFACTURER_ID => Configuration::get(Config::KEY_MANUFACTURER_ID),
+            Config::KEY_REFERENCE_PATTERN => Configuration::get(Config::KEY_REFERENCE_PATTERN),
+            Config::KEY_REFERENCE_REPLACEMENT => Configuration::get(Config::KEY_REFERENCE_REPLACEMENT),
         ];
 
         return $helper->generateForm([$fieldsForm]);

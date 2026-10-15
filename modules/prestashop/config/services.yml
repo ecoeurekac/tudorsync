@@ -1,0 +1,9 @@
+services:
+  _defaults:
+    public: false
+
+  Tudorsync\Prestashop\Command\ModelCodeFillCommand:
+    tags: ['console.command']
+
+  Tudorsync\Prestashop\Command\CatalogPreviewCommand:
+    tags: ['console.command']

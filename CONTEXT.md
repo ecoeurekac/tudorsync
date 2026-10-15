@@ -90,19 +90,42 @@ La documentación oficial de TUDOR que originó el proyecto está en `doc/`:
     TUDOR (`prices_ES.xlsx`). Si la lista falla, se sigue sin ella y con un aviso; si no pasa
     ninguna ficha, no se envía nada, para no poner a 0 el catálogo en TUDOR. Con la lista, en
     Quera se envían 73 modelos y quedan fuera 3.
+18. **Nunca un batch con el catálogo vacío (14-10).** Si el conector no devuelve ningún reloj, el
+    core no llama a TUDOR (`EmptyCatalogException`): un catálogo vacío casi siempre es un fallo,
+    no «todo vendido», y un batch vacío pondría a 0 todo el catálogo del distribuidor.
+19. **Informe mensual (14-10 y 15-10).** El core define la fuente de las ventas
+    (`ProgrammeSalesSourceInterface`). Decisión de Jorge (15-10): **solo se rellenan
+    automáticamente las ventas** (de los pedidos de la tienda); sesiones, visitantes únicos y el
+    resto se rellenan a mano desde GA4. Leer GA4 automáticamente queda para el futuro.
+20. **Un solo plugin WooCommerce (15-10).** La reescritura a paridad con Magento y lo que había
+    hecho la sesión de Saphir se unieron en un único plugin genérico (0.3.0) para Gordillo y Saphir.
+21. **`localizedUrls` siempre como objeto (15-10, `648d5a4`).** Un `localizedUrls` vacío salía
+    como `[]` y TUDOR respondía 400 a todo el batch (visto en Saphir). El core lo envía siempre
+    como objeto, `{}` si no hay URLs por idioma (no se omite, para que TUDOR no conserve URLs de
+    un envío anterior). Ya desplegado en PLO (envío real a PREPROD: 30 enviados, 0 fallos) y Grau.
+22. **Pruebas en el staging de Saphir (15-10, Jorge).** Contra PREPROD, sync completo y
+    publicación en el minuto (envío suelto; batch completo cuando un modelo deja de poder
+    publicarse, también si coincide con otro cambio). Sin el archivo de la lista de modelos
+    vigentes, el filtro se desactiva y se envía con aviso: **decisión mantenida** (no se bloquea).
+23. **Core cerrado para el despliegue del 19-10 (15-10).** Salvo lo que pida el desarrollo de
+    los distribuidores pendientes y, en el futuro, el informe automático desde GA4.
 
 ## Qué está construido y verificado
 
 - `core/`: modelo de dominio, revisión de cada ficha antes de enviar, cliente de la API con
-  OAuth2 (batch NDJSON, envío de un modelo, `getStocks`, health), y el generador del informe
-  mensual sobre las plantillas Excel reales. **90 tests de PHPUnit pasan**
-  (`cd core && composer install && composer test`).
-- **Magento**: instalado en la tienda de Quera (producción desde el 05-10, aún sin conectar a
-  TUDOR) y probado de punta a punta en su staging contra PREPROD: sincronización completa,
-  envíos sueltos y por lotes, retiradas, lista de modelos que falla. Detalle en
-  [`modules/magento/README.md`](modules/magento/README.md).
-- **PrestaShop y WooCommerce**: implementación real con pantalla de config y Test Connection /
-  Run Sync Now, pero solo pasan `php -l`; **no han corrido en una instalación real**.
+  OAuth2 (batch NDJSON, envío de un modelo, `getStocks`, health), interfaz de la fuente de
+  ventas del informe y el generador del informe mensual sobre las plantillas Excel reales.
+  **105 tests de PHPUnit pasan** (`cd core && composer install && composer test`).
+- **Magento**: instalado en Quera (producción desde el 05-10, aún sin conectar a TUDOR; probado
+  de punta a punta en su staging contra PREPROD) y en **Pedro Luis Olivares** (en su tienda de
+  producción, que no tiene staging, apuntando a PREPROD: 30 modelos enviados, 0 fallos). Detalle
+  en [`modules/magento/README.md`](modules/magento/README.md).
+- **PrestaShop**: instalado en Grau (staging y producción), con OAuth2. Vista previa en seco
+  correcta (18 relojes), pero **sin ningún envío real**: TUDOR responde `PARTNER_NOT_FOUND` a las
+  credenciales de Grau, en PREPROD y en PROD.
+- **WooCommerce** (plugin 0.3.0): probado el 15-10 en el staging de Saphir contra PREPROD (sync
+  completo, publicación en el minuto y retiradas: 25 enviados, 1 fuera, 0 fallos). En ese staging
+  los crons no corren solos (WP-Cron desactivado y sin cron del servidor).
 
 Ver la tabla comparativa por plataforma en la sección "Platform connectors" de
 [`README.md`](README.md).
@@ -110,38 +133,45 @@ Ver la tabla comparativa por plataforma en la sección "Platform connectors" de
 ## Qué falta y de quién depende
 
 **Antes del 19-10 (activación de España):**
-- Producción de Quera: credenciales PROD, sync completo cada hora y publicación en el minuto
-  activada. Los envíos automáticos (cron) aún no se han probado en el staging, donde están
-  pausados a propósito: activarlo es decisión de Juanjo y Bea.
+- **Grau:** que TUDOR asocie sus dos aplicaciones (PREPROD y PROD) a su ficha de distribuidor con
+  sus puntos de venta. Mientras siga el `PARTNER_NOT_FOUND`, Grau no puede publicar ni probarse
+  (Jorge, con TUDOR).
+- **Quera:** credenciales PROD, sync completo cada hora y publicación en el minuto activados, y
+  llevarle el arreglo de `localizedUrls` (Juanjo y Bea). Al llevarlo, comprobar con un envío real
+  a PREPROD en su staging (73 enviados, 0 fallos, los mismos 3 fuera).
+- **PLO:** pasar de PREPROD a PROD en su misma instalación (Juanjo).
+- **Saphir:** validar el plugin 0.3.0 en el staging (con el correo aislado) y llevarlo a
+  producción con el arreglo de `localizedUrls`. **En producción, un cron del servidor que lance
+  WP-Cron cada minuto** (cubre la publicación en el minuto y el sync de cada hora); en el staging
+  no lo hay (Juanjo).
+- **Gordillo:** instalar el plugin 0.3.0 cuando se valide en Saphir (Juanjo).
 
 **Pendiente de TUDOR:**
 - Semántica real del campo `value` (¿cantidad real de stock o solo una señal?).
+- Si `M79030N-0001` (PLO) y `M25707B/25-0001` (Quera) están descatalogados o faltan en
+  `prices_ES.xlsx`.
+- Cómo comunicar «todo vendido», ya que un batch vacío da 400 (sin prisa).
 
 **Pendiente de cada cliente:**
-- Quera: revisar los códigos de modelo que salen de la regla del SKU, y `M25707B/25-0001`, que
-  no está en la lista de precios de TUDOR (solo `M25707B/26-0001`) y por eso no se envía.
+- Quera: revisar los códigos de modelo que salen de la regla del SKU.
 - Grau, Gordillo y Saphir: si ya tienen su propio campo/convención para el código de modelo
   TUDOR, antes de confiar en el campo nuevo que agregó cada conector.
 - Si quieren click & collect por tienda física (afecta alcance).
-- (Solo WooCommerce) Qué plugin de idiomas usan, si usan alguno.
 
-**Ingeniería pendiente, sin bloqueo externo:**
-- Informe mensual: en Magento ya salen las ventas de los pedidos y el Excel se genera desde el
-  admin, pero sesiones y visitantes únicos se escriben a mano. Falta en el core la interfaz de
-  la fuente de datos del informe y leer la analítica de GA4 (Jorge).
-- PrestaShop y WooCommerce: pasar a OAuth2 (`clientId`/`clientSecret`); después, quitar
-  `tudorApiKey` del core.
+**Ingeniería pendiente:**
+- Plugin WooCommerce (Juanjo): que el envío suelto de la publicación en el minuto deje en el log
+  los avisos de la revisión (p. ej. «Filtro de modelos vigentes DESACTIVADO»), como ya hace el batch.
+- Informe mensual: implementar la fuente de ventas en PrestaShop (Magento y WooCommerce ya calculan
+  las ventas). Sesiones y visitantes, a mano desde GA4.
+- Quitar `tudorApiKey` del core: ningún módulo lo usa ya, pero cambia el constructor de
+  `ClientConfig`. Para después del 19-10, junto con la compilación en el staging de Magento.
 - Stock multi-almacén (MSI con varias fuentes) en Magento: hoy se usa el stock del website de la
   tienda por defecto.
 - Click & collect por punto de venta / mapeo RSWI en las tres plataformas.
-- Estrategia de distribución real del paquete `tudorsync/core` (hoy cada módulo lo referencia
-  con un path repository local, solo válido en este monorepo).
+- Estrategia de distribución real del paquete `tudorsync/core` (hoy cada tienda lo toma por un path
+  repository de su checkout): necesaria para que el core sea el mismo en todas sin hacerlo a mano.
 - CI que corra `composer test` automáticamente.
-
-**Verificación pendiente:**
-- Smoke test real de PrestaShop y WooCommerce, y de sus acciones de admin, contra una
-  instalación real de cada plataforma.
-- Instalación del módulo de Magento en Pedro Luis Olivares.
+- En el futuro: leer de GA4 las sesiones y visitantes del informe.
 
 ## Documentos de trabajo
 
@@ -156,7 +186,7 @@ compartirlos aparte (botón **Share** en cada uno) para que otra persona los vea
 2. **Tudorsync: Alcance Técnico y Presupuesto Tentativo** — desglose de trabajo por partida
    con estimación de esfuerzo en días-persona, base técnica para presupuestar.
 3. **Presupuesto Integración TUDOR** — plantilla de presupuesto comercial genérico por
-   tienda (72 €/hora), con placeholders para personalizar por cliente.
+   tienda, con placeholders para personalizar por cliente.
 
 ## Por dónde seguir
 

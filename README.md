@@ -81,7 +81,7 @@ document's promise that shoppers never see a quantity), `defaultUrl` + `localize
 `onlinePurchaseEnabled` (the real gate for "Comprar ahora"), `storePickupAvailable`,
 optional `homeDeliveryTiming`, and optional `storesAvailabilityDetails` (per-point-of-sale
 click & collect detail keyed by the point of sale's TUDOR "RSWI" id, which is the `stoId`
-returned by `/v1/point-of-sales`, e.g. `RSWI_185580`).
+returned by `/v1/point-of-sales`, e.g. `RSWI_123456`).
 
 `TudorApiClient` always sends `localizedUrls` as a JSON object, `{}` when there are no
 per-language URLs: an empty PHP array would be encoded as `[]`, which TUDOR rejects with
@@ -125,8 +125,9 @@ client secret or the token:
 | `TokenRequestException` | Token endpoint failed otherwise (5xx, no `access_token`...). |
 | `ApiResponseException` | An API call returned a non-2xx status (`$statusCode`, `$method`, `$path`). 207 on `/v1/stocks/batch` is a partial success, not an error: see `BatchSyncResult`. |
 
-`ClientConfig::$tudorApiKey` is deprecated and ignored; it stays (default `''`) only so the
-platform modules keep working unchanged until they pass the client ID/secret.
+`ClientConfig::$tudorApiKey` is deprecated and ignored (default `''`). No module passes it any
+more; removing it changes `ClientConfig`'s constructor, so it waits until after the 2026-10-19
+go-live, together with a compile check on Magento's staging.
 
 ## TUDOR's monthly sales report
 
@@ -153,6 +154,10 @@ Each platform module provides the order side through `Contract\ProgrammeSalesSou
 null today): units of TUDOR watches, not orders; cancelled orders left out, returns not subtracted; period limits in the
 time zone of the retailer's GA4 property; attribution method (GA4 or the module's own, consent-based) not fixed by the interface.
 
+**Decision (2026-10-15): only the sales are filled in automatically**, from the store's own orders.
+Sessions, unique visitors and the other analytics columns are typed in by hand from GA4; reading
+GA4 automatically is left for later.
+
 ## Platform connectors
 
 Each module has a real (not stub) `CatalogConnector`, admin config screen, and scheduled
@@ -177,16 +182,18 @@ run and a scheduled run always behave identically.
 
 **Magento** runs in Quera's store (Magento 2.4.8, PHP 8.3) since 2026-09-30 and has been tested
 end to end on Quera's staging against TUDOR's PREPROD (full sync, single-model and batch sends,
-withdrawals, the valid-model list failing). It also does more than the table shows — real-time
+withdrawals, the valid-model list failing); since 2026-10-14 it also runs in Pedro Luis
+Olivares' store, against PREPROD. It also does more than the table shows — real-time
 publishing, attribution of orders coming from tudorwatch.com (`tudorsync_utm` cookie, with
 CookieScript consent), the monthly report in the admin (*Reports › TUDOR e-Stock*), an API test
 page and a log of every call to TUDOR: see [`modules/magento/README.md`](modules/magento/README.md).
 **WooCommerce** has the same features as Magento (real-time publishing, attribution with WP Consent API or a
 banner cookie, monthly report, API tests and log, WP-CLI commands: see
-[`modules/woocommerce/README.md`](modules/woocommerce/README.md)); tested on 2026-10-09 in a local
-WordPress 7.1 / WooCommerce 11.2 / TranslatePress store against a simulated TUDOR, not yet against
-PREPROD or in a client's store. **PrestaShop** has still only been `php -l` linted, not run inside an
-actual installation — see "What's still open" below.
+[`modules/woocommerce/README.md`](modules/woocommerce/README.md)); one plugin (0.3.0) for every
+WooCommerce store, tested on 2026-10-15 on Saphir's staging against PREPROD (full sync, real-time
+single sends and full-batch withdrawals). **PrestaShop** is installed in Grau's staging and
+production stores (OAuth2, dry-run preview), but hasn't sent anything to TUDOR yet: TUDOR answers
+`PARTNER_NOT_FOUND` to Grau's credentials — see "What's still open" below.
 
 ## Business rules encoded in `core/`
 
@@ -249,12 +256,14 @@ list for their country: `core/resources/valid-models/prices_{COUNTRY}.xlsx`
 (`prices_ES.xlsx` for Spain), the file exactly as TUDOR publishes it. Only the column titled
 "TMC" is used, wherever it is; codes are compared without spaces and in upper case. A watch
 not in the list isn't sent (TUDOR sets it to 0 when it doesn't receive it). It applies to the
-full sync, to single sends and to the Magento module's real-time (every-minute) publishing.
+full sync, to single sends and to the modules' real-time (every-minute) publishing.
 
 **If the country's file is missing, can't be read, has no TMC column or has fewer than 100
 models**, the filter isn't applied anywhere: the sync goes on as if it didn't exist and
 `AvailabilityFilter::getWarnings()` returns a warning ("Filtro de modelos vigentes
-DESACTIVADO: no se encuentra prices_ES.xlsx").
+DESACTIVADO: no se encuentra prices_ES.xlsx"). This is deliberate (confirmed on 2026-10-15): a
+missing list doesn't block sends, single ones included, so the modules must show or log that
+warning.
 
 **Otherwise the list is always applied** by `keepOnlyAvailable()`, even if it drops every
 watch: a single watch outside the list is never sent on its own. The one exception is the
@@ -287,34 +296,40 @@ For another market, just add `prices_XX.xlsx` with the country code from `StockA
 
 ## What's still open
 
-- **Going live in Spain (2026-10-19):** Quera's store is production since 2026-10-05, with TUDOR
-  not connected yet. Before the activation it needs its PROD credentials, the hourly full sync
-  (`0 * * * *`) and "Publish Changes Within a Minute" on. The automatic sends (cron) haven't been
-  tested on the staging yet: its crons are paused on purpose.
+`core/` is closed for the 2026-10-19 go-live, except for what the pending retailers' modules
+may still need and, later on, reading GA4 for the monthly report.
+
+- **Going live in Spain (2026-10-19):**
+  - **Grau** can't send anything until TUDOR links both its Okta apps (PREPROD and PROD) to its
+    retailer record and points of sale: today the API answers 500 `PARTNER_NOT_FOUND`.
+  - **Quera** (production since 2026-10-05, TUDOR not connected yet) needs its PROD credentials,
+    the hourly full sync and "Publish Changes Within a Minute" on, and the `localizedUrls` fix
+    (`648d5a4`) deployed, checked with a real send to PREPROD on its staging.
+  - **Pedro Luis Olivares** moves from PREPROD to PROD in the same installation.
+  - **Saphir** validates plugin 0.3.0 on its staging and takes it to production. Production
+    needs **a server cron running WP-Cron every minute** (it covers both the real-time queue and
+    the hourly sync); the staging has none (`DISABLE_WP_CRON` and no crontab).
+  - **Gordillo** installs plugin 0.3.0 once Saphir has validated it.
 - **Semantics of `value`**: still to be confirmed by TUDOR (see `StockAvailability`'s docblock).
-- **Modules still on `tudorApiKey`**: core authenticates with OAuth2 since 2026-10-02. Magento
-  passes `clientId`/`clientSecret` since 2026-10-06 and WooCommerce since 2026-10-09; PrestaShop doesn't yet (see
-  `intercambio/2026-10-02-jorge-oauth-listo.md`). Remove `tudorApiKey` once all three have.
-- **PrestaShop and WooCommerce connectors are unverified against a real store**, including their
-  Test Connection / Run Sync Now actions. Each uses a *new* field (Feature/meta) for the TUDOR
-  model code: confirm with Grau, Gordillo and Saphir whether they already have a convention for it.
-- **Model codes to review with Quera**: the SKU rule's codes, and `M25707B/25-0001`, which isn't
-  in TUDOR's price list (only `M25707B/26-0001` is) and so isn't sent.
+- **WooCommerce real-time single sends** don't log the review's warnings yet (e.g. "Filtro de
+  modelos vigentes DESACTIVADO"); the batch path does.
+- **`tudorApiKey`**: no module passes it any more; removing it from `ClientConfig` waits until after the go-live.
+- **Model codes to review**: Quera's SKU rule codes; `M25707B/25-0001` (Quera) and `M79030N-0001`
+  (Pedro Luis Olivares) aren't in TUDOR's price list and so aren't sent; ask TUDOR. Each PrestaShop
+  and WooCommerce store uses a *new* field (Feature/meta) for the model code: confirm with Grau,
+  Gordillo and Saphir whether they already have a convention for it.
 - **Per-POS click & collect** (`storesAvailabilityDetails`/RSWI) isn't wired up on any platform
   (only a flat, store-wide toggle), nor is **MSI with several sources** in Magento.
 - **WooCommerce multi-language**: TranslatePress is built in; WPML or Polylang would go through the
   `tudorsync_localized_urls` filter (not wired).
 - **PrestaShop's cron** depends on the server operator adding a real crontab entry that hits
   the generated, token-protected URL — nothing in the module itself schedules that call.
-- **Monthly report data**: Magento computes the order side (online and click & collect sales)
-  and writes the Excel from its admin; sessions and unique visitors are typed in by hand. Core
-  defines the interface for the order side (`ProgrammeSalesSourceInterface`, 2026-10-14), but no
-  module implements it yet (Magento, PrestaShop and WooCommerce each still have to); nothing reads
-  sessions or unique visitors from GA4.
+- **Monthly report data**: only the sales are automatic (see above). Magento and WooCommerce
+  compute them; PrestaShop doesn't yet. Nothing reads sessions or unique visitors from GA4.
 - Package naming/versioning conventions for internal Composer registry distribution (how
   each store actually pulls `tudorsync/core` — private Packagist, Satis, a path repo baked
-  into deployment, etc.) — currently each module's `composer.json` points at `core/` via a
-  local path repository for development only.
+  into deployment, etc.) — today each store takes `core/` from its own checkout through a path
+  repository, so keeping the same core everywhere is manual.
 - No CI runs `composer test` automatically.
 
 ## Development
@@ -325,7 +340,7 @@ composer install
 composer test
 ```
 
-`core/` currently has 90 passing PHPUnit tests. Among them:
+`core/` currently has 105 passing PHPUnit tests. Among them:
 
 - `MonthlyReportWriterTest` writes into a copy of the real ES report template and reads the
   cells back — that's how the row-5-has-example-content and row-20-is-a-footnote-not-data
@@ -340,6 +355,6 @@ The platform modules (`modules/*`) have no unit tests of their own. The Magento 
 checked inside Quera's staging store against TUDOR's PREPROD: `bin/magento tudorsync:catalog:preview`
 (dry run, no call to TUDOR), `tudorsync:connection:test`, `tudorsync:sync:run` and the admin's
 API test page; before a change goes to production, `setup:di:compile` on the staging must leave
-no `__set_state` in `generated/metadata/global.php`. PrestaShop only passes
-`php -l`: treat them as needing a real smoke test against each client's staging store before
-going live.
+no `__set_state` in `generated/metadata/global.php`. WooCommerce is checked the same way on
+Saphir's staging (admin's Test Connection / Run Sync Now, API tests and log, WP-CLI). PrestaShop
+still needs a real send against Grau's staging before going live.

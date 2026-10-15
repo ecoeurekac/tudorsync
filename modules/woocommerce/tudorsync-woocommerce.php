@@ -51,5 +51,6 @@ add_action('plugins_loaded', static function (): void {
 
     if (defined('WP_CLI') && WP_CLI) {
         \WP_CLI::add_command('tudorsync model-code', \Tudorsync\Woocommerce\Cli\ModelCodeCommand::class);
+        \WP_CLI::add_command('tudorsync report', \Tudorsync\Woocommerce\Cli\ReportCommand::class);
     }
 });

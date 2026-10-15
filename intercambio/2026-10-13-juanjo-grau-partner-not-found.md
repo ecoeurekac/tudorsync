@@ -49,3 +49,16 @@ de solo lectura con las apps **PREPROD** de los demás:
 Control: secret falso → Okta 401 `invalid_client`; token falso o sin token → 401 del gateway. Conclusión: falta
 asociar la app PREPROD de Grau a su ficha de retailer en TUDOR. Captura (no versionada):
 `doc/distribuidores/grau/20261013_grau_preprod_partner_not_found.png`.
+
+## Actualización 15-10, 08:36–08:38 UTC: sigue igual, y en PROD también
+
+Solo lecturas, sin enviar stock (ni `createStock` ni batch):
+
+| Entorno | Client ID | Token Okta | `/health` | `GET /v1/point-of-sales` | `GET /v1/stocks` |
+|---|---|---|---|---|---|
+| PREPROD | `0oa1127ojzlpajyIK418` | OK | 200 | **500 `PARTNER_NOT_FOUND`** | — |
+| **PROD** | `0oa1127joo0i6lyBx418` | OK | 200 | **500 `PARTNER_NOT_FOUND`** | **500 `PARTNER_NOT_FOUND`** |
+
+La clave de PROD se usó una sola vez desde un archivo temporal ya borrado; no está guardada en la tienda ni en el repo.
+**Urgente para el go-live del 19-10:** pedir a TUDOR que asocie las dos apps (PREPROD y PROD) a la ficha de
+retailer de Grau con sus puntos de venta. Sin eso Grau no puede publicar, aunque el módulo esté listo.

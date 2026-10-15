@@ -54,6 +54,6 @@ monta un registro, habría que publicar la versión de core y fijar la misma en 
 ## Estado por tienda (ir marcando)
 - [ ] Saphir (WooCommerce) — staging ya en 648d5a4 (checkout). Falta producción.
 - [ ] Gordillo (WooCommerce)
-- [ ] Grau (PrestaShop)
+- [x] Grau (PrestaShop) — 15-10: staging-local (checkout) y producción (worktree `packages/tudorsync-prod`) en `4c3d82e`. Sin composer (core enlazado por path repo). 105 tests OK; payload de los 18 relojes idéntico; preview prod 18/8. Sin envío real: PARTNER_NOT_FOUND.
 - [ ] Quera (Magento)
 - [x] PLO (Magento) — 15-10: `git pull` (core por symlink del path repo, modo default: sin setup:upgrade ni di:compile). Preview y `sync:run` a PREPROD: 30 enviados, 0 fallos.

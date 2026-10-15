@@ -74,13 +74,14 @@ final class Admin
             });
         }
 
-        add_action('admin_init', [$this, 'redirectLegacyPage']);
+        add_action('admin_menu', [$this, 'redirectLegacyPage']);
     }
 
     /**
      * The plugin's first version lived at Settings › TUDOR Sync (options-general.php?page=
      * tudorsync-settings), which no longer registers. Send a bookmark or stale tab there to the
-     * new page instead of WordPress's "you are not allowed" screen.
+     * new page instead of WordPress's "you are not allowed" screen. Hooked on admin_menu:
+     * WordPress refuses an unknown page while building the menu, before admin_init runs.
      */
     public function redirectLegacyPage(): void
     {

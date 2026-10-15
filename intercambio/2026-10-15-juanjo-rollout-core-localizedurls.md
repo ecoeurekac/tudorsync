@@ -56,4 +56,4 @@ monta un registro, habría que publicar la versión de core y fijar la misma en 
 - [ ] Gordillo (WooCommerce)
 - [ ] Grau (PrestaShop)
 - [ ] Quera (Magento)
-- [ ] PLO (Magento)
+- [x] PLO (Magento) — 15-10: `git pull` (core por symlink del path repo, modo default: sin setup:upgrade ni di:compile). Preview y `sync:run` a PREPROD: 30 enviados, 0 fallos.

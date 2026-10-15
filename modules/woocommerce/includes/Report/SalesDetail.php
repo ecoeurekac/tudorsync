@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Tudorsync\Woocommerce\Report;
 
 /**
- * TUDOR watches sold online in a period, for TUDOR's monthly report.
+ * TUDOR watches sold online in a period, line by line: what ProgrammeSalesSource counted, for the
+ * admin and WP-CLI. TUDOR's monthly report gets the totals through core's ProgrammeSales.
  */
-final class ProgrammeSales
+final class SalesDetail
 {
     /**
      * @param int|null $clickAndCollectSales null when the store has no pickup shipping method configured

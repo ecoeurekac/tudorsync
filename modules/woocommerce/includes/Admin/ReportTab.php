@@ -34,7 +34,7 @@ final class ReportTab
         $periods = array_reverse($report->getPeriodsBetween($report->getFirstRelevantPeriod(), $current));
 
         echo '<div class="tudorsync-box"><h2>' . esc_html__('Months', 'tudorsync') . '</h2>';
-        echo '<p class="tudorsync-muted">' . esc_html__('Online sales and click & collect are counted from the orders that came from tudorwatch.com (cancelled, failed and unpaid orders excluded). Sessions and unique visitors come from your web analytics (visits with utm_source=tudorwatch.com) and are mandatory for TUDOR.', 'tudorsync') . '</p>';
+        echo '<p class="tudorsync-muted">' . esc_html__('Online sales are counted from the paid orders (processing, completed or refunded) that came from tudorwatch.com; refunds are not subtracted. Click & collect is not offered within the programme today, so it goes as n/a. Sessions and unique visitors come from your web analytics (visits with utm_source=tudorwatch.com) and are mandatory for TUDOR.', 'tudorsync') . '</p>';
 
         $rows = [];
         foreach ($periods as $period) {

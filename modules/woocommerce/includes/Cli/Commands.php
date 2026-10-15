@@ -18,14 +18,24 @@ use WP_CLI;
  *     wp tudorsync sync run                                  full sync now
  *     wp tudorsync connection test                           GET /v1/point-of-sales
  *     wp tudorsync realtime publish [--send]                 queued changes: plan, or send
- *     wp tudorsync model-code fill [--apply] [--overwrite] [--all]
+ *     wp tudorsync model-code fill [--apply] [--overwrite] [--all] [--category=<slug>]
  *     wp tudorsync report programme-sales [--month=<YYYY-MM>] [--all-orders]
  *     wp tudorsync api-log clean [--days=<n>]
  */
 final class Commands
 {
-    /** TUDOR model code (TMC) as found in image texts: M + 4-5 digits + letters/digits + -NNNN. */
-    private const TMC_IN_TEXT = '/(?<![A-Z0-9])M\d{4,5}[A-Z0-9]*-\d{4}(?![0-9])/i';
+    /**
+     * TUDOR model code (TMC) as found in image file names and texts: M + 4-5 digits +
+     * letters/digits, then the 4-digit variant after a dash, space or underscore
+     * (`tudor-m79360n-0011.png`, `Tudor M79360N 0002`).
+     */
+    private const TMC_IN_TEXT = '/(?<![A-Z0-9])M(\d{4,5}[A-Z0-9]*)[\s_-]+(\d{4})(?![0-9])/i';
+    /** A SKU that is already a full TMC (`M2830A1A0-0001`). */
+    private const TMC_EXACT = '/^M\d{4,5}[A-Z0-9]*-\d{4}$/i';
+    /** A SKU that starts with a TUDOR reference (`79360N/7206006`, `M79360N-0011`): comparable with an image's code. */
+    private const SKU_WITH_REFERENCE = '/^M?(\d{4}[A-Z0-9]*)/i';
+    /** Characters of the reference that must match between an image's code and the SKU. */
+    private const REFERENCE_MATCH_LENGTH = 4;
 
     public function __construct(
         private readonly Plugin $plugin,
@@ -50,10 +60,11 @@ final class Commands
             'synopsis' => [['type' => 'flag', 'name' => 'send', 'optional' => true, 'description' => 'Publish them now.']],
         ]);
         WP_CLI::add_command('tudorsync model-code fill', [$commands, 'modelCodeFill'], [
-            'shortdesc' => 'Fills the TUDOR model code field from the product images\' texts or the SKU rule.',
+            'shortdesc' => 'Fills the TUDOR model code field from the SKU when it already is one, the product images (file name and texts) or the SKU rule.',
             'synopsis' => [
                 ['type' => 'flag', 'name' => 'apply', 'optional' => true, 'description' => 'Save the codes (without it, nothing is written).'],
                 ['type' => 'flag', 'name' => 'overwrite', 'optional' => true, 'description' => 'Replace codes already filled in when they differ.'],
+                ['type' => 'assoc', 'name' => 'category', 'optional' => true, 'description' => 'Only the products of this product category (slug), instead of the SKU rule and product scope candidates.'],
                 ['type' => 'flag', 'name' => 'all', 'optional' => true, 'description' => 'List every product, not only those needing attention.'],
             ],
         ]);
@@ -238,15 +249,20 @@ final class Commands
         $resolver = $this->plugin->modelCodeResolver();
         $apply = !empty($assoc['apply']);
         $overwrite = !empty($assoc['overwrite']);
-        $ids = array_values(array_unique(array_merge($connector->getSkuRuleCandidateIds(), $this->getScopeAndMetaIds())));
+        $category = isset($assoc['category']) && is_string($assoc['category']) ? trim($assoc['category']) : '';
+        $ids = $category !== ''
+            ? $this->getCategoryIds($category)
+            : array_values(array_unique(array_merge($connector->getSkuRuleCandidateIds(), $this->getScopeAndMetaIds())));
         sort($ids);
 
         if ($ids === []) {
-            WP_CLI::error('No candidate products: set a SKU rule, a product scope, or fill in the code by hand.');
+            WP_CLI::error($category !== ''
+                ? sprintf('No products in the category "%s".', $category)
+                : 'No candidate products: set a SKU rule, a product scope, or fill in the code by hand.');
         }
 
         $rows = [];
-        $summary = ['products' => 0, 'from images' => 0, 'from SKU rule' => 0, 'no code' => 0, 'only by hand' => 0, 'conflicts' => 0, 'images ≠ rule' => 0, 'in stock without code' => 0, 'written' => 0];
+        $summary = ['products' => 0, 'SKU is the code' => 0, 'from images' => 0, 'from SKU rule' => 0, 'no code' => 0, 'only by hand' => 0, 'conflicts' => 0, 'image of another model' => 0, 'images ≠ rule' => 0, 'in stock without code' => 0, 'written' => 0];
 
         foreach ($ids as $productId) {
             $product = wc_get_product($productId);
@@ -257,11 +273,28 @@ final class Commands
 
             $summary['products']++;
             $current = (string) $product->get_meta(Config::META_MODEL_CODE);
-            $fromImages = $this->codesInImages($product);
-            $fromSku = $resolver->fromSku((string) $product->get_sku());
+            $sku = trim((string) $product->get_sku());
+            $skuCode = preg_match(self::TMC_EXACT, $sku) === 1 ? strtoupper($sku) : null;
+            $imageCodes = $this->codesInImages($product);
+            $fromImages = array_values(array_filter($imageCodes, fn (string $code): bool => $this->imageMatchesSku($code, $sku)));
+            $fromSku = $resolver->fromSku($sku);
             $note = '';
 
-            if (count($fromImages) > 1) {
+            if ($skuCode !== null) {
+                $code = $skuCode;
+                $source = 'sku';
+                $summary['SKU is the code']++;
+
+                if (array_diff($fromImages, [$skuCode]) !== []) {
+                    $note = 'images say ' . implode(', ', $fromImages);
+                }
+            } elseif ($imageCodes !== [] && $fromImages === []) {
+                // Only codes of another model: the product carries a wrong image. Never guess.
+                $code = null;
+                $source = 'mismatch';
+                $note = 'image of another model: ' . implode(', ', $imageCodes);
+                $summary['image of another model']++;
+            } elseif (count($fromImages) > 1) {
                 $code = null;
                 $source = 'conflict';
                 $note = 'images disagree: ' . implode(', ', $fromImages);
@@ -303,7 +336,7 @@ final class Commands
                 $summary['written']++;
             }
 
-            $needsAttention = $action === 'fill' || str_starts_with($action, 'replace ') || $source === 'conflict' || $note !== ''
+            $needsAttention = $action === 'fill' || str_starts_with($action, 'replace ') || in_array($source, ['conflict', 'mismatch'], true) || $note !== ''
                 || ($code === null && $current === '');
 
             if (!empty($assoc['all']) || $needsAttention) {
@@ -342,7 +375,7 @@ final class Commands
         }
 
         [$from, $to] = ProgrammeSalesSource::monthRange($month);
-        $sales = $this->plugin->programmeSalesSource()->getProgrammeSales($from, $to, empty($assoc['all-orders']));
+        $sales = $this->plugin->programmeSalesSource()->getSalesDetail($from, $to, empty($assoc['all-orders']));
 
         $this->table(array_map(static fn (array $line): array => [
             'order' => $line['order_number'],
@@ -405,10 +438,11 @@ final class Commands
     }
 
     /**
-     * TUDOR model codes written in the texts of the product's images (alt text, title, caption),
-     * as TUDOR's own image set names them. File names are not used.
+     * TUDOR model codes in the product's images, as TUDOR's own image set names them: file name,
+     * alt text, title and caption. TUDOR's images carry the exact variant (`-0011`), which a short
+     * retailer SKU usually does not.
      *
-     * @return list<string>
+     * @return list<string> normalized as `M<reference>-<variant>`
      */
     private function codesInImages(\WC_Product $product): array
     {
@@ -417,21 +451,55 @@ final class Commands
 
         foreach ($imageIds as $imageId) {
             $texts = [
+                basename((string) get_post_meta($imageId, '_wp_attached_file', true)),
                 (string) get_post_meta($imageId, '_wp_attachment_image_alt', true),
                 (string) get_the_title($imageId),
                 (string) wp_get_attachment_caption($imageId),
             ];
 
             foreach ($texts as $text) {
-                if (preg_match_all(self::TMC_IN_TEXT, $text, $matches) > 0) {
-                    foreach ($matches[0] as $match) {
-                        $codes[strtoupper($match)] = true;
+                if (preg_match_all(self::TMC_IN_TEXT, $text, $matches, PREG_SET_ORDER) > 0) {
+                    foreach ($matches as $match) {
+                        $codes[strtoupper('M' . $match[1] . '-' . $match[2])] = true;
                     }
                 }
             }
         }
 
         return array_keys($codes);
+    }
+
+    /**
+     * Whether an image's code can belong to a product with this SKU: when the SKU starts with a
+     * TUDOR reference, both references must share their first characters (covers truncated
+     * references, 79210C ⊂ 79210CNU). This catches a product that carries another model's image.
+     * A SKU without a reference (the store's own numbering) cannot be compared and accepts it.
+     */
+    private function imageMatchesSku(string $imageCode, string $sku): bool
+    {
+        if (preg_match(self::SKU_WITH_REFERENCE, $sku, $skuMatch) !== 1) {
+            return true;
+        }
+
+        preg_match(self::SKU_WITH_REFERENCE, $imageCode, $imageMatch);
+
+        return strncasecmp($skuMatch[1], $imageMatch[1] ?? '', self::REFERENCE_MATCH_LENGTH) === 0;
+    }
+
+    /**
+     * Products in a product category (slug), any status.
+     *
+     * @return list<int>
+     */
+    private function getCategoryIds(string $slug): array
+    {
+        return array_map('intval', get_posts([
+            'post_type' => 'product',
+            'post_status' => 'any',
+            'fields' => 'ids',
+            'numberposts' => -1,
+            'tax_query' => [['taxonomy' => 'product_cat', 'field' => 'slug', 'terms' => $slug]],
+        ]));
     }
 
     /**

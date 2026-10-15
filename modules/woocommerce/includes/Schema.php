@@ -14,10 +14,12 @@ namespace Tudorsync\Woocommerce;
  * - `{prefix}tudorsync_report_file`: monthly reports generated from the admin (Report\ReportFiles).
  *
  * The UTM referral of an order is order meta, not a table (Attribution\OrderAttribution).
+ *
+ * Also carries over the settings of the plugin's first version (see migrateLegacyOptions()).
  */
 final class Schema
 {
-    public const VERSION = '1';
+    public const VERSION = '2';
     private const OPTION = 'tudorsync_schema_version';
 
     public static function table(string $name): string
@@ -88,6 +90,31 @@ final class Schema
   PRIMARY KEY  (file_id)
 ) {$charset};");
 
+        $this->migrateLegacyOptions();
         update_option(self::OPTION, self::VERSION, true);
+    }
+
+    /**
+     * Settings of the plugin's first version that have another shape now. Credentials, country,
+     * environment and click & collect kept their option names and need nothing.
+     *
+     * - `tudorsync_attribution_consent_category` (consent read from the `cookielawinfo-checkbox-
+     *   <category>=yes` cookie of the CookieYes / WebToffee banner) → "cookie" consent with that
+     *   same cookie, unless consent was already set up here.
+     * - `tudorsync_api_key_*`: API keys from before OAuth2, no longer used.
+     */
+    private function migrateLegacyOptions(): void
+    {
+        $category = trim((string) get_option('tudorsync_attribution_consent_category', ''));
+
+        if ($category !== '' && get_option(Config::optionName(Config::CONSENT_MANAGER)) === false) {
+            update_option(Config::optionName(Config::CONSENT_MANAGER), Config::CONSENT_COOKIE_VALUE);
+            update_option(Config::optionName(Config::CONSENT_CATEGORY), $category);
+            update_option(Config::optionName(Config::CONSENT_COOKIE), 'cookielawinfo-checkbox-' . $category . '=yes');
+        }
+
+        foreach (['tudorsync_attribution_consent_category', 'tudorsync_api_key_staging', 'tudorsync_api_key_production'] as $legacy) {
+            delete_option($legacy);
+        }
     }
 }

@@ -49,15 +49,26 @@ final class LocalizedUrls
 
         $filtered = apply_filters('tudorsync_localized_urls', $urls, $product, $defaultUrl);
 
-        if (!is_array($filtered)) {
-            return $urls;
+        if (is_array($filtered)) {
+            $urls = array_filter(
+                $filtered,
+                static fn ($url, $key): bool => is_string($key) && is_string($url) && $url !== '',
+                ARRAY_FILTER_USE_BOTH,
+            );
         }
 
-        return array_filter(
-            $filtered,
-            static fn ($url, $key): bool => is_string($key) && is_string($url) && $url !== '',
-            ARRAY_FILTER_USE_BOTH,
-        );
+        // A single-language store (or one whose translations share the URL, like an overlay
+        // translator): the site's language with the default URL. Never empty, so TUDOR always
+        // gets an object here (an empty list is rejected with 400).
+        if ($urls === [] && $defaultUrl !== '') {
+            $key = $this->localeKey((string) get_locale());
+
+            if ($key !== '') {
+                $urls[$key] = $defaultUrl;
+            }
+        }
+
+        return $urls;
     }
 
     /**

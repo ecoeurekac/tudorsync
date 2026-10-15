@@ -29,6 +29,34 @@
         </index>
     </table>
     <!--
+        TUDOR watches sold in a store that does not subtract stock when an order is placed
+        (cataloginventory/options/can_subtract = 0, e.g. stock driven only by an ERP): one row per
+        order line, with the salable quantity there was when it was placed (Model\Stock\OpenSales).
+        Until the stock drops by that line (the ERP has registered the sale), the order is cancelled
+        or the line expires, its quantity is subtracted from what is published to TUDOR.
+    -->
+    <table name="tudorsync_open_sale" resource="sales" engine="innodb"
+           comment="TUDOR e-Stock: order lines not yet reflected in the stock">
+        <column xsi:type="int" name="item_id" unsigned="true" nullable="false" comment="sales_order_item.item_id"/>
+        <column xsi:type="int" name="order_id" unsigned="true" nullable="false" comment="sales_order.entity_id"/>
+        <column xsi:type="varchar" name="sku" length="64" nullable="false" comment="SKU"/>
+        <column xsi:type="decimal" name="qty_at_order" scale="4" precision="12" unsigned="false" nullable="false"
+                comment="Salable quantity when the order was placed"/>
+        <column xsi:type="timestamp" name="created_at" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Order placed at"/>
+        <column xsi:type="datetime" name="released_at" nullable="true"
+                comment="When the stock showed the sale (UTC); no longer subtracted"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="item_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="TUDORSYNC_OPEN_SALE_ITEM_ID_SALES_ORDER_ITEM_ITEM_ID"
+                    table="tudorsync_open_sale" column="item_id"
+                    referenceTable="sales_order_item" referenceColumn="item_id" onDelete="CASCADE"/>
+        <index referenceId="TUDORSYNC_OPEN_SALE_SKU" indexType="btree">
+            <column name="sku"/>
+        </index>
+    </table>
+    <!--
         TUDOR model codes whose stock or product data changed since they were last published
         (Model\Realtime\PendingQueue). One row per model code, re-queuing just refreshes it.
         Written by the stock/order/product hooks, emptied every minute by Cron\PublishPending

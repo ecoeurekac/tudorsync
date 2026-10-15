@@ -16,6 +16,8 @@ use Throwable;
  * physical one: an order that's been placed but not shipped yet still holds its unit, and a
  * one-off piece already sold must not keep showing "Comprar ahora" on tudorwatch.com.
  * Without MSI (module disabled) it falls back to the legacy single-source stock item qty.
+ * In stores that do not subtract stock on order, the sales the stock does not show yet are
+ * subtracted too (OpenSales).
  *
  * The MSI services are fetched lazily through the ObjectManager on purpose: this module is
  * meant to be installed on other retailers' stores too, and a hard constructor dependency on
@@ -32,6 +34,7 @@ class SalableQtyProvider
         private readonly StockRegistryInterface $stockRegistry,
         private readonly ModuleManager $moduleManager,
         private readonly ObjectManagerInterface $objectManager,
+        private readonly OpenSales $openSales,
     ) {
     }
 
@@ -47,14 +50,26 @@ class SalableQtyProvider
     {
         $stockItem = $this->stockRegistry->getStockItem($productId);
         $qty = (int) $stockItem->getQty();
+        $salableQty = $this->isMsiEnabled() ? $this->getMsiSalableQty($sku, $websiteCode) : $qty;
 
         return [
             'in_stock' => (bool) $stockItem->getIsInStock(),
             'backorders' => (int) $stockItem->getBackorders() > 0,
             'manage_stock' => (bool) $stockItem->getManageStock(),
             'qty' => $qty,
-            'salable_qty' => $this->isMsiEnabled() ? $this->getMsiSalableQty($sku, $websiteCode) : $qty,
+            'salable_qty' => $salableQty - $this->openSales->getPendingQty($sku, $salableQty),
         ];
+    }
+
+    /**
+     * Salable quantity as the stock has it, without subtracting the open sales: what OpenSales
+     * saves when an order is placed.
+     */
+    public function getStockSalableQty(int $productId, string $sku, string $websiteCode): int
+    {
+        return $this->isMsiEnabled()
+            ? $this->getMsiSalableQty($sku, $websiteCode)
+            : (int) $this->stockRegistry->getStockItem($productId)->getQty();
     }
 
     private function getMsiSalableQty(string $sku, string $websiteCode): int

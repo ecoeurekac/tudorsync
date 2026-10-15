@@ -56,6 +56,19 @@
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>When a TUDOR watch is sold or its stock or product data changes, republish that model within a minute instead of waiting for the next full sync. Only TUDOR products are watched. The full sync keeps running as a safety net.</comment>
                 </field>
+                <field id="open_sales_enabled" translate="label comment" type="select" sortOrder="66" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Subtract Sales Not Yet in the Stock</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Only for stores that do not decrease stock when an order is placed (<em>Catalog &gt; Inventory &gt; Decrease Stock When Order is Placed</em> = No), e.g. because the stock comes only from an ERP. A TUDOR watch sold online is then published with one unit less right away, until the stock drops by that sale, the order is cancelled or the days below go by. Ignored while the store does decrease stock: the order already does it.]]></comment>
+                </field>
+                <field id="open_sales_days" translate="label comment" type="text" sortOrder="67" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Days a Sale Is Subtracted at Most</label>
+                    <validate>required-entry validate-digits validate-greater-than-zero</validate>
+                    <comment>Safety net for a sale the stock never shows (e.g. the order was never registered in the ERP).</comment>
+                    <depends>
+                        <field id="open_sales_enabled">1</field>
+                    </depends>
+                </field>
                 <field id="status_and_actions" translate="label" type="text" sortOrder="70" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Connection &amp; Sync</label>
                     <frontend_model>Tudorsync\EcommerceSync\Block\Adminhtml\System\Config\StatusAndActions</frontend_model>

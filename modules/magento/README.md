@@ -123,6 +123,32 @@ el minuto siguiente. Interruptor: *Publish Changes Within a Minute* (`tudorsync/
 `tudorsync:realtime:publish` enseña la cola y qué se haría, sin llamar a TUDOR; `--send` hace lo
 mismo que el cron.
 
+### Tiendas que no descuentan stock al hacer el pedido
+
+Con *Catalog › Inventory › Decrease Stock When Order is Placed* = No (`cataloginventory/options/can_subtract = 0`),
+MSI no escribe reservas: el pedido no baja el stock y el reloj vendido sigue en tudorwatch.com hasta que
+el ERP registra la venta, a veces horas después. Para esas tiendas, *Subtract Sales Not Yet in the Stock*
+(`tudorsync/general/open_sales_enabled`, no por defecto; se ignora si la tienda sí descuenta stock)
+(`Model\Stock\OpenSales`):
+
+- **Al hacer el pedido** (`Observer\RecordOpenSale`, evento `sales_model_service_quote_submit_success`,
+  global: también pedidos del admin): cada línea de un reloj TUDOR (simples y virtuales) se guarda en
+  **`tudorsync_open_sale`** con la cantidad vendible que había, y su modelo se encola: en el minuto
+  sale con esa unidad menos.
+- **Mientras cuenta**, `SalableQtyProvider` resta su cantidad de la vendible (sync, minuto, preview y
+  pruebas de API).
+- **Deja de contar** cuando:
+  - el stock baja por esa línea (el ERP ya la ha registrado). Las líneas de un SKU se miran por orden:
+    con dos ventas abiertas, la primera bajada libera solo la primera. La liberación se guarda
+    (`released_at`), para que una reposición posterior no vuelva a restarla;
+  - el pedido (o la línea) se cancela o se cierra (abonado). Al cancelar, `Observer\QueueOnOrderCancel`
+    encola el modelo;
+  - pasan *Days a Sale Is Subtracted at Most* (`open_sales_days`, 7 por defecto): red de seguridad
+    para una venta que el ERP nunca refleja.
+- Una reposición que llega junto con la venta deja la línea abierta hasta que caduca: mejor publicar
+  una unidad de menos un tiempo que vender un reloj que ya no está.
+- `Cron\PurgeOpenSales` (03:50) borra las líneas canceladas, cerradas o caducadas.
+
 ## Pedidos que llegan desde TUDOR (informe mensual)
 
 Datos para la fila «Relojes TUDOR vendidos en línea mediante este programa» del informe mensual

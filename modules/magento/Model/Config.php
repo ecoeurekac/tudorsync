@@ -31,6 +31,8 @@ class Config
     private const XML_PATH_SKU_PATTERN = 'tudorsync/model_code/sku_pattern';
     private const XML_PATH_SKU_REPLACEMENT = 'tudorsync/model_code/sku_replacement';
     private const XML_PATH_REALTIME_ENABLED = 'tudorsync/general/realtime_enabled';
+    private const XML_PATH_OPEN_SALES_ENABLED = 'tudorsync/general/open_sales_enabled';
+    private const XML_PATH_OPEN_SALES_DAYS = 'tudorsync/general/open_sales_days';
     private const XML_PATH_CONSENT_MANAGER = 'tudorsync/attribution/consent_manager';
     private const XML_PATH_CONSENT_CATEGORY = 'tudorsync/attribution/consent_category';
     private const XML_PATH_PICKUP_PREFIXES = 'tudorsync/report/pickup_shipping_method_prefixes';
@@ -88,6 +90,23 @@ class Config
     public function isRealtimeEnabled(): bool
     {
         return $this->scopeConfig->isSetFlag(self::XML_PATH_REALTIME_ENABLED);
+    }
+
+    /**
+     * Subtract the TUDOR watches already sold from what is published, while the stock does not
+     * show them yet (Model\Stock\OpenSales): for stores that do not subtract stock on order.
+     */
+    public function isOpenSalesEnabled(): bool
+    {
+        return $this->scopeConfig->isSetFlag(self::XML_PATH_OPEN_SALES_ENABLED);
+    }
+
+    /**
+     * Days a sale keeps being subtracted if the stock never shows it. At least 1.
+     */
+    public function getOpenSalesDays(): int
+    {
+        return max(1, (int) $this->getString(self::XML_PATH_OPEN_SALES_DAYS));
     }
 
     public function hasCredentials(?int $storeId = null): bool

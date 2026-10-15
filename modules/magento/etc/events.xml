@@ -10,4 +10,12 @@
     <event name="cataloginventory_stock_item_save_after">
         <observer name="tudorsync_queue_on_product_change" instance="Tudorsync\EcommerceSync\Observer\QueueOnProductChange"/>
     </event>
+    <!-- Stores that do not subtract stock on order: TUDOR sales the stock does not show yet
+         (Model\Stock\OpenSales). Global: admin orders take the watch too. -->
+    <event name="sales_model_service_quote_submit_success">
+        <observer name="tudorsync_record_open_sale" instance="Tudorsync\EcommerceSync\Observer\RecordOpenSale"/>
+    </event>
+    <event name="order_cancel_after">
+        <observer name="tudorsync_queue_on_order_cancel" instance="Tudorsync\EcommerceSync\Observer\QueueOnOrderCancel"/>
+    </event>
 </config>

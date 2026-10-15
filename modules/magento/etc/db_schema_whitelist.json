@@ -90,5 +90,22 @@
         "constraint": {
             "PRIMARY": true
         }
+    },
+    "tudorsync_open_sale": {
+        "column": {
+            "item_id": true,
+            "order_id": true,
+            "sku": true,
+            "qty_at_order": true,
+            "created_at": true,
+            "released_at": true
+        },
+        "index": {
+            "TUDORSYNC_OPEN_SALE_SKU": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "TUDORSYNC_OPEN_SALE_ITEM_ID_SALES_ORDER_ITEM_ITEM_ID": true
+        }
     }
 }

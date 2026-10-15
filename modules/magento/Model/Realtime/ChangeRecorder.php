@@ -34,8 +34,7 @@ class ChangeRecorder
     public function recordSkus(array $skus, string $reason): void
     {
         $this->safely(function () use ($skus, $reason): void {
-            $skus = array_values(array_unique(array_filter(array_map('strval', $skus))));
-            $this->queue($this->resolveSkus($skus, $this->getAttributeValuesBySku($skus)), $reason);
+            $this->queue(array_values($this->getModelCodesBySku($skus)), $reason);
         });
     }
 
@@ -86,19 +85,23 @@ class ChangeRecorder
     }
 
     /**
+     * The TUDOR ones among these SKUs, with their model code (same rule as the sync). May throw:
+     * callers inside checkout wrap it.
+     *
      * @param list<string> $skus
-     * @param array<string, string> $attributeValueBySku
-     * @return list<string>
+     * @return array<string, string> SKU => model code
      */
-    private function resolveSkus(array $skus, array $attributeValueBySku): array
+    public function getModelCodesBySku(array $skus): array
     {
+        $skus = array_values(array_unique(array_filter(array_map('strval', $skus))));
+        $attributeValueBySku = $this->getAttributeValuesBySku($skus);
         $modelCodes = [];
 
         foreach ($skus as $sku) {
             $modelCode = $this->modelCodeResolver->resolve($attributeValueBySku[$sku] ?? '', $sku);
 
             if ($modelCode !== null) {
-                $modelCodes[] = $modelCode;
+                $modelCodes[$sku] = $modelCode;
             }
         }
 

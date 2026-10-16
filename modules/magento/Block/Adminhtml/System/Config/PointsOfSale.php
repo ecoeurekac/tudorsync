@@ -38,20 +38,11 @@ class PointsOfSale extends AbstractFieldArray
     private function getPickupRenderer(): BlockInterface
     {
         if ($this->pickupRenderer === null) {
-            /** @var \Magento\Framework\View\Element\Html\Select $select */
-            $select = $this->getLayout()->createBlock(
-                \Magento\Framework\View\Element\Html\Select::class,
+            $this->pickupRenderer = $this->getLayout()->createBlock(
+                PickupSelect::class,
                 '',
-                ['data' => ['is_render_to_js_template' => true]]
+                ['data' => ['is_render_to_js_template' => true, 'extra_params' => 'style="width:80px"']]
             );
-            $select->setOptions([
-                ['value' => '1', 'label' => (string) __('Yes')],
-                ['value' => '0', 'label' => (string) __('No')],
-            ]);
-            $select->setData('input_name', $this->_getCellInputElementName('pickup'));
-            $select->setData('input_id', $this->_getCellInputElementId('<%- _id %>', 'pickup'));
-            $select->setData('extra_params', 'style="width:80px"');
-            $this->pickupRenderer = $select;
         }
 
         return $this->pickupRenderer;

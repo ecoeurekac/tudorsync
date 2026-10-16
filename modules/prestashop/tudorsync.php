@@ -20,6 +20,7 @@ use Tudorsync\Core\Sync\EmptyCatalogException;
 use Tudorsync\Core\Sync\NothingPassedReviewException;
 use Tudorsync\Core\Sync\SyncEngine;
 use Tudorsync\Prestashop\Api\CurlHttpClient;
+use Tudorsync\Prestashop\Attribution\UtmCookie;
 use Tudorsync\Prestashop\CatalogConnector;
 use Tudorsync\Prestashop\Config;
 use Tudorsync\Prestashop\ModelCodeResolver;
@@ -38,7 +39,7 @@ class Tudorsync extends Module
     {
         $this->name = 'tudorsync';
         $this->tab = 'administration';
-        $this->version = '0.1.0';
+        $this->version = '0.2.0';
         $this->author = 'Tudorsync';
         $this->need_instance = 0;
         // tudorsync/core needs PHP 8.1+, which PrestaShop 1.7 doesn't support.
@@ -62,7 +63,7 @@ class Tudorsync extends Module
             return false;
         }
 
-        if (!parent::install()) {
+        if (!parent::install() || !$this->registerHook('actionFrontControllerSetMedia')) {
             return false;
         }
 
@@ -98,6 +99,25 @@ class Tudorsync extends Module
         // that's product data the retailer entered, not module configuration.
 
         return parent::uninstall();
+    }
+
+    /**
+     * Loads views/js/utm-capture.js on every front page: it keeps the tudorwatch.com referral in
+     * the `tudorsync_utm` cookie, once CookieScript has the `performance` category accepted.
+     * Done in the browser so it also works when the page comes from a cache.
+     */
+    public function hookActionFrontControllerSetMedia(): void
+    {
+        if (PHP_VERSION_ID < 80100) {
+            return;
+        }
+
+        Media::addJsDef(['tudorsyncUtm' => UtmCookie::scriptSettings()]);
+        $this->context->controller->registerJavascript(
+            'modules-tudorsync-utm-capture',
+            'modules/' . $this->name . '/views/js/utm-capture.js',
+            ['position' => 'bottom', 'priority' => 200],
+        );
     }
 
     /**

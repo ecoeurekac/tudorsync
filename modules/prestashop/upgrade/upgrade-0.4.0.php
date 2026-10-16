@@ -12,5 +12,5 @@ if (!defined('_PS_VERSION_')) {
  */
 function upgrade_module_0_4_0(Tudorsync $module): bool
 {
-    return Tudorsync\Prestashop\Report\MonthlyReport::installSchema() && $module->installReportTab();
+    return Tudorsync\Prestashop\Report\MonthlyReport::installSchema() && $module->installTabs();
 }

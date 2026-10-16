@@ -68,7 +68,6 @@ final class CatalogConnector implements CatalogConnectorInterface
         }
 
         $shopId = (int) Context::getContext()->shop->id;
-        $clientConfig = $this->config->getClientConfig();
         $link = new Link();
         $languages = Language::getLanguages(true, $shopId);
         $defaultLangId = $this->config->getDefaultLanguageId() ?: (int) Context::getContext()->language->id;
@@ -88,20 +87,90 @@ final class CatalogConnector implements CatalogConnectorInterface
                 continue; // out of stock, or backorder/"on demand"-only — never publish either
             }
 
-            $items[] = new StockAvailability(
-                modelCode: $modelCode,
-                country: $clientConfig->market,
-                value: $quantity,
-                defaultUrl: $this->utmUrlBuilder->withTracking(
-                    (string) $link->getProductLink($productId, null, null, null, $defaultLangId, $shopId),
-                ),
-                localizedUrls: $this->getLocalizedUrls($link, $productId, $shopId, $languages),
-                onlinePurchaseEnabled: true,
-                storePickupAvailable: $clientConfig->offersClickAndCollect,
-            );
+            $items[] = $this->makeItem($productId, $modelCode, $quantity, $link, $languages, $defaultLangId, $shopId);
         }
 
         return $items;
+    }
+
+    /**
+     * The record the sync would build for one product, whatever its status or stock (for the
+     * back office's API tests); $value replaces its available quantity. Null when the product
+     * doesn't exist or has no model code.
+     */
+    public function buildAvailability(int $productId, ?int $value = null): ?StockAvailability
+    {
+        $modelCode = $this->getModelCodesOf([$productId])[$productId] ?? null;
+
+        if ($modelCode === null) {
+            return null;
+        }
+
+        $shopId = (int) Context::getContext()->shop->id;
+        $defaultLangId = $this->config->getDefaultLanguageId() ?: (int) Context::getContext()->language->id;
+
+        return $this->makeItem(
+            $productId,
+            $modelCode,
+            $value ?? (int) StockAvailable::getQuantityAvailableByProduct($productId, null, $shopId),
+            new Link(),
+            Language::getLanguages(true, $shopId),
+            $defaultLangId,
+            $shopId,
+        );
+    }
+
+    /**
+     * Products whose reference, name or model code contains $query (for the API tests).
+     *
+     * @return list<array{product_id: int, reference: string, name: string, model_code: string, active: bool, quantity: int}>
+     */
+    public function search(string $query, int $limit = 30): array
+    {
+        $shopId = (int) Context::getContext()->shop->id;
+        $defaultLangId = $this->config->getDefaultLanguageId() ?: (int) Context::getContext()->language->id;
+        $like = '\'%' . pSQL(addcslashes(trim($query), '%_')) . '%\'';
+        $featureId = $this->config->getModelCodeFeatureId();
+
+        $rows = Db::getInstance()->executeS('SELECT DISTINCT p.id_product, p.reference, pl.name, ps.active
+            FROM `' . _DB_PREFIX_ . 'product` p
+            JOIN `' . _DB_PREFIX_ . 'product_shop` ps ON ps.id_product = p.id_product AND ps.id_shop = ' . $shopId . '
+            LEFT JOIN `' . _DB_PREFIX_ . 'product_lang` pl ON pl.id_product = p.id_product AND pl.id_shop = ' . $shopId . ' AND pl.id_lang = ' . $defaultLangId . '
+            LEFT JOIN `' . _DB_PREFIX_ . 'feature_product` fp ON fp.id_product = p.id_product AND fp.id_feature = ' . $featureId . '
+            LEFT JOIN `' . _DB_PREFIX_ . 'feature_value_lang` fvl ON fvl.id_feature_value = fp.id_feature_value
+            WHERE p.reference LIKE ' . $like . ' OR pl.name LIKE ' . $like . ' OR fvl.value LIKE ' . $like . '
+            ORDER BY p.id_product DESC LIMIT ' . max(1, $limit));
+        $rows = is_array($rows) ? $rows : [];
+        $codes = $this->getModelCodesOf(array_column($rows, 'id_product'));
+
+        return array_map(static fn (array $row): array => [
+            'product_id' => (int) $row['id_product'],
+            'reference' => (string) $row['reference'],
+            'name' => (string) $row['name'],
+            'model_code' => $codes[(int) $row['id_product']] ?? '',
+            'active' => (int) $row['active'] === 1,
+            'quantity' => (int) StockAvailable::getQuantityAvailableByProduct((int) $row['id_product'], null, $shopId),
+        ], $rows);
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $languages Rows as returned by Language::getLanguages().
+     */
+    private function makeItem(int $productId, string $modelCode, int $value, Link $link, array $languages, int $defaultLangId, int $shopId): StockAvailability
+    {
+        $clientConfig = $this->config->getClientConfig();
+
+        return new StockAvailability(
+            modelCode: $modelCode,
+            country: $clientConfig->market,
+            value: $value,
+            defaultUrl: $this->utmUrlBuilder->withTracking(
+                (string) $link->getProductLink($productId, null, null, null, $defaultLangId, $shopId),
+            ),
+            localizedUrls: $this->getLocalizedUrls($link, $productId, $shopId, $languages),
+            onlinePurchaseEnabled: true,
+            storePickupAvailable: $clientConfig->offersClickAndCollect,
+        );
     }
 
     /**

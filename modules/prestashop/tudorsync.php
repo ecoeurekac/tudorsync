@@ -39,6 +39,13 @@ class Tudorsync extends Module
 {
     /** Front: attribution cookie and cart. Order: attribution and model codes. Admin: order page. */
     public const REPORT_TAB = 'AdminTudorsyncReport';
+    public const API_TEST_TAB = 'AdminTudorsyncApiTest';
+
+    /** Back-office tabs: class => [parent tab, name per language iso, default name]. */
+    private const TABS = [
+        self::REPORT_TAB => ['AdminParentOrders', ['es' => 'Informe TUDOR', 'ca' => 'Informe TUDOR'], 'TUDOR report'],
+        self::API_TEST_TAB => ['AdminAdvancedParameters', ['es' => 'Pruebas API TUDOR', 'ca' => 'Proves API TUDOR'], 'TUDOR API tests'],
+    ];
 
     public const HOOKS = ['actionFrontControllerSetMedia', 'actionCartSave', 'actionValidateOrder', 'displayAdminOrderSide'];
 
@@ -46,7 +53,7 @@ class Tudorsync extends Module
     {
         $this->name = 'tudorsync';
         $this->tab = 'administration';
-        $this->version = '0.4.0';
+        $this->version = '0.5.0';
         $this->author = 'Tudorsync';
         $this->need_instance = 0;
         // tudorsync/core needs PHP 8.1+, which PrestaShop 1.7 doesn't support.
@@ -71,7 +78,7 @@ class Tudorsync extends Module
         }
 
         if (!parent::install() || !$this->registerHook(self::HOOKS) || !OrderAttribution::installSchema()
-            || !MonthlyReport::installSchema() || !$this->installReportTab()) {
+            || !MonthlyReport::installSchema() || !$this->installTabs()) {
             return false;
         }
 
@@ -108,35 +115,43 @@ class Tudorsync extends Module
         // tudorsync_*_attribution / tudorsync_order_line tables: they are the sales history
         // of TUDOR's monthly report.
 
-        $tabId = (int) Tab::getIdFromClassName(self::REPORT_TAB);
-        if ($tabId > 0) {
-            (new Tab($tabId))->delete();
+        foreach (array_keys(self::TABS) as $className) {
+            $tabId = (int) Tab::getIdFromClassName($className);
+            if ($tabId > 0) {
+                (new Tab($tabId))->delete();
+            }
         }
 
         return parent::uninstall();
     }
 
     /**
-     * Orders > TUDOR report (AdminTudorsyncReportController). Safe to call again.
+     * Orders > TUDOR report (AdminTudorsyncReportController) and Advanced parameters > TUDOR API
+     * tests (AdminTudorsyncApiTestController). Safe to call again: existing tabs are kept.
      */
-    public function installReportTab(): bool
+    public function installTabs(): bool
     {
-        if ((int) Tab::getIdFromClassName(self::REPORT_TAB) > 0) {
-            return true;
+        foreach (self::TABS as $className => [$parent, $names, $default]) {
+            if ((int) Tab::getIdFromClassName($className) > 0) {
+                continue;
+            }
+
+            $tab = new Tab();
+            $tab->class_name = $className;
+            $tab->module = $this->name;
+            $tab->id_parent = (int) Tab::getIdFromClassName($parent);
+            $tab->active = true;
+            $tab->name = [];
+            foreach (Language::getLanguages(false) as $language) {
+                $tab->name[(int) $language['id_lang']] = $names[$language['iso_code']] ?? $default;
+            }
+
+            if (!$tab->add()) {
+                return false;
+            }
         }
 
-        $names = ['es' => 'Informe TUDOR', 'ca' => 'Informe TUDOR'];
-        $tab = new Tab();
-        $tab->class_name = self::REPORT_TAB;
-        $tab->module = $this->name;
-        $tab->id_parent = (int) Tab::getIdFromClassName('AdminParentOrders');
-        $tab->active = true;
-        $tab->name = [];
-        foreach (Language::getLanguages(false) as $language) {
-            $tab->name[(int) $language['id_lang']] = $names[$language['iso_code']] ?? 'TUDOR report';
-        }
-
-        return (bool) $tab->add();
+        return true;
     }
 
     /**
@@ -425,7 +440,9 @@ class Tudorsync extends Module
                 <button type="submit" name="submit_tudorsync_run" value="1" class="btn btn-default">' . $this->l('Run Sync Now') . '</button>
             </form>
             <p style="margin-top:10px;"><a href="' . htmlspecialchars($this->context->link->getAdminLink(self::REPORT_TAB), ENT_QUOTES) . '">'
-                . $this->l('TUDOR monthly report (Orders > TUDOR report)') . ' &rarr;</a></p>
+                . $this->l('TUDOR monthly report (Orders > TUDOR report)') . ' &rarr;</a><br>
+                <a href="' . htmlspecialchars($this->context->link->getAdminLink(self::API_TEST_TAB), ENT_QUOTES) . '">'
+                . $this->l('TUDOR API tests (Advanced parameters > TUDOR API tests)') . ' &rarr;</a></p>
         </div>';
     }
 

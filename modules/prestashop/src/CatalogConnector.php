@@ -38,12 +38,17 @@ use Tudorsync\Core\Url\UtmUrlBuilder;
  * tracked at all) would be wrongly excluded by this logic — confirm with the retailer whether
  * any TUDOR models are sold that way before relying on this connector for them.
  *
+ * Repeated model codes: only the most recently updated active product counts (pickRepeated()).
+ *
  * Multi-language: builds one URL per active PrestaShop language via Link::getProductLink().
  */
 final class CatalogConnector implements CatalogConnectorInterface
 {
     private readonly UtmUrlBuilder $utmUrlBuilder;
     private readonly ModelCodeResolver $modelCodeResolver;
+
+    /** @var array<string, array{used: int, ignored: list<int>}> */
+    private array $repeatedDecisions = [];
 
     public function __construct(
         private readonly Config $config,
@@ -69,8 +74,14 @@ final class CatalogConnector implements CatalogConnectorInterface
         $defaultLangId = $this->config->getDefaultLanguageId() ?: (int) Context::getContext()->language->id;
 
         $items = [];
+        $sellable = $this->getProductsWithModelCode($featureId, $shopId, $defaultLangId);
+        $winners = $this->pickRepeated($featureId, $shopId, $defaultLangId);
 
-        foreach ($this->getProductsWithModelCode($featureId, $shopId, $defaultLangId) as $productId => $modelCode) {
+        foreach ($sellable as $productId => $modelCode) {
+            if (isset($winners[$modelCode]) && $winners[$modelCode] !== $productId) {
+                continue; // repeated model code: only the most recently updated active product counts
+            }
+
             $quantity = (int) StockAvailable::getQuantityAvailableByProduct($productId, null, $shopId);
 
             if ($quantity <= 0) {
@@ -91,6 +102,59 @@ final class CatalogConnector implements CatalogConnectorInterface
         }
 
         return $items;
+    }
+
+    /**
+     * Model codes that more than one product carries, from the last getAvailableCatalog():
+     * which product was used and which were ignored (shown by tudorsync:catalog:preview).
+     *
+     * @return array<string, array{used: int, ignored: list<int>}>
+     */
+    public function getRepeatedDecisions(): array
+    {
+        return $this->repeatedDecisions;
+    }
+
+    /**
+     * When several products carry the same model code (e.g. Grau's old sellable product and the
+     * TUDOR catalogue product with an "M" reference), only one counts: the active one updated
+     * most recently (product_shop.date_upd; on a tie, the newest id). Its stock and URLs are what
+     * is sent; if it isn't sellable or has no stock, the model isn't sent at all. Decided with
+     * Juanjo (16-10-2026): "ante la duda, los datos del último activo y actualizado".
+     *
+     * @return array<string, int> model code => id_product of the one that counts (repeated codes only)
+     */
+    private function pickRepeated(int $featureId, int $shopId, int $defaultLangId): array
+    {
+        $byCode = [];
+        foreach ($this->getProductsWithModelCode($featureId, $shopId, $defaultLangId, false) as $productId => $modelCode) {
+            $byCode[$modelCode][] = $productId;
+        }
+
+        $repeated = array_filter($byCode, static fn (array $ids): bool => count($ids) > 1);
+        $this->repeatedDecisions = [];
+
+        if ($repeated === []) {
+            return [];
+        }
+
+        $rows = Db::getInstance()->executeS('SELECT id_product, active, date_upd FROM `' . _DB_PREFIX_ . 'product_shop`
+            WHERE id_shop = ' . $shopId . ' AND id_product IN (' . implode(',', array_map('intval', array_merge(...array_values($repeated)))) . ')');
+        $state = [];
+        foreach (is_array($rows) ? $rows : [] as $row) {
+            $state[(int) $row['id_product']] = ['active' => (int) $row['active'] === 1, 'date_upd' => (string) $row['date_upd']];
+        }
+
+        $winners = [];
+        foreach ($repeated as $modelCode => $ids) {
+            $active = array_values(array_filter($ids, static fn (int $id): bool => $state[$id]['active'] ?? false));
+            usort($active, static fn (int $a, int $b): int => [$state[$b]['date_upd'], $b] <=> [$state[$a]['date_upd'], $a]);
+            $winner = $active[0] ?? 0; // none active: none of them is sellable anyway
+            $winners[(string) $modelCode] = $winner;
+            $this->repeatedDecisions[(string) $modelCode] = ['used' => $winner, 'ignored' => array_values(array_diff($ids, [$winner]))];
+        }
+
+        return $winners;
     }
 
     /**

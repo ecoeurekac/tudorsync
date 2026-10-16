@@ -37,8 +37,9 @@ final class CatalogPreviewCommand extends Command
         $config = new Config();
         $filter = new AvailabilityFilter();
         // plan() never calls TUDOR: the client is only there because SyncEngine needs one.
+        $connector = new CatalogConnector($config);
         $engine = new SyncEngine(
-            new CatalogConnector($config),
+            $connector,
             $filter,
             new TudorApiClient($config->getClientConfig(), new CurlHttpClient()),
         );
@@ -60,6 +61,14 @@ final class CatalogPreviewCommand extends Command
         }
         $table->render();
 
+        foreach ($connector->getRepeatedDecisions() as $modelCode => $decision) {
+            $output->writeln(sprintf(
+                '  repeated model code %s: product #%s used (most recently updated active), ignored #%s',
+                $modelCode,
+                $decision['used'] ?: 'none active',
+                implode(', #', $decision['ignored']),
+            ));
+        }
         foreach ($filter->getExclusions() as $exclusion) {
             $output->writeln(sprintf('  left out by the review: %s %s — %s', $exclusion->modelCode, $exclusion->country, $exclusion->message));
         }

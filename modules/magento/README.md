@@ -40,8 +40,9 @@ el estado dice «No se ha enviado nada»: un batch vacío pondría a 0 todo el c
 *Stores > Configuration > Catalog > TUDOR E-commerce Sync*
 
 - **General**: país (ISO de 2 letras; sin él no se sincroniza), entorno, **Client ID y Client
-  Secret** de staging y producción (OAuth2 de TUDOR; el secret se guarda cifrado), «value», click & collect (todo o nada), plazo de entrega
-  a domicilio (opcional), frecuencia del cron y los botones Test Connection / Run Sync Now.
+  Secret** de staging y producción (OAuth2 de TUDOR; el secret se guarda cifrado), «value», click & collect, plazo de recogida en tienda en horas (opcional, por
+  defecto para todos los puntos de venta), click & collect por punto de venta (opcional: RSWI, Sí/No y
+  horas; vacío = el plazo por defecto), plazo de entrega a domicilio (opcional), frecuencia del cron y los botones Test Connection / Run Sync Now.
 - **TUDOR Model Code**: regla opcional para sacar el código del SKU: prefijo (filtro SQL) +
   expresión regular + sustitución. Ejemplo: prefijo `TU`, patrón `/^TU(.+)-(\d{4})$/`,
   sustitución `M$1-$2`. **El atributo, si está relleno, siempre gana.**
@@ -51,6 +52,24 @@ el estado dice «No se ha enviado nada»: un batch vacío pondría a 0 todo el c
   para el click & collect del informe. Vacío = el campo queda en blanco.
 
 Los botones usan los valores **guardados**: primero hay que guardar y después probar.
+
+### Recogida en tienda (click & collect)
+
+La API de TUDOR no tiene un plazo de recogida general: solo lo acepta por punto de venta
+(`storesAvailabilityDetails`, con el id RSWI de cada punto de venta, el `stoId` de `GET /v1/point-of-sales`), y
+lo que va ahí sustituye al `storePickupAvailable` general en ese punto de venta. `Model\StorePickupDetails`:
+
+- *Offer Click & Collect* = No: no se envía detalle (solo `storePickupAvailable = false`).
+- Con filas en *Click & Collect per Point of Sale*: se envían exactamente esas, cada una con su Sí/No y sus
+  horas (vacío = el plazo por defecto). Los puntos de venta que no estén en la lista, TUDOR los deja sin
+  recogida.
+- Sin filas pero con *Store Pickup Timing*: ese plazo para **todos** los puntos de venta del distribuidor,
+  leídos de `GET /v1/point-of-sales` (en caché un día). Si la API falla, se avisa en `tudorsync.log`
+  y sale sin detalle.
+- Sin filas ni plazo: como hasta ahora, solo la opción general.
+
+Todos los modelos llevan el mismo detalle (el stock es el de la tienda, no el de cada punto de venta).
+`tudorsync:catalog:preview --json` lo muestra en `storesAvailabilityDetails`.
 
 ## Comandos
 
@@ -289,7 +308,6 @@ deja de arrancar en modo producción. Usar `?Clase $x = null` y crearlo dentro d
 
 ## Pendiente
 
-- Click & collect por punto de venta (`storesAvailabilityDetails`, RSWI): depende de TUDOR.
 - MSI con **varias** fuentes o stocks por website: hoy se usa el stock del website de la
   tienda por defecto.
 - Una tienda con varios mercados (un país por website) necesitaría un batch por país.

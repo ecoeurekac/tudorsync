@@ -161,6 +161,16 @@ class ApiTester
             $payload['homeDeliveryTiming'] = $item->homeDeliveryTimingHours;
         }
 
+        if ($item->storesAvailabilityDetails !== []) {
+            $payload['storesAvailabilityDetails'] = array_map(
+                static fn ($detail): array => array_filter([
+                    'storePickupAvailable' => $detail->available,
+                    'storePickupTiming' => $detail->timingHours,
+                ], static fn ($value): bool => $value !== null),
+                $item->storesAvailabilityDetails,
+            );
+        }
+
         return $payload;
     }
 

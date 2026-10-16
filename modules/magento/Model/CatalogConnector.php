@@ -38,8 +38,9 @@ use Tudorsync\EcommerceSync\Model\Stock\SalableQtyProvider;
  * visible, keyed by the store view's locale (see Config::getLocaleCode()). The default URL is
  * the default store view's.
  *
- * Not wired up yet: per-point-of-sale click & collect (storesAvailabilityDetails / RSWI) —
- * storePickupAvailable is a flat store-wide toggle from admin config.
+ * Click & collect: storePickupAvailable is the store-wide toggle from admin config; the
+ * per-point-of-sale detail with its timing (storesAvailabilityDetails / RSWI) comes from
+ * StorePickupDetails.
  */
 class CatalogConnector implements CatalogConnectorInterface
 {
@@ -57,6 +58,7 @@ class CatalogConnector implements CatalogConnectorInterface
         private readonly SalableQtyProvider $salableQtyProvider,
         private readonly ModelCodeResolver $modelCodeResolver,
         private readonly Config $config,
+        private readonly StorePickupDetails $storePickupDetails,
         ?UtmUrlBuilder $utmUrlBuilder = null,
     ) {
         $this->utmUrlBuilder = $utmUrlBuilder ?? new UtmUrlBuilder();
@@ -165,6 +167,7 @@ class CatalogConnector implements CatalogConnectorInterface
                 onlinePurchaseEnabled: true,
                 storePickupAvailable: $this->config->getClientConfig($defaultStoreId)->offersClickAndCollect,
                 homeDeliveryTimingHours: $this->config->getHomeDeliveryTimingHours($defaultStoreId),
+                storesAvailabilityDetails: $this->storePickupDetails->get($defaultStoreId),
             );
             $products[$mainProductId]['merged_count'] = count($productIds);
         }
@@ -274,6 +277,7 @@ class CatalogConnector implements CatalogConnectorInterface
             onlinePurchaseEnabled: true,
             storePickupAvailable: $this->config->getClientConfig($defaultStoreId)->offersClickAndCollect,
             homeDeliveryTimingHours: $this->config->getHomeDeliveryTimingHours($defaultStoreId),
+            storesAvailabilityDetails: $this->storePickupDetails->get($defaultStoreId),
         );
     }
 

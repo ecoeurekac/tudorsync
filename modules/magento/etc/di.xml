@@ -76,6 +76,11 @@
             <argument name="logger" xsi:type="object">Tudorsync\EcommerceSync\Logger</argument>
         </arguments>
     </type>
+    <type name="Tudorsync\EcommerceSync\Model\StorePickupDetails">
+        <arguments>
+            <argument name="logger" xsi:type="object">Tudorsync\EcommerceSync\Logger</argument>
+        </arguments>
+    </type>
     <type name="Tudorsync\EcommerceSync\Model\Realtime\ChangeRecorder">
         <arguments>
             <argument name="logger" xsi:type="object">Tudorsync\EcommerceSync\Logger</argument>

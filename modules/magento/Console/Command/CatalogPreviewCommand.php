@@ -185,6 +185,13 @@ class CatalogPreviewCommand extends Command
             'onlinePurchaseEnabled' => $item->onlinePurchaseEnabled,
             'storePickupAvailable' => $item->storePickupAvailable,
             'homeDeliveryTiming' => $item->homeDeliveryTimingHours,
+            'storesAvailabilityDetails' => $item->storesAvailabilityDetails === [] ? null : array_map(
+                static fn ($detail): array => array_filter([
+                    'storePickupAvailable' => $detail->available,
+                    'storePickupTiming' => $detail->timingHours,
+                ], static fn ($value): bool => $value !== null),
+                $item->storesAvailabilityDetails,
+            ),
         ], static fn ($value): bool => $value !== null);
     }
 }

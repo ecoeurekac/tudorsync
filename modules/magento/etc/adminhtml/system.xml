@@ -39,8 +39,25 @@
                 </field>
                 <field id="click_and_collect_enabled" translate="label comment" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Offer Click &amp; Collect</label>
-                    <comment>Store-wide toggle only — per-point-of-sale click &amp; collect timing (storesAvailabilityDetails) is not wired up yet.</comment>
+                    <comment>Whether TUDOR can offer picking the watch up in store (storePickupAvailable). The timing and the points of sale go in the two fields below.</comment>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="store_pickup_timing" translate="label comment" type="text" sortOrder="51" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Store Pickup Timing (hours)</label>
+                    <comment>Optional. Default hours until the watch is ready for pickup, for every point of sale without its own timing below (0 = ready now). With no points of sale listed below, it applies to all of yours in TUDOR (GET /v1/point-of-sales). Leave empty to omit it.</comment>
+                    <validate>validate-digits</validate>
+                    <depends>
+                        <field id="click_and_collect_enabled">1</field>
+                    </depends>
+                </field>
+                <field id="points_of_sale" translate="label comment" sortOrder="52" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Click &amp; Collect per Point of Sale</label>
+                    <frontend_model>Tudorsync\EcommerceSync\Block\Adminhtml\System\Config\PointsOfSale</frontend_model>
+                    <backend_model>Magento\Config\Model\Config\Backend\Serialized\ArraySerialized</backend_model>
+                    <comment><![CDATA[Optional. One row per point of sale, with its TUDOR RSWI id (e.g. RSWI_185580; the API tests list them under "Points of sale"). Timing empty = the default above. When there are rows, only those points of sale are sent: TUDOR removes click &amp; collect from any point of sale left out.]]></comment>
+                    <depends>
+                        <field id="click_and_collect_enabled">1</field>
+                    </depends>
                 </field>
                 <field id="home_delivery_timing" translate="label comment" type="text" sortOrder="55" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Home Delivery Timing (hours)</label>

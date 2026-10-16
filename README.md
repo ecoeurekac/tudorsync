@@ -318,8 +318,10 @@ may still need and, later on, reading GA4 for the monthly report.
   (Pedro Luis Olivares) aren't in TUDOR's price list and so aren't sent; ask TUDOR. Each PrestaShop
   and WooCommerce store uses a *new* field (Feature/meta) for the model code: confirm with Grau,
   Gordillo and Saphir whether they already have a convention for it.
-- **Per-POS click & collect** (`storesAvailabilityDetails`/RSWI) isn't wired up on any platform
-  (only a flat, store-wide toggle), nor is **MSI with several sources** in Magento.
+- **Per-POS click & collect** (`storesAvailabilityDetails`/RSWI) is wired up only in Magento
+  (`Model\StorePickupDetails`: default timing for every point of sale, or one row per RSWI);
+  PrestaShop and WooCommerce still send only the store-wide toggle. **MSI with several sources**
+  in Magento isn't wired up either.
 - **WooCommerce multi-language**: TranslatePress is built in; WPML or Polylang would go through the
   `tudorsync_localized_urls` filter (not wired).
 - **PrestaShop's cron** depends on the server operator adding a real crontab entry that hits

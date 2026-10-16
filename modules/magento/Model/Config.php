@@ -25,6 +25,8 @@ class Config
     private const XML_PATH_CLIENT_SECRET = 'tudorsync/general/client_secret_%s';
     private const XML_PATH_CLICK_AND_COLLECT_ENABLED = 'tudorsync/general/click_and_collect_enabled';
     private const XML_PATH_HOME_DELIVERY_TIMING = 'tudorsync/general/home_delivery_timing';
+    private const XML_PATH_STORE_PICKUP_TIMING = 'tudorsync/general/store_pickup_timing';
+    private const XML_PATH_POINTS_OF_SALE = 'tudorsync/general/points_of_sale';
     private const XML_PATH_VALUE_MODE = 'tudorsync/general/value_mode';
     private const XML_PATH_LOCALE_FORMAT = 'tudorsync/urls/locale_format';
     private const XML_PATH_SKU_PREFIX = 'tudorsync/model_code/sku_prefix';
@@ -153,6 +155,46 @@ class Config
         $value = $this->getString(self::XML_PATH_HOME_DELIVERY_TIMING, $storeId);
 
         return ctype_digit($value) ? (int) $value : null;
+    }
+
+    /**
+     * Default click & collect timing in hours (0 = ready in store now) for every point of sale
+     * without its own; null when empty. TUDOR's API only takes it per point of sale
+     * (storesAvailabilityDetails), see Model\StorePickupDetails.
+     */
+    public function getStorePickupTimingHours(?int $storeId = null): ?int
+    {
+        $value = $this->getString(self::XML_PATH_STORE_PICKUP_TIMING, $storeId);
+
+        return ctype_digit($value) ? (int) $value : null;
+    }
+
+    /**
+     * Points of sale configured one by one (Block\Adminhtml\System\Config\PointsOfSale), keyed
+     * by RSWI id; timing null = the default timing. Rows without an id are skipped.
+     *
+     * @return array<string, array{available: bool, timing: ?int}>
+     */
+    public function getPointsOfSale(?int $storeId = null): array
+    {
+        $rows = json_decode($this->getString(self::XML_PATH_POINTS_OF_SALE, $storeId), true);
+        $pointsOfSale = [];
+
+        foreach (is_array($rows) ? $rows : [] as $row) {
+            $stoId = trim((string) ($row['sto_id'] ?? ''));
+
+            if ($stoId === '') {
+                continue;
+            }
+
+            $timing = trim((string) ($row['timing'] ?? ''));
+            $pointsOfSale[$stoId] = [
+                'available' => (string) ($row['pickup'] ?? '1') !== '0',
+                'timing' => ctype_digit($timing) ? (int) $timing : null,
+            ];
+        }
+
+        return $pointsOfSale;
     }
 
     public function getValueMode(?int $storeId = null): string

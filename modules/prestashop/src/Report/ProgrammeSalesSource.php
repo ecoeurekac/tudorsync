@@ -97,6 +97,17 @@ final class ProgrammeSalesSource implements ProgrammeSalesSourceInterface
     }
 
     /**
+     * Date of the first order attributed to tudorwatch.com (YYYY-MM-DD, shop time zone), or null.
+     */
+    public function getFirstAttributedOrderDate(): ?string
+    {
+        $first = Db::getInstance()->getValue('SELECT MIN(o.date_add) FROM `' . _DB_PREFIX_ . 'orders` o
+            JOIN `' . _DB_PREFIX_ . OrderAttribution::TABLE_ORDER . '` a ON a.id_order = o.id_order');
+
+        return is_string($first) && $first !== '' ? substr($first, 0, 10) : null;
+    }
+
+    /**
      * First and last instant of a month (YYYY-MM) in the shop's time zone, [from, to).
      *
      * @return array{0: \DateTimeImmutable, 1: \DateTimeImmutable}
@@ -108,7 +119,7 @@ final class ProgrammeSalesSource implements ProgrammeSalesSourceInterface
         return [$from, $from->modify('+1 month')];
     }
 
-    private static function shopTimezone(): \DateTimeZone
+    public static function shopTimezone(): \DateTimeZone
     {
         $name = (string) Configuration::get('PS_TIMEZONE');
 

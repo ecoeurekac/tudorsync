@@ -6,7 +6,8 @@
     "license": "proprietary",
     "require": {
         "php": "^8.1",
-        "tudorsync/core": "*"
+        "tudorsync/core": "*",
+        "maennchen/zipstream-php": "2.1.*"
     },
     "repositories": [
         { "type": "path", "url": "../../core" }

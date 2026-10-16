@@ -34,7 +34,7 @@ final class ProgrammeSalesCommand extends Command
         if (preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $month) !== 1) {
             $output->writeln('<error>--month must be YYYY-MM</error>');
 
-            return Command::INVALID;
+            return 2;
         }
 
         $attributedOnly = !$input->getOption('all');
@@ -63,6 +63,6 @@ final class ProgrammeSalesCommand extends Command
             $attributedOnly ? ' from tudorwatch.com' : ' (all paid orders, attributed or not)',
         ));
 
-        return Command::SUCCESS;
+        return 0;
     }
 }

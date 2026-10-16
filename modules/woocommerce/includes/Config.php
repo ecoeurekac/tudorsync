@@ -40,6 +40,8 @@ final class Config
     public const CONSENT_CATEGORY = 'consent_category';
     public const CONSENT_COOKIE = 'consent_cookie';
     public const PICKUP_METHODS = 'pickup_shipping_methods';
+    public const STORE_PICKUP_TIMING = 'store_pickup_timing';
+    public const POINTS_OF_SALE = 'points_of_sale';
 
     public const VALUE_MODE_QUANTITY = 'quantity';
     public const VALUE_MODE_SIGNAL = 'signal';
@@ -272,5 +274,68 @@ final class Config
             array_map('trim', explode(',', $this->get(self::PICKUP_METHODS))),
             static fn (string $method): bool => $method !== '',
         ));
+    }
+
+    /**
+     * Default click & collect timing in hours (0 = ready in store now) for every point of sale
+     * without its own; null when empty. TUDOR's API only takes it per point of sale
+     * (storesAvailabilityDetails), see Catalog\StorePickupDetails.
+     */
+    public function getStorePickupTimingHours(): ?int
+    {
+        $value = trim($this->get(self::STORE_PICKUP_TIMING));
+
+        return ctype_digit($value) ? (int) $value : null;
+    }
+
+    /**
+     * Points of sale configured one by one on the settings page, keyed by RSWI id; timing null
+     * = the default timing. Rows without an id are skipped.
+     *
+     * @return array<string, array{available: bool, timing: ?int}>
+     */
+    public function getPointsOfSale(): array
+    {
+        $pointsOfSale = [];
+
+        foreach ($this->getPointsOfSaleRows() as $row) {
+            $pointsOfSale[$row['sto_id']] = [
+                'available' => $row['pickup'] !== '0',
+                'timing' => ctype_digit($row['timing']) ? (int) $row['timing'] : null,
+            ];
+        }
+
+        return $pointsOfSale;
+    }
+
+    /**
+     * The stored points-of-sale rows as the settings table edits them (string values).
+     *
+     * @return list<array{sto_id: string, pickup: string, timing: string}>
+     */
+    public function getPointsOfSaleRows(): array
+    {
+        $rows = json_decode($this->get(self::POINTS_OF_SALE), true);
+        $out = [];
+
+        foreach (is_array($rows) ? $rows : [] as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+
+            $stoId = trim((string) ($row['sto_id'] ?? ''));
+
+            if ($stoId === '') {
+                continue;
+            }
+
+            $out[] = [
+                'sto_id' => $stoId,
+                'pickup' => (string) ($row['pickup'] ?? '1') === '0' ? '0' : '1',
+                'timing' => trim((string) ($row['timing'] ?? '')),
+            ];
+        }
+
+        return $out;
     }
 }

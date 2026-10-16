@@ -47,6 +47,7 @@ final class Admin
             'tudorsync_save_settings' => [$settings, 'handleSave'],
             'tudorsync_test_connection' => [$settings, 'handleTestConnection'],
             'tudorsync_run_sync' => [$settings, 'handleRunSync'],
+            'tudorsync_load_points_of_sale' => [$settings, 'handleLoadPointsOfSale'],
             'tudorsync_publish_pending' => [$data, 'handlePublishPending'],
             'tudorsync_api_test' => [$apiTest, 'handleRun'],
             'tudorsync_report_save_period' => [$report, 'handleSavePeriod'],

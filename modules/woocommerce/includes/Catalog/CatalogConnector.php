@@ -36,6 +36,7 @@ final class CatalogConnector implements CatalogConnectorInterface
         private readonly Config $config,
         private readonly ModelCodeResolver $modelCodeResolver,
         private readonly LocalizedUrls $localizedUrls,
+        private readonly StorePickupDetails $storePickupDetails,
         ?UtmUrlBuilder $utmUrlBuilder = null,
     ) {
         $this->utmUrlBuilder = $utmUrlBuilder ?? new UtmUrlBuilder();
@@ -134,6 +135,7 @@ final class CatalogConnector implements CatalogConnectorInterface
                 onlinePurchaseEnabled: true,
                 storePickupAvailable: $this->config->offersClickAndCollect(),
                 homeDeliveryTimingHours: $this->config->getHomeDeliveryTimingHours(),
+                storesAvailabilityDetails: $this->storePickupDetails->get(),
             );
         }
 

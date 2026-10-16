@@ -25,6 +25,7 @@ final class SettingsTab
     {
         $this->renderStatus();
         $this->renderForm();
+        $this->renderPickupLoad();
     }
 
     private function renderStatus(): void
@@ -149,8 +150,71 @@ final class SettingsTab
         $this->text(Config::PICKUP_METHODS, __('Click & collect shipping methods', 'tudorsync'), __('Shipping method ids (or their start) that mean click & collect in the monthly report, separated by commas. Empty: the report shows n/a.', 'tudorsync'), 'regular-text code');
         echo '</tbody></table>';
 
+        $this->renderPickupSection();
+
         submit_button(__('Save settings', 'tudorsync'));
         echo '</form>';
+    }
+
+    /**
+     * Click & collect per point of sale (storesAvailabilityDetails / RSWI). Sent only when
+     * "Click & collect" is Yes. See Catalog\StorePickupDetails.
+     */
+    private function renderPickupSection(): void
+    {
+        $config = $this->plugin->config();
+
+        echo '<h2>' . esc_html__('Click & collect — points of sale', 'tudorsync') . '</h2>';
+        echo '<p class="description">' . esc_html__('Only sent when "Click & collect" is Yes above. TUDOR takes pickup per point of sale (RSWI). A point of sale listed here uses its own Yes/No and time; every other one of this retailer is sent as "no pickup", so TUDOR does not fall back to the store-wide value for it.', 'tudorsync') . '</p>';
+
+        echo '<table class="form-table" role="presentation"><tbody>';
+        $this->text(Config::STORE_PICKUP_TIMING, __('Default pickup time (hours)', 'tudorsync'), __('0 = ready in store now. Used for every point of sale without its own time. Empty and no points of sale listed: no per-store detail is sent.', 'tudorsync'), 'small-text');
+        echo '</tbody></table>';
+
+        $rows = $config->getPointsOfSaleRows();
+
+        for ($i = 0; $i < 3; $i++) {
+            $rows[] = ['sto_id' => '', 'pickup' => '1', 'timing' => ''];
+        }
+
+        echo '<table class="widefat striped" style="max-width:720px"><thead><tr>'
+            . '<th>' . esc_html__('Point of sale (RSWI id)', 'tudorsync') . '</th>'
+            . '<th>' . esc_html__('Pickup', 'tudorsync') . '</th>'
+            . '<th>' . esc_html__('Time (hours)', 'tudorsync') . '</th>'
+            . '</tr></thead><tbody>';
+
+        foreach ($rows as $i => $row) {
+            printf(
+                '<tr>'
+                . '<td><input type="text" name="points_of_sale[%1$d][sto_id]" value="%2$s" class="regular-text code" placeholder="RSWI_0000"></td>'
+                . '<td><select name="points_of_sale[%1$d][pickup]"><option value="1"%3$s>%4$s</option><option value="0"%5$s>%6$s</option></select></td>'
+                . '<td><input type="text" name="points_of_sale[%1$d][timing]" value="%7$s" class="small-text"></td>'
+                . '</tr>',
+                (int) $i,
+                esc_attr($row['sto_id']),
+                selected($row['pickup'], '1', false),
+                esc_html__('Yes', 'tudorsync'),
+                selected($row['pickup'], '0', false),
+                esc_html__('No', 'tudorsync'),
+                esc_attr($row['timing']),
+            );
+        }
+
+        echo '</tbody></table>';
+        echo '<p class="description">' . esc_html__('Leave the id empty to drop a row. The button below the form loads this retailer\'s points of sale from TUDOR.', 'tudorsync') . '</p>';
+    }
+
+    /**
+     * Separate form (can't nest in the settings form): loads the retailer's points of sale from
+     * TUDOR and adds the missing ones to the table, as "Pickup: Yes", keeping the ones listed.
+     */
+    private function renderPickupLoad(): void
+    {
+        echo '<div class="tudorsync-box"><h2>' . esc_html__('Load points of sale', 'tudorsync') . '</h2>';
+        echo '<p class="description">' . esc_html__('Adds this retailer\'s points of sale (GET /v1/point-of-sales) to the table above, each as "Pickup: Yes", keeping the ones already listed. Then set the ones without pickup to "No" and save.', 'tudorsync') . '</p>';
+        View::formStart('tudorsync_load_points_of_sale', 'class="tudorsync-inline-form"');
+        submit_button(__('Load points of sale from TUDOR', 'tudorsync'), 'secondary', 'submit', false);
+        echo '</form></div>';
     }
 
     public function handleSave(): void
@@ -160,6 +224,7 @@ final class SettingsTab
         $plain = [
             Config::ENVIRONMENT, Config::COUNTRY, Config::CLIENT_ID_STAGING, Config::CLIENT_ID_PRODUCTION,
             Config::VALUE_MODE, Config::UNMANAGED_STOCK, Config::CLICK_AND_COLLECT, Config::HOME_DELIVERY_TIMING,
+            Config::STORE_PICKUP_TIMING,
             Config::SKU_PREFIX, Config::SKU_PATTERN, Config::SKU_REPLACEMENT, Config::PRODUCT_SCOPE, Config::LOCALE_FORMAT,
             Config::SYNC_FREQUENCY, Config::REALTIME_ENABLED, Config::CONSENT_MANAGER, Config::CONSENT_CATEGORY,
             Config::CONSENT_COOKIE, Config::PICKUP_METHODS,
@@ -189,8 +254,15 @@ final class SettingsTab
                 $value = '';
             }
 
+            if ($key === Config::STORE_PICKUP_TIMING && $value !== '' && !ctype_digit($value)) {
+                $errors[] = __('Default pickup time must be a whole number of hours.', 'tudorsync');
+                $value = '';
+            }
+
             $config->set($key, $value);
         }
+
+        $config->set(Config::POINTS_OF_SALE, (string) wp_json_encode($this->sanitizePointsOfSale($errors)));
 
         foreach ([Config::CLIENT_SECRET_STAGING, Config::CLIENT_SECRET_PRODUCTION] as $key) {
             $value = trim((string) wp_unslash($_POST[$key] ?? '')); // phpcs:ignore WordPress.Security.NonceVerification
@@ -207,6 +279,79 @@ final class SettingsTab
             $errors === [],
             $errors === [] ? __('Settings saved.', 'tudorsync') : __('Settings saved, with problems:', 'tudorsync') . "\n" . implode("\n", $errors),
         );
+    }
+
+    /**
+     * The points-of-sale table from the form, cleaned up (rows without an id dropped).
+     *
+     * @param list<string> $errors
+     * @return list<array{sto_id: string, pickup: string, timing: string}>
+     */
+    private function sanitizePointsOfSale(array &$errors): array
+    {
+        $rows = [];
+
+        foreach ((array) wp_unslash($_POST['points_of_sale'] ?? []) as $row) { // phpcs:ignore WordPress.Security.NonceVerification -- Admin::guard()
+            if (!is_array($row)) {
+                continue;
+            }
+
+            $stoId = sanitize_text_field(trim((string) ($row['sto_id'] ?? '')));
+
+            if ($stoId === '') {
+                continue;
+            }
+
+            $timing = trim((string) ($row['timing'] ?? ''));
+
+            if ($timing !== '' && !ctype_digit($timing)) {
+                $errors[] = __('Point-of-sale pickup time must be a whole number of hours.', 'tudorsync');
+                $timing = '';
+            }
+
+            $rows[] = [
+                'sto_id' => $stoId,
+                'pickup' => (string) ($row['pickup'] ?? '1') === '0' ? '0' : '1',
+                'timing' => $timing,
+            ];
+        }
+
+        return $rows;
+    }
+
+    public function handleLoadPointsOfSale(): void
+    {
+        $config = $this->plugin->config();
+
+        if (!$config->hasCredentials()) {
+            Admin::redirect('settings', false, __('Set this environment\'s credentials before loading points of sale.', 'tudorsync'));
+        }
+
+        try {
+            $pointsOfSale = (new \Tudorsync\Core\Api\TudorApiClient($config->getClientConfig(), $this->plugin->httpClient()))->getPointOfSales();
+        } catch (\Throwable $e) {
+            Admin::redirect('settings', false, sprintf(__('Could not load points of sale: %s', 'tudorsync'), $e->getMessage()));
+        }
+
+        $rows = $config->getPointsOfSaleRows();
+        $existing = array_column($rows, 'sto_id');
+        $added = 0;
+
+        foreach ($pointsOfSale as $pointOfSale) {
+            if (!in_array($pointOfSale->stoId, $existing, true)) {
+                $rows[] = ['sto_id' => $pointOfSale->stoId, 'pickup' => '1', 'timing' => ''];
+                $added++;
+            }
+        }
+
+        $config->set(Config::POINTS_OF_SALE, (string) wp_json_encode($rows));
+
+        Admin::redirect('settings', true, sprintf(
+            /* translators: 1: points of sale added, 2: total listed */
+            __('Loaded: %1$d point(s) of sale added, %2$d listed in total. Set the ones without pickup to "No" and save.', 'tudorsync'),
+            $added,
+            count($rows),
+        ));
     }
 
     public function handleTestConnection(): void

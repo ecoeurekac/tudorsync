@@ -63,6 +63,8 @@ de los productos y las atribuciones de los pedidos se quedan.
 | Value sent to TUDOR | Salable quantity | o «Always 1» |
 | Products without stock management | Leave them out | o enviarlos como 1 si están «En stock» |
 | Click & collect | No | `storePickupAvailable` de toda la tienda |
+| Default pickup time (hours) | — | Plazo de recogida por defecto (0 = ya en tienda). Para cada punto de venta sin el suyo. Solo dígitos |
+| Points of sale | — | Recogida por punto de venta (RSWI): cada uno con Sí/No y su plazo; los no listados se envían como «no recoge» (así TUDOR no les aplica el valor de toda la tienda). Botón «Load points of sale from TUDOR» para cargarlos |
 | Home delivery time (hours) | — | Solo dígitos; vacío = no se envía |
 | SKU prefix / pattern / replacement | — | Regla para sacar el código del SKU: regex **con delimitadores** y reemplazo con `$1`… Ej.: `/^M?(\d{4,5}[A-Z0-9]*-\d{4})$/` → `M$1` |
 | Product scope | — | `taxonomía:slug` separados por comas (`product_cat:tudor`, `product_brand:tudor`): la regla de SKU solo se prueba en esos productos. Un producto con el código puesto a mano se lee siempre |
@@ -182,5 +184,4 @@ Pestañas:
 - Probar contra **PREPROD** de TUDOR con credenciales de la tienda y en su staging.
 - Multi-idioma con WPML o Polylang: solo TranslatePress viene de serie; los demás, con el filtro
   `tudorsync_localized_urls`.
-- Click & collect por punto de venta (`storesAvailabilityDetails` / RSWI), como en el resto de conectores.
 - Traducción del admin al español (las cadenas están preparadas, dominio `tudorsync`).

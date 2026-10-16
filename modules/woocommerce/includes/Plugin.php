@@ -15,6 +15,7 @@ use Tudorsync\Woocommerce\Attribution\UtmCapture;
 use Tudorsync\Woocommerce\Attribution\UtmCookie;
 use Tudorsync\Woocommerce\Catalog\CatalogConnector;
 use Tudorsync\Woocommerce\Catalog\LocalizedUrls;
+use Tudorsync\Woocommerce\Catalog\StorePickupDetails;
 use Tudorsync\Woocommerce\Cli\Commands;
 use Tudorsync\Woocommerce\Realtime\ChangeRecorder;
 use Tudorsync\Woocommerce\Realtime\PendingQueue;
@@ -32,7 +33,7 @@ use Tudorsync\Woocommerce\Sync\SyncRunner;
  */
 final class Plugin
 {
-    public const VERSION = '0.3.0';
+    public const VERSION = '0.4.0';
 
     private static ?self $instance = null;
 
@@ -128,6 +129,16 @@ final class Plugin
             $this->config(),
             $this->modelCodeResolver(),
             $this->localizedUrls(),
+            $this->storePickupDetails(),
+        ));
+    }
+
+    public function storePickupDetails(): StorePickupDetails
+    {
+        return $this->get(StorePickupDetails::class, fn (): StorePickupDetails => new StorePickupDetails(
+            $this->config(),
+            $this->httpClient(),
+            $this->logger(),
         ));
     }
 

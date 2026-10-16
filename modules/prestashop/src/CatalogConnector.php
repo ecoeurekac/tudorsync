@@ -113,15 +113,38 @@ final class CatalogConnector implements CatalogConnectorInterface
     }
 
     /**
+     * Model codes of the given products, whatever their stock or status (for the order lines
+     * of the attribution and the monthly report).
+     *
+     * @param int[] $productIds
+     * @return array<int, string> id_product => model code, only for the products that have one
+     */
+    public function getModelCodesOf(array $productIds): array
+    {
+        $featureId = $this->config->getModelCodeFeatureId();
+        $productIds = array_values(array_unique(array_filter(array_map('intval', $productIds))));
+
+        if ($featureId <= 0 || $productIds === []) {
+            return [];
+        }
+
+        $shopId = (int) Context::getContext()->shop->id;
+        $defaultLangId = $this->config->getDefaultLanguageId() ?: (int) Context::getContext()->language->id;
+
+        return $this->getProductsWithModelCode($featureId, $shopId, $defaultLangId, false, $productIds);
+    }
+
+    /**
      * Model code per product: the Feature value when filled in, otherwise the reference rule
      * for products of the configured TUDOR brand. Feature values are per language: the shop's
      * default language wins, otherwise the first non-empty value in any language (a custom
      * value may have been typed in only one of them).
      *
      * @param bool $sellableOnly Only products a customer can buy (active, visible, available for order).
+     * @param int[] $onlyProductIds Limit to these products (all when empty).
      * @return array<int, string> id_product => model code
      */
-    private function getProductsWithModelCode(int $featureId, int $shopId, int $defaultLangId, bool $sellableOnly = true): array
+    private function getProductsWithModelCode(int $featureId, int $shopId, int $defaultLangId, bool $sellableOnly = true, array $onlyProductIds = []): array
     {
         $manufacturerId = $this->modelCodeResolver->isRuleConfigured() ? $this->config->getManufacturerId() : 0;
 
@@ -135,6 +158,10 @@ final class CatalogConnector implements CatalogConnectorInterface
                 ? '(fp.id_feature_value IS NOT NULL OR p.id_manufacturer = ' . $manufacturerId . ')'
                 : 'fp.id_feature_value IS NOT NULL')
             ->orderBy('p.id_product, (fvl.id_lang = ' . $defaultLangId . ') DESC, fvl.id_lang');
+
+        if ($onlyProductIds !== []) {
+            $sql->where('p.id_product IN (' . implode(',', array_map('intval', $onlyProductIds)) . ')');
+        }
 
         if ($sellableOnly) {
             $sql->where('ps.active = 1')

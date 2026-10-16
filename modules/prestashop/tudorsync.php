@@ -20,6 +20,7 @@ use Tudorsync\Core\Sync\EmptyCatalogException;
 use Tudorsync\Core\Sync\NothingPassedReviewException;
 use Tudorsync\Core\Sync\SyncEngine;
 use Tudorsync\Prestashop\Api\CurlHttpClient;
+use Tudorsync\Prestashop\Attribution\OrderAttribution;
 use Tudorsync\Prestashop\Attribution\UtmCookie;
 use Tudorsync\Prestashop\CatalogConnector;
 use Tudorsync\Prestashop\Config;
@@ -35,11 +36,14 @@ use Tudorsync\Prestashop\ModelCodeResolver;
  */
 class Tudorsync extends Module
 {
+    /** Front: attribution cookie and cart. Order: attribution and model codes. Admin: order page. */
+    public const HOOKS = ['actionFrontControllerSetMedia', 'actionCartSave', 'actionValidateOrder', 'displayAdminOrderSide'];
+
     public function __construct()
     {
         $this->name = 'tudorsync';
         $this->tab = 'administration';
-        $this->version = '0.2.0';
+        $this->version = '0.3.0';
         $this->author = 'Tudorsync';
         $this->need_instance = 0;
         // tudorsync/core needs PHP 8.1+, which PrestaShop 1.7 doesn't support.
@@ -63,7 +67,7 @@ class Tudorsync extends Module
             return false;
         }
 
-        if (!parent::install() || !$this->registerHook('actionFrontControllerSetMedia')) {
+        if (!parent::install() || !$this->registerHook(self::HOOKS) || !OrderAttribution::installSchema()) {
             return false;
         }
 
@@ -96,7 +100,9 @@ class Tudorsync extends Module
         Configuration::deleteByName(Config::KEY_LAST_SYNC_RESULT);
 
         // Deliberately NOT deleting the "TUDOR Model Code" Feature or its values here —
-        // that's product data the retailer entered, not module configuration.
+        // that's product data the retailer entered, not module configuration. Same for the
+        // tudorsync_*_attribution / tudorsync_order_line tables: they are the sales history
+        // of TUDOR's monthly report.
 
         return parent::uninstall();
     }
@@ -118,6 +124,74 @@ class Tudorsync extends Module
             'modules/' . $this->name . '/views/js/utm-capture.js',
             ['position' => 'bottom', 'priority' => 200],
         );
+
+        $this->orderAttribution()->rememberForCart((int) ($this->context->cart->id ?? 0));
+    }
+
+    /**
+     * The cart's referral also on cart saves (the ajax add to cart doesn't load a page).
+     *
+     * @param array{cart?: Cart} $params
+     */
+    public function hookActionCartSave(array $params): void
+    {
+        $cart = $params['cart'] ?? null;
+
+        if (PHP_VERSION_ID < 80100 || !$cart instanceof Cart || !$this->context->controller instanceof FrontController) {
+            return;
+        }
+
+        $this->orderAttribution()->rememberForCart((int) $cart->id);
+    }
+
+    /**
+     * Also fires from the payment modules' webhooks (Stripe, PayPal), without the shopper's
+     * cookies: OrderAttribution then takes the referral from the cart.
+     *
+     * @param array{order?: Order, cart?: Cart} $params
+     */
+    public function hookActionValidateOrder(array $params): void
+    {
+        $order = $params['order'] ?? null;
+
+        if (PHP_VERSION_ID < 80100 || !$order instanceof Order) {
+            return;
+        }
+
+        $cart = $params['cart'] ?? null;
+        $this->orderAttribution()->saveOrder($order, $cart instanceof Cart ? $cart : null);
+    }
+
+    /**
+     * Order page in the back office: says when the order came from tudorwatch.com.
+     *
+     * @param array{id_order?: int} $params
+     */
+    public function hookDisplayAdminOrderSide(array $params): string
+    {
+        if (PHP_VERSION_ID < 80100) {
+            return '';
+        }
+
+        $referral = OrderAttribution::forOrder((int) ($params['id_order'] ?? 0));
+
+        if ($referral === null) {
+            return '';
+        }
+
+        return '<div class="card mt-2"><div class="card-header"><h3 class="card-header-title">TUDOR e-Stock</h3></div>'
+            . '<div class="card-body">' . htmlspecialchars(sprintf(
+                $this->l('Came from %1$s (campaign %2$s, medium %3$s), visit on %4$s UTC.'),
+                $referral['utm_source'],
+                $referral['utm_campaign'] !== '' ? $referral['utm_campaign'] : '-',
+                $referral['utm_medium'] !== '' ? $referral['utm_medium'] : '-',
+                $referral['landed_at'],
+            )) . '</div></div>';
+    }
+
+    private function orderAttribution(): OrderAttribution
+    {
+        return new OrderAttribution(new UtmCookie(), new CatalogConnector(new Config()));
     }
 
     /**

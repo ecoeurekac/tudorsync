@@ -7,3 +7,6 @@ services:
 
   Tudorsync\Prestashop\Command\CatalogPreviewCommand:
     tags: ['console.command']
+
+  Tudorsync\Prestashop\Command\ProgrammeSalesCommand:
+    tags: ['console.command']

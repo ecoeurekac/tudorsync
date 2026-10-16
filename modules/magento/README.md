@@ -60,9 +60,11 @@ La API de TUDOR no tiene un plazo de recogida general: solo lo acepta por punto 
 lo que va ahí sustituye al `storePickupAvailable` general en ese punto de venta. `Model\StorePickupDetails`:
 
 - *Offer Click & Collect* = No: no se envía detalle (solo `storePickupAvailable = false`).
-- Con filas en *Click & Collect per Point of Sale*: se envían exactamente esas, cada una con su Sí/No y sus
-  horas (vacío = el plazo por defecto). Los puntos de venta que no estén en la lista, TUDOR los deja sin
-  recogida.
+- Con filas en *Click & Collect per Point of Sale*: esas, cada una con su Sí/No y sus horas (vacío = el
+  plazo por defecto), y **todos los demás puntos de venta del distribuidor como no disponibles**
+  (`storePickupAvailable: false`, leídos de `GET /v1/point-of-sales`). Un punto de venta que no se envía
+  toma el valor general, que es Sí: por eso no se deja ninguno fuera. Basta con poner los que recogen. Si la
+  API de puntos de venta falla, solo salen las filas (aviso en `tudorsync.log`).
 - Sin filas pero con *Store Pickup Timing*: ese plazo para **todos** los puntos de venta del distribuidor,
   leídos de `GET /v1/point-of-sales` (en caché un día). Si la API falla, se avisa en `tudorsync.log`
   y sale sin detalle.

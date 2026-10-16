@@ -54,7 +54,7 @@
                     <label>Click &amp; Collect per Point of Sale</label>
                     <frontend_model>Tudorsync\EcommerceSync\Block\Adminhtml\System\Config\PointsOfSale</frontend_model>
                     <backend_model>Magento\Config\Model\Config\Backend\Serialized\ArraySerialized</backend_model>
-                    <comment><![CDATA[Optional. One row per point of sale, with its TUDOR RSWI id (e.g. RSWI_185580; the API tests list them under "Points of sale"). Timing empty = the default above. When there are rows, only those points of sale are sent: TUDOR removes click &amp; collect from any point of sale left out.]]></comment>
+                    <comment><![CDATA[Optional. One row per point of sale, with its TUDOR RSWI id (e.g. RSWI_185580; the API tests list them under "Points of sale"). Timing empty = the default above. List only the ones that offer it: every other point of sale of yours is sent as not available (read from GET /v1/point-of-sales).]]></comment>
                     <depends>
                         <field id="click_and_collect_enabled">1</field>
                     </depends>

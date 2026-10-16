@@ -11,7 +11,9 @@ que `TudorApiClient` ya enviaba.
 - **Store Pickup Timing (hours)**: plazo por defecto (0 = ya en tienda). Sin filas debajo, vale para
   **todos** los puntos de venta del distribuidor, leídos de `GET /v1/point-of-sales` (en caché 24 h).
 - **Click & Collect per Point of Sale**: filas con RSWI, Sí/No y horas (vacío = el plazo por defecto). Si hay
-  filas, solo se mandan esas: TUDOR quita la recogida de los puntos de venta que no estén.
+  filas, **todos los demás RSWI del distribuidor se mandan con `storePickupAvailable: false`**. Un punto de
+  venta que no se manda toma el valor general (Sí), así que basta con listar los que recogen (corregido el
+  16-10 tras lo que vio Juanjo; antes solo iban las filas).
 
 La API no tiene un plazo de recogida general, solo `storePickupTiming` dentro de cada punto de venta (spec
 1.7.0). Por eso el «global» se reparte entre todos los RSWI.
@@ -29,3 +31,10 @@ Sin `setup:upgrade` (solo `system.xml`, DI y clases nuevas). **Quera, en modo pr
 En PLO (modo default) ha bastado con `cache:clean config`.
 
 PrestaShop y WooCommerce siguen enviando solo la opción general.
+
+## Arreglos del 16-10 por la tarde
+
+- `d31bcb3`: el Sí/No de cada fila no se guardaba (el select salía sin `name`) y todo contaba como Sí. **Volver a
+  guardar** las tablas que se hayan rellenado antes del arreglo.
+- Siguiente commit: los puntos de venta no listados van como no disponibles. PLO en PREPROD: `RSWI_2450` Sí 24 h,
+  `RSWI_18488` No. TUDOR lo acepta (30 UPDATED).
